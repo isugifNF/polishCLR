@@ -1,0 +1,15 @@
+name: polishCLR_env
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.7
+  - merqury
+  - meryl
+  - parallel
+  - pbgcpp
+  - freebayes
+  - samtools
+  - minimap2
+  - bwa-mem2
