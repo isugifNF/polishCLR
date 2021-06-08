@@ -5,6 +5,7 @@ nextflow.enable.dsl=2
 params.primary_assembly="*p_ctg.fasta"
 params.illumina_reads="*.fastq.gz"
 params.pacbio_reads="*_subreads.fastq.gz"
+params.outdir="PolishCLR_Results"
 
 // 1st Merqury QV value
 process meryl_count_01 {
@@ -67,9 +68,74 @@ process pbmm2_align_01 {
     """
 }
 
-process samtools_faidx_01 {
+process create_windows_01 {
+    publishDir "${params.outdir}/02_ArrowPolish", mode: 'symlink'
+
+    input: path(assembly_fasta)
+    output: tuple path("*.fai"), path("win.txt")
+    shell:
+    """
+    #! /usr/bin/env bash
+    samtools faidx ${assembly_fasta}
+    cat ${assembly_fasta}.fai | awk '{print $1 ":0-" $2}' > win.txt
+    """
+}
+
+process gcc_Arrow_01 {
+    publishDir "${params.outdir}/02_ArrowPolish", mode: 'symlink'
+
+    input: tuple val(window), path(assembly_fasta), path(assembly_fai), path(pacbio_bam), path(pacbio_bai)
+    output: tuple path("*.fasta"), path("*.vcf")
+    script:
+    """
+    #! /usr/bin/env bash
+    gcpp --algorithm=arrow \
+      -x 10 -X 120 -q 0 \
+      -j 24 -w $window \
+      -r ${assembly_fasta} ${pacbio_bam} \
+      -o ${window.replace(':','_')}.vcf,${window.replace(':','_')}.fasta
+    """
+}
+
+process merge_consensus_01 {
+    publishDir "${params.outdir}/02_ArrowPolish", mode: 'symlink'
+
+    input: path(windows_fasta)
+    output: path("consensus.fasta")
+    script:
+    """
+    #! /usr/bin/env bash
+    cat ${windows_fasta} > consensus.fasta
+    """
+}
+
+// 2nd Merqury QV value
+process MerquryQV_02 {
+    publishDir "${params.outdir}/03_MerquryQV", mode: 'symlink'
+
+    input: tuple path(illumina_db), path(assembly_fasta)
+    output: path("*")
+    shell:
+    """
+    #! /usr/bin/env bash
+    $MERQURY/merqury.sh $illumina_db $assembly_fasta ${assembly_fasta.simpleName}
+    """
+}
+
+// FreeBayes
+process minimap2_index_01 {
 
 }
+
+process minimap2_align_01 {
+
+}
+
+process freebayes {
+    
+}
+
+
 
 workflow {
     // Setup input channels, starting assembly (asm), Illumina reads (ill), and pacbio reads (pac)
@@ -82,7 +148,18 @@ workflow {
 
     // Step 2: Arrow Polish
     asm_ch | pbmm2_index_01 | combine(pac_ch) | pbmm2_align_01
+    fai_ch = asm_ch | create_windows_01 | map { n -> n.get(0) }
+    create_windows_01.out | 
+      map { n -> n.get(1) } | 
+      splitText() {it.trim()} |
+      combine(asm_ch) | combine(fai_ch) | combine(pbmm2_align_01.out) | 
+      gcc_Arrow_01 |
+      map { n -> n.get(0)} |
+      collect |
+      merge_consensus_01
 
+    // Step 3: Check quality of new assembly with Merqury
+    meryl_union_01.out | combine(merge_consensus_01.out) | MerquryQV_02
 
-
+    // Step 4: FreeBayes Polish with Illumina reads
 }
