@@ -1,0 +1,39 @@
+#! /usr/bin/env bash
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=4
+#SBATCH --time=24:00:00
+#SBATCH --job-name=NF_PolishCLR
+#SBATCH --output=R-%x.%J.out
+#SBATCH --error=R-%x.%J.err
+# --mail-user=username@email.com
+# --mail-type=begin
+# --mail-type=end
+# --account=project_name    # <= put HPC account name here, required on Atlas
+
+# === Load Modules here
+# ==  Atlas HPC (will need a local install of nextflow)
+module load singularity
+NEXTFLOW=/project/isu_gif_vrsc/programs/nextflow
+
+# == Ceres HPC
+# module load nextflow
+# NEXTFLOW=nextflow
+
+# == Nova HPC
+# module load gcc/7.3.0-xegsmw4 nextflow
+# module load singularity
+# NEXTFLOW=nextflow
+
+# === Set working directory and in/out variables
+cd ${SLURM_SUBMIT_DIR}
+
+# === Using Conda Environments
+source activate /home/$USER/miniconda3/env/polishCLR_env
+
+# === Main Program
+$NEXTFLOW run main.nf \
+  --primary_assembly "raw-data/*p_ctg.fasta" \
+  --illumina_reads "raw-data/JAMU*.fastq.gz" \
+  --pacbio_reads "raw-data/*subreads.fastq.gz" \
+  --k "21" \
+  -resume
