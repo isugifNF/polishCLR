@@ -24,6 +24,21 @@ nextflow run main.nf \
   -resume
 ```
 
+Current progress:
+
+```
+N E X T F L O W  ~  version 20.07.1
+Launching `main.nf` [special_bartik] - revision: 7cb2c8ac31
+executor >  slurm (1)
+[53/50eca4] process > bz_to_gz (1)          [100%] 1 of 1, cached: 1 ✔
+[23/3b4395] process > meryl_count_01 (2)    [100%] 2 of 2, cached: 2 ✔
+[55/3e6914] process > meryl_union_01        [100%] 1 of 1, cached: 1 ✔
+[a1/5ce12d] process > MerquryQV_01 (1)      [100%] 1 of 1, cached: 1 ✔
+[fb/0af4a2] process > pbmm2_index_01 (1)    [100%] 1 of 1, cached: 1 ✔
+[c8/1ea134] process > pbmm2_align_01 (1)    [  0%] 0 of 1
+[53/4071bc] process > create_windows_01 (1) [100%] 1 of 1, cached: 1 ✔
+```
+
 pipeline for polishing CLRs
 
 ```
