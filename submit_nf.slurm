@@ -2,7 +2,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=4
 #SBATCH --time=24:00:00
-#SBATCH --job-name=Test
+#SBATCH --job-name=NF_PolishCLR
 #SBATCH --output=R-%x.%J.out
 #SBATCH --error=R-%x.%J.err
 # --mail-user=username@email.com
@@ -36,6 +36,6 @@ source activate /project/isu_gif_vrsc/jenchang/dot_home/.conda/envs/polishCLR_en
 $NEXTFLOW run main.nf \
   --primary_assembly "/project/ag100pest/Pgos/RawData/3-unzip/all_p_ctg.fasta" \
   --illumina_reads "/project/ag100pest/Illumina_polishing/JAMU*{R1,R2}.fastq.bz2" \
-  --pacbio_reads "/project/ag100pest/Pgos/RawData/m54334U_190823_194159.subreads.fasta" \
+  --pacbio_reads "/project/ag100pest/Pgos/RawData/m54334U_190823_194159.subreads.bam" \
   --k "21" \
   -resume

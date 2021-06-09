@@ -77,13 +77,14 @@ process pbmm2_align_01 {
     publishDir "${params.outdir}/02_ArrowPolish", mode: 'symlink'
 
     input:tuple path(assembly_fasta), path(assembly_mmi), path(pacbio_read)
-    output: tuple path("*_aln.bam"), path("*_aln.bai")
+    output: tuple path("*.bam"), path("*.bai")
     script:
     """
     #! /usr/bin/env bash
-    PROC=\$((`nproc`-4))
-    pbmm2 align -j \$PROC ${assembly_fasta} ${pacbio_read} | samtools sort --threads 4 - > ${pacbio_read.simpleName}_aln.bam
-    samtools index -@ ${PROC} ${pacbio_read.simpleName}_aln.bam
+    PROC=\$((`nproc`-10))
+    mkdir tmp
+    pbmm2 align -j \$PROC ${assembly_fasta} ${pacbio_read} | samtools sort -T tmp -m 8G --threads 8 - > ${pacbio_read.simpleName}_aln.bam
+    samtools index -@ \${PROC} ${pacbio_read.simpleName}_aln.bam
     """
 }
 
@@ -101,7 +102,7 @@ process create_windows_01 {
     """
 }
 
-/*
+
 process gcc_Arrow_01 {
     publishDir "${params.outdir}/02_ArrowPolish", mode: 'symlink'
 
@@ -118,6 +119,7 @@ process gcc_Arrow_01 {
     """
 }
 
+
 process merge_consensus_01 {
     publishDir "${params.outdir}/02_ArrowPolish", mode: 'symlink'
 
@@ -128,7 +130,10 @@ process merge_consensus_01 {
     #! /usr/bin/env bash
     cat ${windows_fasta} > consensus.fasta
     """
+
 }
+
+/*
 
 // 2nd Merqury QV value
 process MerquryQV_02 {
@@ -290,7 +295,7 @@ workflow {
     asm_ch | pbmm2_index_01 | combine(pac_ch) | pbmm2_align_01
 
     fai_ch = asm_ch | create_windows_01 | map { n -> n.get(0) }
-/*
+
     create_windows_01.out | 
       map { n -> n.get(1) } | 
       splitText() {it.trim()} |
@@ -299,7 +304,7 @@ workflow {
       map { n -> n.get(0)} |
       collect |
       merge_consensus_01
-
+/*
     asm2_ch = merge_consensus_01.out   // <= New Assembly
 
     // Step 3: Check quality of new assembly with Merqury (turns out we can reuse the illumina database)
