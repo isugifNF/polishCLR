@@ -8,9 +8,23 @@ params.pacbio_reads="*_subreads.fastq.gz"
 params.outdir="PolishCLR_Results"
 params.k="21"
 
+
+// Unzip any bz2 files
+process bz_to_gz {
+    publishDir "${params.outdir}/00_Preprocess", mode: 'symlink'
+    input:tuple val(readname), path(illumina_reads)
+    output: tuple val(readname), path("*1.gz"), path("*2.gz")
+    script:
+    """
+    #! /usr/bin/env bash
+    parallel -j 2 "bzcat {1} | gzip -c > {1}.fastq.gz" ::: *.fastq.bz2
+    """
+}
+
+/*
 // 1st Merqury QV value
 process meryl_count_01 {
-    publishDir "${params.outdir}/01_MerquryQV", mode: 'symlink'
+
     input: tuple val(k), path(illumina_read)
     output: path("*.meryl")
     script:
@@ -252,13 +266,16 @@ process MerquryQV_04 {
     $MERQURY/merqury.sh $illumina_db $assembly_fasta ${assembly_fasta.simpleName}
     """
 }
-
+*/
 workflow {
     // Setup input channels, starting assembly (asm), Illumina reads (ill), and pacbio reads (pac)
-    asm_ch = channel.fromPath(params.primary_assembly, checkIfExists:true)
-    ill_ch = channel.fromPath(params.illumina_reads, checkIfExists:true)
-    pac_ch = channel.fromPath(params.pacbio_reads, checkIfExists:true)
+    asm_ch = channel.fromPath(params.primary_assembly, checkIfExists:true) | view
+    ill_ch = channel.fromFilePairs(params.illumina_reads, checkIfExists:true) | view
+    pac_ch = channel.fromPath(params.pacbio_reads, checkIfExists:true) | view
 
+    ill_ch | bz_to_gz | view
+
+/*
     // Step 1: Check quality of assembly with Merqury
     channel.of(params.k) | combine(ill_ch) | meryl_count_01 | collect | meryl_union_01 | combine(asm_ch) | MerquryQV_01
 
@@ -310,5 +327,5 @@ workflow {
 
     // Step 7: Check quality of assembly with Merqury
     meryl_union_01.out | combine(asm4_ch) | MerquryQV_04
-    
+*/    
 }
