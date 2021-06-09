@@ -8,8 +8,8 @@ dependencies:
   - merqury
   - meryl
   - parallel
+  - pbmm2
   - pbgcpp
   - freebayes
   - samtools
-  - minimap2
   - bwa-mem2

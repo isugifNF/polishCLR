@@ -2,7 +2,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=4
 #SBATCH --time=24:00:00
-#SBATCH --job-name=NF_PolishCLR
+#SBATCH --job-name=Test
 #SBATCH --output=R-%x.%J.out
 #SBATCH --error=R-%x.%J.err
 # --mail-user=username@email.com
@@ -28,6 +28,7 @@ NEXTFLOW=nextflow
 cd ${SLURM_SUBMIT_DIR}
 
 # === Using Conda Environments
+module load miniconda
 source activate /project/isu_gif_vrsc/jenchang/dot_home/.conda/envs/polishCLR_env
 
 # === Main Program

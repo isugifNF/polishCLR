@@ -13,15 +13,16 @@ params.k="21"
 process bz_to_gz {
     publishDir "${params.outdir}/00_Preprocess", mode: 'symlink'
     input:tuple val(readname), path(illumina_reads)
-    output: tuple val(readname), path("*1.gz"), path("*2.gz")
+    output: tuple val(readname), path("*.gz")
     script:
     """
     #! /usr/bin/env bash
-    parallel -j 2 "bzcat {1} | gzip -c > {1}.fastq.gz" ::: *.fastq.bz2
+    PROC=\$((`nproc`-4))
+    parallel -j 2 "bzcat {1} | pigz -p \$PROC > {1}.fastq.gz" ::: *.fastq.bz2
     """
 }
 
-/*
+
 // 1st Merqury QV value
 process meryl_count_01 {
 
@@ -30,9 +31,10 @@ process meryl_count_01 {
     script:
     """
     #! /usr/bin/env bash
-    meryl count k=${k} ${illumina_read.simpleName}.meryl ${illumina_read}
+    meryl count k=${k} output ${illumina_read.simpleName}.meryl ${illumina_read}
     """
 }
+
 
 process meryl_union_01 {
     publishDir "${params.outdir}/01_MerquryQV", mode: 'symlink'
@@ -57,6 +59,7 @@ process MerquryQV_01 {
     """
 }
 
+
 // 2nd Arrow Polish (if after Falcon unzip)
 process pbmm2_index_01 {
     publishDir "${params.outdir}/02_ArrowPolish", mode: 'symlink'
@@ -69,6 +72,7 @@ process pbmm2_index_01 {
     pbmm2 index ${assembly_fasta} ${assembly_fasta}.mmi
     """
 }
+
 process pbmm2_align_01 {
     publishDir "${params.outdir}/02_ArrowPolish", mode: 'symlink'
 
@@ -77,11 +81,12 @@ process pbmm2_align_01 {
     script:
     """
     #! /usr/bin/env bash
-    PROC=`nproc`
+    PROC=\$((`nproc`-4))
     pbmm2 align -j \$PROC ${assembly_fasta} ${pacbio_read} | samtools sort --threads 4 - > ${pacbio_read.simpleName}_aln.bam
     samtools index -@ ${PROC} ${pacbio_read.simpleName}_aln.bam
     """
 }
+
 
 process create_windows_01 {
     publishDir "${params.outdir}/02_ArrowPolish", mode: 'symlink'
@@ -92,10 +97,11 @@ process create_windows_01 {
     """
     #! /usr/bin/env bash
     samtools faidx ${assembly_fasta}
-    cat ${assembly_fasta}.fai | awk '{print $1 ":0-" $2}' > win.txt
+    cat ${assembly_fasta}.fai | awk '{print \$1 ":0-" \$2}' > win.txt
     """
 }
 
+/*
 process gcc_Arrow_01 {
     publishDir "${params.outdir}/02_ArrowPolish", mode: 'symlink'
 
@@ -267,21 +273,24 @@ process MerquryQV_04 {
     """
 }
 */
+
 workflow {
     // Setup input channels, starting assembly (asm), Illumina reads (ill), and pacbio reads (pac)
-    asm_ch = channel.fromPath(params.primary_assembly, checkIfExists:true) | view
-    ill_ch = channel.fromFilePairs(params.illumina_reads, checkIfExists:true) | view
-    pac_ch = channel.fromPath(params.pacbio_reads, checkIfExists:true) | view
+    asm_ch = channel.fromPath(params.primary_assembly, checkIfExists:true)
+    ill_ch = channel.fromFilePairs(params.illumina_reads, checkIfExists:true) 
+    pac_ch = channel.fromPath(params.pacbio_reads, checkIfExists:true)
 
-    ill_ch | bz_to_gz | view
+    pill_ch = ill_ch | bz_to_gz |map {n -> n.get(1)} | flatten
 
-/*
     // Step 1: Check quality of assembly with Merqury
-    channel.of(params.k) | combine(ill_ch) | meryl_count_01 | collect | meryl_union_01 | combine(asm_ch) | MerquryQV_01
+    channel.of(params.k) | combine(pill_ch) | meryl_count_01 | collect | meryl_union_01 | combine(asm_ch) | MerquryQV_01
 
+ 
     // Step 2: Arrow Polish with PacBio reads
     asm_ch | pbmm2_index_01 | combine(pac_ch) | pbmm2_align_01
+
     fai_ch = asm_ch | create_windows_01 | map { n -> n.get(0) }
+/*
     create_windows_01.out | 
       map { n -> n.get(1) } | 
       splitText() {it.trim()} |
