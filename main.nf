@@ -148,14 +148,14 @@ process MerquryQV_02 {
     """
 }
 
-/*
+
 // 1st FreeBayes Polish
 // Pick minimap2 or bwa-mem2 for the aligner (switch to bwa-mem2)
 
 process align_shortreads_01 {
     publishDir "${params.outdir}/04_FreeBayesPolish", mode: 'symlink'
 
-    input: tuple path(assembly_fasta), path(illumina_reads)
+    input: tuple path(assembly_fasta), path(illumina_one), path(illumina_two)
     output: path("*.bam")
     script:
     """
@@ -163,26 +163,48 @@ process align_shortreads_01 {
     PROC=\$((`nproc`-4))
     mkdir tmp
     bwa-mem2 index ${assembly_fasta}
-    bwa-mem2 mem -SP -t \${PROC} ${assembly_fasta} ${illumina_reads} |
-      samtools sort -T tmp -m 8G --threads 4 - > ${illumina_reads.get(0).simpleName}_aln.bam
+    bwa-mem2 mem -SP -t \${PROC} ${assembly_fasta} ${illumina_one} ${illumina_two} |
+      samtools sort -T tmp -m 8G --threads 4 - > ${illumina_one.simpleName}_aln.bam
     """
 }
 // -m 5G -@ 36
 
+process create_windows_02 {
+    publishDir "${params.outdir}/04_FreeBayesPolish", mode: 'symlink'
+
+    input: path(assembly_fasta)
+    output: tuple path("*.fai"), path("win.txt")
+    shell:
+    """
+    #! /usr/bin/env bash
+    samtools faidx ${assembly_fasta}
+    cat ${assembly_fasta}.fai | awk '{print \$1 ":0-" \$2}' > win.txt
+    """
+}
+
+
 process freebayes_01 {
     publishDir "${params.outdir}/04_FreeBayesPolish", mode: 'symlink'
     input: tuple val(window), path(assembly_fasta), path(assembly_fai), path(illumina_bam)
-    output: tuple path("*.vcf")
+    output: path("*.vcf")
     script:
     """
     #! /usr/bin/env bash
     freebayes \
-      --region ${window} ${params.options} \
+      --region ${window} \
+      --min-mapping-quality 0 \
+      --min-coverage 3 \
+      --min-supporting-allele-qsum 0 \
+      --ploidy 2 \
+      --min-alternate-fraction 0.2 \
+      --max-complex-gap 0 \
       --bam ${illumina_bam} \
-      --vcf ${illumina.simpleName}"_"${window.replace(':','_')}".vcf" \
+      --vcf ${illumina_bam.simpleName}"_"${window.replace(':','_')}".vcf" \
       --fasta-reference ${assembly_fasta}
     """
 }
+
+/*
 
 process combineVCF_01 {
 	publishDir "${params.outdir}/04_FreeBayesPolish", mode: 'symlink'
@@ -311,17 +333,20 @@ workflow {
 
     // Step 3: Check quality of new assembly with Merqury (turns out we can reuse the illumina database)
     meryl_union_01.out | combine(asm2_ch) | MerquryQV_02
-/*
+
     // Step 4: FreeBayes Polish with Illumina reads
-    asm2_ch | combine(pill_ch.out.collect()) | align_shortreads_01
+    asm2_ch | combine(pill_ch.collect()) | align_shortreads_01 | view
+    fai2_ch = asm2_ch | create_windows_02 | map { n -> n.get(0) } | view
+
     // since windows will be the same? (actually double check this...)
-    create_windows_01.out | 
+    create_windows_02.out | 
       map { n -> n.get(1) } | 
       splitText() {it.trim()} |
-      combine(asm2_ch) | combine(fai_ch) | combine(align_shortreads_01.out) |
-      freebayes_01 |
-      collect |
+      combine(asm2_ch) | combine(fai2_ch) | combine(align_shortreads_01.out) |
+      freebayes_01
+/*      collect |
       combineVCF_01 // | vcf_to_fasta
+
 
     asm3_ch = vcf_to_fasta.out         // <= New assembly
   
