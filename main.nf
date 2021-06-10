@@ -119,7 +119,7 @@ process gcc_Arrow_01 {
     """
 }
 
-
+// add nproc
 process merge_consensus_01 {
     publishDir "${params.outdir}/02_ArrowPolish", mode: 'symlink'
 
@@ -133,7 +133,7 @@ process merge_consensus_01 {
 
 }
 
-/*
+
 
 // 2nd Merqury QV value
 process MerquryQV_02 {
@@ -148,8 +148,10 @@ process MerquryQV_02 {
     """
 }
 
+/*
 // 1st FreeBayes Polish
-// Pick minimap2 or bwa-mem2 for the aligner
+// Pick minimap2 or bwa-mem2 for the aligner (switch to bwa-mem2)
+
 process align_shortreads_01 {
     publishDir "${params.outdir}/04_FreeBayesPolish", mode: 'symlink'
 
@@ -158,13 +160,13 @@ process align_shortreads_01 {
     script:
     """
     #! /usr/bin/env bash
-    PROC=`nproc`
-    minimap2 -ax sr -t ${PROC} $assembly_fasta $illumina_reads |
-      samtools view -uhS - |
-      samtools sort --threads 4 - > ${illumina_reads.get(0).simpleName}.bam
+    PROC=\$((`nproc`-4))
+    mkdir tmp
+    bwa-mem2 index ${assembly_fasta}
+    bwa-mem2 mem -SP -t \${PROC} ${assembly_fasta} ${illumina_reads} |
+      samtools sort -T tmp -m 8G --threads 4 - > ${illumina_reads.get(0).simpleName}_aln.bam
     """
 }
-// samtools sort needs a tmp directory... add this in later
 // -m 5G -@ 36
 
 process freebayes_01 {
@@ -304,14 +306,14 @@ workflow {
       map { n -> n.get(0)} |
       collect |
       merge_consensus_01
-/*
+
     asm2_ch = merge_consensus_01.out   // <= New Assembly
 
     // Step 3: Check quality of new assembly with Merqury (turns out we can reuse the illumina database)
     meryl_union_01.out | combine(asm2_ch) | MerquryQV_02
-
+/*
     // Step 4: FreeBayes Polish with Illumina reads
-    asm2_ch | combine(ill_ch) | align_shortreads_01
+    asm2_ch | combine(pill_ch.out.collect()) | align_shortreads_01
     // since windows will be the same? (actually double check this...)
     create_windows_01.out | 
       map { n -> n.get(1) } | 
