@@ -156,7 +156,7 @@ process align_shortreads_01 {
     publishDir "${params.outdir}/04_FreeBayesPolish", mode: 'symlink'
 
     input: tuple path(assembly_fasta), path(illumina_one), path(illumina_two)
-    output: path("*.bam")
+    output: tuple path("*.bam"), path("*.bai")
     script:
     """
     #! /usr/bin/env bash
@@ -165,6 +165,7 @@ process align_shortreads_01 {
     bwa-mem2 index ${assembly_fasta}
     bwa-mem2 mem -SP -t \${PROC} ${assembly_fasta} ${illumina_one} ${illumina_two} |
       samtools sort -T tmp -m 8G --threads 4 - > ${illumina_one.simpleName}_aln.bam
+    samtools index -@ \${PROC} ${illumina_one.simpleName}_aln.bam
     """
 }
 // -m 5G -@ 36
@@ -185,7 +186,7 @@ process create_windows_02 {
 
 process freebayes_01 {
     publishDir "${params.outdir}/04_FreeBayesPolish", mode: 'symlink'
-    input: tuple val(window), path(assembly_fasta), path(assembly_fai), path(illumina_bam)
+    input: tuple val(window), path(assembly_fasta), path(assembly_fai), path(illumina_bam), path(illumina_bai)
     output: path("*.vcf")
     script:
     """
@@ -204,22 +205,19 @@ process freebayes_01 {
     """
 }
 
-/*
-
 process combineVCF_01 {
-	publishDir "${params.outdir}/04_FreeBayesPolish", mode: 'symlink'
-	
-	input: path(vcfs)
+    publishDir "${params.outdir}/04_FreeBayesPolish", mode: 'symlink'
+    input: path(vcfs)
     output: path("consensus.vcf")
-
-	script:
-	"""
+    script:
+    """
     #! /usr/bin/env bash
-
-	cat $vcfs |  vcffirstheader > consensus.vcf 
-	"""
+    cat ${vcfs.get(0)} | grep "^#" > consensus.vcf
+    cat ${vcfs} | grep -v "^#" >> consensus.vcf
+    """
 }
 
+/*
 process vcf_to_fasta_01 {
     /// ? where is this step?
 }
@@ -343,9 +341,10 @@ workflow {
       map { n -> n.get(1) } | 
       splitText() {it.trim()} |
       combine(asm2_ch) | combine(fai2_ch) | combine(align_shortreads_01.out) |
-      freebayes_01
-/*      collect |
-      combineVCF_01 // | vcf_to_fasta
+      freebayes_01 |
+      collect |
+      combineVCF_01 // | 
+/*      vcf_to_fasta
 
 
     asm3_ch = vcf_to_fasta.out         // <= New assembly
