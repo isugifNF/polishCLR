@@ -29,21 +29,29 @@ Current progress:
 ```
 N E X T F L O W  ~  version 20.07.1
 Launching `main.nf` [special_bartik] - revision: 7cb2c8ac31
-executor >  slurm (10)
-[53/50eca4] process > bz_to_gz (1)          [100%] 1 of 1, cached: 1 ✔
-[23/3b4395] process > meryl_count_01 (1)    [100%] 2 of 2, cached: 2 ✔
-[55/3e6914] process > meryl_union_01        [100%] 1 of 1, cached: 1 ✔
-[a1/5ce12d] process > MerquryQV_01 (1)      [100%] 1 of 1, cached: 1 ✔
-[fb/0af4a2] process > pbmm2_index_01 (1)    [100%] 1 of 1, cached: 1 ✔
-[a6/1c9e97] process > pbmm2_align_01 (1)    [100%] 1 of 1, cached: 1 ✔
-[53/4071bc] process > create_windows_01 (1) [100%] 1 of 1, cached: 1 ✔
-[f0/da050d] process > gcc_Arrow_01 (480)      [100%] 480 of 480, cached: 480 ✔
+executor >  slurm (482)
+[53/50eca4] process > bz_to_gz (1)            [100%] 1 of 1, cached: 1 ✔
+[d7/24a868] process > meryl_count_01 (2)      [100%] 2 of 2, cached: 2 ✔
+[55/3e6914] process > meryl_union_01          [100%] 1 of 1, cached: 1 ✔
+[a1/5ce12d] process > MerquryQV_01 (1)        [100%] 1 of 1, cached: 1 ✔
+[fb/0af4a2] process > pbmm2_index_01 (1)      [100%] 1 of 1, cached: 1 ✔
+[a6/1c9e97] process > pbmm2_align_01 (1)      [100%] 1 of 1, cached: 1 ✔
+[53/4071bc] process > create_windows_01 (1)   [100%] 1 of 1, cached: 1 ✔
+[8d/598162] process > gcc_Arrow_01 (477)      [100%] 480 of 480, cached: 480 ✔
 [d8/b6c8d2] process > merge_consensus_01      [100%] 1 of 1, cached: 1 ✔
 [13/1938bf] process > MerquryQV_02 (1)        [100%] 1 of 1, cached: 1 ✔
-[63/5d4675] process > align_shortreads_01 (1) [100%] 1 of 1, cached: 1 ✔
+[9d/97a779] process > align_shortreads_01 (1) [100%] 1 of 1 ✔
 [1d/e6da33] process > create_windows_02       [100%] 1 of 1, cached: 1 ✔
-[b4/290710] process > freebayes_01 (382)      [  5%] 24 of 480, cached: 12
+[16/f31f64] process > freebayes_01 (309)      [100%] 480 of 480 ✔
+[cf/17e899] process > combineVCF_01           [100%] 1 of 1 ✔
+Completed at: 10-Jun-2021 17:28:55
+Duration    : 1h 16m 37s
+CPU hours   : 46.2 (91.8% cached)
+Succeeded   : 482
+Cached      : 491
 ```
+
+Continue from `consensus.vcf` either later today or tomorrow.
 
 <details><summary>prior run</summary>
 
