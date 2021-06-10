@@ -37,9 +37,12 @@ executor >  slurm (10)
 [fb/0af4a2] process > pbmm2_index_01 (1)    [100%] 1 of 1, cached: 1 ✔
 [a6/1c9e97] process > pbmm2_align_01 (1)    [100%] 1 of 1, cached: 1 ✔
 [53/4071bc] process > create_windows_01 (1) [100%] 1 of 1, cached: 1 ✔
-[3e/8a8fa2] process > gcc_Arrow_01 (479)    [100%] 480 of 480, cached: 480 ✔
-[d8/b6c8d2] process > merge_consensus_01    [100%] 1 of 1, cached: 1 ✔
-[13/1938bf] process > MerquryQV_02 (1)      [  0%] 0 of 1
+[f0/da050d] process > gcc_Arrow_01 (480)      [100%] 480 of 480, cached: 480 ✔
+[d8/b6c8d2] process > merge_consensus_01      [100%] 1 of 1, cached: 1 ✔
+[13/1938bf] process > MerquryQV_02 (1)        [100%] 1 of 1, cached: 1 ✔
+[63/5d4675] process > align_shortreads_01 (1) [100%] 1 of 1, cached: 1 ✔
+[1d/e6da33] process > create_windows_02       [100%] 1 of 1, cached: 1 ✔
+[b4/290710] process > freebayes_01 (382)      [  5%] 24 of 480, cached: 12
 ```
 
 <details><summary>prior run</summary>
