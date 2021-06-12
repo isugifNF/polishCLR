@@ -29,29 +29,39 @@ Current progress:
 ```
 N E X T F L O W  ~  version 20.07.1
 Launching `main.nf` [special_bartik] - revision: 7cb2c8ac31
-executor >  slurm (2)
-[53/50eca4] process > bz_to_gz (1)            [100%] 1 of 1, cached: 1 ✔
-[d7/24a868] process > meryl_count_01 (1)      [100%] 2 of 2, cached: 2 ✔
-[55/3e6914] process > meryl_union_01          [100%] 1 of 1, cached: 1 ✔
-[a1/5ce12d] process > MerquryQV_01 (1)        [100%] 1 of 1, cached: 1 ✔
-[fb/0af4a2] process > pbmm2_index_01 (1)      [100%] 1 of 1, cached: 1 ✔
-[a6/1c9e97] process > pbmm2_align_01 (1)      [100%] 1 of 1, cached: 1 ✔
-[53/4071bc] process > create_windows_01 (1)   [100%] 1 of 1, cached: 1 ✔
-[59/294ac0] process > gcc_Arrow_01 (478)      [100%] 480 of 480, cached: 480 ✔
-[d8/b6c8d2] process > merge_consensus_01      [100%] 1 of 1, cached: 1 ✔
-[13/1938bf] process > MerquryQV_02 (1)        [100%] 1 of 1, cached: 1 ✔
-[9d/97a779] process > align_shortreads_01 (1) [100%] 1 of 1, cached: 1 ✔
-[1d/e6da33] process > create_windows_02       [100%] 1 of 1, cached: 1 ✔
-[99/1d2fcf] process > freebayes_01 (480)      [100%] 480 of 480, cached: 480 ✔
-[d2/f8cd26] process > combineVCF_01           [100%] 1 of 1, cached: 1 ✔
-[51/3f7ca7] process > vcf_to_fasta_01 (1)     [100%] 1 of 1, cached: 1 ✔
-[56/3a97a1] process > MerquryQV_03 (1)        [100%] 1 of 1, cached: 1 ✔
-[2d/86c139] process > align_shortreads_02 (1) [  0%] 0 of 1
-[5d/94903c] process > create_windows_03 (1)   [100%] 1 of 1 ✔
-[-        ] process > freebayes_02            -
-[-        ] process > combineVCF_02           -
-[-        ] process > vcf_to_fasta_02         -
-[-        ] process > MerquryQV_04            -
+executor >  slurm (1945)
+[00/0890bc] process > bz_to_gz (1)            [100%] 1 of 1 ✔
+[c0/97fd15] process > meryl_count_01 (1)      [100%] 2 of 2 ✔
+[0c/aaa5c5] process > meryl_union_01          [100%] 1 of 1 ✔
+[f2/12c259] process > MerquryQV_01 (1)        [100%] 1 of 1 ✔
+[60/e66a84] process > pbmm2_index_02 (1)      [100%] 1 of 1 ✔
+[6b/46feaa] process > pbmm2_align_02 (1)      [100%] 1 of 1 ✔
+[10/03543b] process > create_windows_02 (1)   [100%] 1 of 1 ✔
+[e4/d9a181] process > gcc_Arrow_02 (178)      [100%] 480 of 480 ✔
+[20/c1adf5] process > merge_consensus_02      [100%] 1 of 1 ✔
+[a1/6c5928] process > MerquryQV_03 (1)        [100%] 1 of 1 ✔
+[6f/13e289] process > pbmm2_index_02b         [100%] 1 of 1 ✔
+[75/18faa1] process > pbmm2_align_02b (1)     [100%] 1 of 1 ✔
+[bf/324112] process > create_windows_02b      [100%] 1 of 1 ✔
+[65/9cabdd] process > gcc_Arrow_02b (67)      [100%] 480 of 480 ✔
+[a3/6925e8] process > merge_consensus_02b     [100%] 1 of 1 ✔
+[99/ce7730] process > MerquryQV_03b (1)       [100%] 1 of 1 ✔
+[d8/e99b27] process > align_shortreads_04 (1) [100%] 1 of 1 ✔
+[6b/4f65ec] process > create_windows_04       [100%] 1 of 1 ✔
+[10/5dfe3a] process > freebayes_04 (270)      [100%] 480 of 480 ✔
+[c9/2478ab] process > combineVCF_04           [100%] 1 of 1 ✔
+[94/a826ad] process > vcf_to_fasta_04 (1)     [100%] 1 of 1 ✔
+[5c/4b6288] process > MerquryQV_05 (1)        [100%] 1 of 1 ✔
+[f8/9fc043] process > align_shortreads_06 (1) [100%] 1 of 1 ✔
+[e4/048537] process > create_windows_06 (1)   [100%] 1 of 1 ✔
+[83/4a6b4f] process > freebayes_06 (444)      [100%] 480 of 480 ✔
+[67/dda494] process > combineVCF_06           [100%] 1 of 1 ✔
+[69/0f922a] process > vcf_to_fasta_06 (1)     [100%] 1 of 1 ✔
+[f5/24cab8] process > MerquryQV_07 (1)        [100%] 1 of 1 ✔
+Completed at: 12-Jun-2021 15:13:37
+Duration    : 17h 32m 56s
+CPU hours   : 82.1
+Succeeded   : 1'945
 
 ```
 
@@ -71,6 +81,20 @@ PolishCLR_Results/
   |_ 06_FreeBayesPolish/         # 2nd round ilumina polish
   |   |_ consensus_new.fasta     # <======= Final assemblly!
   |_ 07_MerquryQV/               # quality of final assembly
+
+PolishCLR_Results
+|_ 00_Preprocess
+|_ 01_MerquryQV
+|_ 02_ArrowPolish
+|_ 02b_ArrowPolish
+|_ 03b_MerquryQV
+|_ 03_MerquryQV
+|_ 04_FreeBayesPolish
+|_ 05_MerquryQV
+|_ 06_FreeBayesPolish    # <= should be final assembly
+|_ 07_MerquryQV
+|_ report.html
+|_ timeline.html         # <= runtime for each step
 
 ```
 
