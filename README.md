@@ -85,16 +85,16 @@ PolishCLR_Results/
   |_ 07_MerquryQV/               # quality of final assembly
 
 PolishCLR_Results
-|_ 00_Preprocess
-|_ 01_MerquryQV
-|_ 02_ArrowPolish
-|_ 02b_ArrowPolish
-|_ 03b_MerquryQV
-|_ 03_MerquryQV
-|_ 04_FreeBayesPolish
-|_ 05_MerquryQV
-|_ 06_FreeBayesPolish    # <= should be final assembly
-|_ 07_MerquryQV
+|_ 00_Preprocess/               # Illumina bz2 reads converted to gz files
+|_ 01_MerquryQV/                # quality value of primary assembly (before polishing)
+|_ 02_ArrowPolish/              # polished with pacbio reads
+|_ 03_MerquryQV/                # new quality value
+|_ 02b_ArrowPolish/             # polished again with pacbio reads
+|_ 03b_MerquryQV/               # new quality value
+|_ 04_FreeBayesPolish/          # polished with illumina reads
+|_ 05_MerquryQV/                 
+|_ 06_FreeBayesPolish/    # <= should contain final assembly
+|_ 07_MerquryQV/
 |_ report.html
 |_ timeline.html         # <= runtime for each step
 
