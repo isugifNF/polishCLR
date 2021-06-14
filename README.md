@@ -1,5 +1,12 @@
 # polishCLR
 
+## fetch pipeline
+
+```
+git clone https://github.com/isugifNF/polishCLR.git
+cd polishCLR
+```
+
 ## Install dependencies
 
 For now, installing dependencies in a [miniconda](https://docs.conda.io/en/latest/miniconda.html) environment.
