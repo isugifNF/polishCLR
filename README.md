@@ -14,7 +14,8 @@ conda env create -f environment.yml -p ${PWD}/env/polishCLR_env
 
 ```
 module load nextflow
-source activate ${PWD}/envs/polishCLR_env
+module load miniconda
+source activate ${PWD}/env/polishCLR_env
 
 nextflow run main.nf \
   --primary_assembly "/project/ag100pest/Pgos/RawData/3-unzip/all_p_ctg.fasta" \
