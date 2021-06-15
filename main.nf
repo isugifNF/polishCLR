@@ -22,6 +22,7 @@ def helpMessage() {
 
    Optional arguments:
    --outdir                       Output directory to place final output [default: 'PolishCLR_Results']
+   --clusterOptions               Cluster options for slurm or sge profiles [default slurm: '-N 1 -n 40 -t 04:00:00'; default sge: ' ']
    --threads                      Number of CPUs to use during each job [default: 40]
    --queueSize                    Maximum number of jobs to be queued [default: 50]
    --account                      Some HPCs require you supply an account name for tracking usage.  You can supply that here.
@@ -174,7 +175,6 @@ process MerquryQV_03 {
     """
 }
 
-
 // 2nd Arrow Polish (skip if falcon unzip)
 process pbmm2_index_02b {
     publishDir "${params.outdir}/02b_ArrowPolish", mode: 'symlink'
@@ -307,12 +307,12 @@ process freebayes_04 {
 process combineVCF_04 {
     publishDir "${params.outdir}/04_FreeBayesPolish", mode: 'symlink'
     input: path(vcfs)
-    output: path("consensus.vcf")
+    output: path("consensus_01.vcf")
     script:
     """
     #! /usr/bin/env bash
-    cat ${vcfs.get(0)} | grep "^#" > consensus.vcf
-    cat ${vcfs} | grep -v "^#" >> consensus.vcf
+    cat ${vcfs.get(0)} | grep "^#" > consensus_01.vcf
+    cat ${vcfs} | grep -v "^#" >> consensus_01.vcf
     """
 }
 
@@ -323,9 +323,9 @@ process vcf_to_fasta_04 {
     script:
     """
     #! /usr/bin/env bash
-    bcftools view -Oz ${vcf} > ${vcf.simpleName}.vcf.gz
-    bcftools index ${vcf.simpleName}.vcf.gz
-    bcftools consensus ${vcf.simpleName}.vcf.gz -f ${genome_fasta} -H 1 > consensus_new.fasta
+    bcftools view -Oz ${vcf} > ${vcf.simpleName}.gz
+    bcftools index ${vcf.simpleName}.gz
+    bcftools consensus ${vcf.simpleName}.gz -f ${genome_fasta} -H 1 > consensus_01.fasta
     """
 }
 
@@ -399,8 +399,8 @@ process combineVCF_06 {
     script:
     """
     #! /usr/bin/env bash
-    cat ${vcfs.get(0)} | grep "^#" > consensus.vcf
-    cat ${vcfs} | grep -v "^#" >> consensus.vcf
+    cat ${vcfs.get(0)} | grep "^#" > consensus_02.vcf
+    cat ${vcfs} | grep -v "^#" >> consensus_02.vcf
     """
 }
 
@@ -411,9 +411,9 @@ process vcf_to_fasta_06 {
     script:
     """
     #! /usr/bin/env bash
-    bcftools view -Oz ${vcf} > ${vcf.simpleName}.vcf.gz
+    bcftools view -Oz ${vcf} > ${vcf.simpleName}.gz
     bcftools index ${vcf.simpleName}.vcf.gz
-    bcftools consensus ${vcf.simpleName}.vcf.gz -f ${genome_fasta} -H 1 > consensus_new.fasta
+    bcftools consensus ${vcf.simpleName}.vcf.gz -f ${genome_fasta} -H 1 > consensus_02.fasta
     """
 }
 
