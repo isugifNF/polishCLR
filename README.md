@@ -7,6 +7,50 @@ git clone https://github.com/isugifNF/polishCLR.git
 cd polishCLR
 ```
 
+<details><summary>print usage statement</summary>
+
+  ```
+  nextflow run main.nf --help
+  
+  N E X T F L O W  ~  version 21.04.0
+Launching `main.nf` [condescending_gutenberg] - revision: 54771c06ba
+  ----------------------------------------------------
+                                \\---------//       
+  ___  ___        _   ___  ___    \\-----//        
+   |  (___  |  | / _   |   |_       \-//         
+  _|_  ___) |__| \_/  _|_  |        // \        
+                                  //-----\\       
+                                //---------\\       
+  isugifNF/polishCLR  v1.0.0       
+----------------------------------------------------
+
+
+   Usage:
+   The typical command for running the pipeline are as follows:
+   nextflow run main.nf --primary_assembly "*fasta" --illumina_reads "*{1,2}.fastq.bz2" --pacbio_reads "*_subreads.bam" -resume
+
+   Mandatory arguments:
+   --primary_assembly             genome assembly fasta file to polish
+   --illumina_reads               paired end illumina reads, to be used for Merqury QV scores, and freebayes polish primary assembly
+   --pacbio_reads                 pacbio reads in bam format, to be used to arrow polish primary assembly
+
+   Optional modifiers
+   --k                            kmer to use in MerquryQV scoring [default:21]
+   --bzip                         if illumina paired reads are in bz2 format [default: true]. If true, will convert to gz.
+   --same_specimen                if illumina and pacbio reads are from the same specimin [default: true]. 
+   --falcon_unzip                 if primary assembly has already undergone falcon unzip [default: false]. If true, will Arrow polish once instead of twice.
+
+   Optional arguments:
+   --outdir                       Output directory to place final output [default: 'PolishCLR_Results']
+   --clusterOptions               Cluster options for slurm or sge profiles [default slurm: '-N 1 -n 40 -t 04:00:00'; default sge: ' ']
+   --threads                      Number of CPUs to use during each job [default: 40]
+   --queueSize                    Maximum number of jobs to be queued [default: 50]
+   --account                      Some HPCs require you supply an account name for tracking usage.  You can supply that here.
+   --help                         This usage statement.
+  ```
+  
+</details>
+
 ## Install dependencies
 
 For now, installing dependencies in a [miniconda](https://docs.conda.io/en/latest/miniconda.html) environment.
