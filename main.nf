@@ -319,7 +319,7 @@ process combineVCF_04 {
 process vcf_to_fasta_04 {
     publishDir "${params.outdir}/04_FreeBayesPolish", mode: 'symlink'
     input: tuple path(vcf), path(genome_fasta)
-    output: path("consensus_new.fasta")
+    output: path("consensus_01.fasta")
     script:
     """
     #! /usr/bin/env bash
@@ -395,7 +395,7 @@ process freebayes_06 {
 process combineVCF_06 {
     publishDir "${params.outdir}/06_FreeBayesPolish", mode: 'symlink'
     input: path(vcfs)
-    output: path("consensus.vcf")
+    output: path("consensus_02.vcf")
     script:
     """
     #! /usr/bin/env bash
@@ -407,13 +407,13 @@ process combineVCF_06 {
 process vcf_to_fasta_06 {
     publishDir "${params.outdir}/06_FreeBayesPolish", mode: 'symlink'
     input: tuple path(vcf), path(genome_fasta)
-    output: path("consensus_new.fasta")
+    output: path("final_polished_assembly.fasta")
     script:
     """
     #! /usr/bin/env bash
-    bcftools view -Oz ${vcf} > ${vcf.simpleName}.gz
+    bcftools view -Oz ${vcf} > ${vcf}.gz
     bcftools index ${vcf.simpleName}.vcf.gz
-    bcftools consensus ${vcf.simpleName}.vcf.gz -f ${genome_fasta} -H 1 > consensus_02.fasta
+    bcftools consensus ${vcf.simpleName}.vcf.gz -f ${genome_fasta} -H 1 > final_polished_assembly.fasta
     """
 }
 
