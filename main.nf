@@ -66,6 +66,7 @@ process bz_to_gz {
 
 // 01 Merqury: Quality value of primary assembly
 process meryl_count_01 {
+    publishDir "${params.outdir}/01_MerquryQV", mode: 'symlink'
     input: tuple val(k), path(illumina_read)
     output: path("*.meryl")
     script:
@@ -126,12 +127,12 @@ process pbmm2_align_02 {
 process create_windows_02 {
     publishDir "${params.outdir}/02_ArrowPolish", mode: 'symlink'
     input: path(assembly_fasta)
-    output: tuple path("*.fai"), path("win.txt")
+    output: tuple path("*.fai"), path("win_02.txt")
     shell:
     """
     #! /usr/bin/env bash
     samtools faidx ${assembly_fasta}
-    cat ${assembly_fasta}.fai | awk '{print \$1 ":0-" \$2}' > win.txt
+    cat ${assembly_fasta}.fai | awk '{print \$1 ":0-" \$2}' > win_02.txt
     """
 }
 
@@ -196,20 +197,20 @@ process pbmm2_align_02b {
     #! /usr/bin/env bash
     PROC=\$((`nproc`-10))
     mkdir tmp
-    pbmm2 align -j \$PROC ${assembly_fasta} ${pacbio_read} | samtools sort -T tmp -m 8G --threads 8 - > ${pacbio_read.simpleName}_aln.bam
-    samtools index -@ \${PROC} ${pacbio_read.simpleName}_aln.bam
+    pbmm2 align -j \$PROC ${assembly_fasta} ${pacbio_read} | samtools sort -T tmp -m 8G --threads 8 - > ${pacbio_read.simpleName}_02_aln.bam
+    samtools index -@ \${PROC} ${pacbio_read.simpleName}_02_aln.bam
     """
 }
 
 process create_windows_02b {
     publishDir "${params.outdir}/02b_ArrowPolish", mode: 'symlink'
     input: path(assembly_fasta)
-    output: tuple path("*.fai"), path("win.txt")
+    output: tuple path("*.fai"), path("win_02b.txt")
     shell:
     """
     #! /usr/bin/env bash
     samtools faidx ${assembly_fasta}
-    cat ${assembly_fasta}.fai | awk '{print \$1 ":0-" \$2}' > win.txt
+    cat ${assembly_fasta}.fai | awk '{print \$1 ":0-" \$2}' > win_02b.txt
     """
 }
 
@@ -233,11 +234,11 @@ process gcc_Arrow_02b {
 process merge_consensus_02b {
     publishDir "${params.outdir}/02b_ArrowPolish", mode: 'symlink'
     input: path(windows_fasta)
-    output: path("consensus.fasta")
+    output: path("consensus_02b.fasta")
     script:
     """
     #! /usr/bin/env bash
-    cat ${windows_fasta} > consensus.fasta
+    cat ${windows_fasta} > consensus_02b.fasta
     """
 }
 
@@ -274,12 +275,12 @@ process align_shortreads_04 {
 process create_windows_04 {
     publishDir "${params.outdir}/04_FreeBayesPolish", mode: 'symlink'
     input: path(assembly_fasta)
-    output: tuple path("*.fai"), path("win.txt")
+    output: tuple path("*.fai"), path("win_04.txt")
     shell:
     """
     #! /usr/bin/env bash
     samtools faidx ${assembly_fasta}
-    cat ${assembly_fasta}.fai | awk '{print \$1 ":0-" \$2}' > win.txt
+    cat ${assembly_fasta}.fai | awk '{print \$1 ":0-" \$2}' > win_04.txt
     """
 }
 
@@ -353,8 +354,8 @@ process align_shortreads_06 {
     mkdir tmp
     bwa-mem2 index ${assembly_fasta}
     bwa-mem2 mem -SP -t \${PROC} ${assembly_fasta} ${illumina_one} ${illumina_two} |
-      samtools sort -T tmp -m 8G --threads 4 - > ${illumina_one.simpleName}_aln.bam
-    samtools index -@ \${PROC} ${illumina_one.simpleName}_aln.bam
+      samtools sort -T tmp -m 8G --threads 4 - > ${illumina_one.simpleName}_02_aln.bam
+    samtools index -@ \${PROC} ${illumina_one.simpleName}_02_aln.bam
     """
 }
 // -m 5G -@ 36
@@ -362,12 +363,12 @@ process align_shortreads_06 {
 process create_windows_06 {
     publishDir "${params.outdir}/06_FreeBayesPolish", mode: 'symlink'
     input: path(assembly_fasta)
-    output: tuple path("*.fai"), path("win.txt")
+    output: tuple path("*.fai"), path("win_06.txt")
     shell:
     """
     #! /usr/bin/env bash
     samtools faidx ${assembly_fasta}
-    cat ${assembly_fasta}.fai | awk '{print \$1 ":0-" \$2}' > win.txt
+    cat ${assembly_fasta}.fai | awk '{print \$1 ":0-" \$2}' > win_06.txt
     """
 }
 
@@ -436,7 +437,8 @@ workflow {
     pac_ch = channel.fromPath(params.pacbio_reads, checkIfExists:true)
 
     // Step 0: Preprocess illumina files from bz2 to gz files
-    if(params.bzip2){
+//    if(params.bzip2){     // Instead of a flag, auto detect, however it must be in the pattern, * will fail
+    if(params.illumina_reads =~ /bz$/){
       pill_ch = ill_ch | bz_to_gz | map { n -> n.get(1) } | flatten
     }else{
       pill_ch = ill_ch | map {n -> n.get(1) } | flatten
