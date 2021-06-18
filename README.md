@@ -152,21 +152,19 @@ PolishCLR_Results
 
 ```
 
-<details><summary>prior run</summary>
-
-pipeline for polishing CLRs
+Merqury QV (quality value increases each polish, except 2nd arrow polish (investigate why)
 
 ```
-nextflow run main.nf -resume
-
-N E X T F L O W  ~  version 20.10.0
-Launching `main.nf` [mighty_franklin] - revision: 07a7c3d6ca
-executor >  slurm (508)
-[cd/518765] process > run_arrow (1) [100%] 508 of 508 ✔
-Completed at: 19-May-2021 17:01:33
-Duration    : 51m 51s
-CPU hours   : 32.0
-Succeeded   : 508
+=== original primary assembly
+all_p_ctg    9064957 566335230	31.1459	0.000768078
+=== Arrow polish
+consensus 1601270	567139658	38.7086	0.000134629
+=== Arrow polish
+consensus 1638131	567090651	38.6093	0.000137745
+=== Freebayes polish
+consensus_01  1089557	567025929	40.3817	9.15852e-05
+=== Freebayes polish
+final_polished_assembly	1068195	567027516	40.4678	8.97877e-05
 ```
 
-</details>
+Final Polished Assembly QV = 40.4678
