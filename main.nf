@@ -438,7 +438,7 @@ workflow {
 
     // Step 0: Preprocess illumina files from bz2 to gz files
 //    if(params.bzip2){     // Instead of a flag, auto detect, however it must be in the pattern, * will fail
-    if(params.illumina_reads =~ /bz$/){
+    if(params.illumina_reads =~ /bz2$/){
       pill_ch = ill_ch | bz_to_gz | map { n -> n.get(1) } | flatten
     }else{
       pill_ch = ill_ch | map {n -> n.get(1) } | flatten
