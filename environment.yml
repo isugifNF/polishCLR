@@ -14,4 +14,4 @@ dependencies:
   - bcftools
   - samtools
   - bwa-mem2
-
+  - pigz
