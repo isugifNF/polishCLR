@@ -16,7 +16,6 @@ def helpMessage() {
 
    Optional modifiers
    --k                            kmer to use in MerquryQV scoring [default:21]
-   --bzip                         if illumina paired reads are in bz2 format [default: true]. If true, will convert to gz.
    --same_specimen                if illumina and pacbio reads are from the same specimin [default: true]. 
    --falcon_unzip                 if primary assembly has already undergone falcon unzip [default: false]. If true, will Arrow polish once instead of twice.
 
@@ -29,6 +28,7 @@ def helpMessage() {
    --help                         This usage statement.
   """
 }
+//   --bzip                         if illumina paired reads are in bz2 format [default: true]. If true, will convert to gz.
 
 // Show help message
 if (params.help) {
@@ -191,14 +191,14 @@ process pbmm2_index_02b {
 process pbmm2_align_02b {
     publishDir "${params.outdir}/02b_ArrowPolish", mode: 'symlink'
     input:tuple path(assembly_fasta), path(assembly_mmi), path(pacbio_read)
-    output: tuple path("*.bam"), path("*.bai")
+    output: tuple path("*2b.bam"), path("*2b.bam.bai")
     script:
     """
     #! /usr/bin/env bash
     PROC=\$((`nproc`-10))
     mkdir tmp
-    pbmm2 align -j \$PROC ${assembly_fasta} ${pacbio_read} | samtools sort -T tmp -m 8G --threads 8 - > ${pacbio_read.simpleName}_02_aln.bam
-    samtools index -@ \${PROC} ${pacbio_read.simpleName}_02_aln.bam
+    pbmm2 align -j \$PROC ${assembly_fasta} ${pacbio_read} | samtools sort -T tmp -m 8G --threads 8 - > ${pacbio_read.simpleName}_aln_2b.bam
+    samtools index -@ \${PROC} ${pacbio_read.simpleName}_aln_2b.bam
     """
 }
 
@@ -308,25 +308,25 @@ process freebayes_04 {
 process combineVCF_04 {
     publishDir "${params.outdir}/04_FreeBayesPolish", mode: 'symlink'
     input: path(vcfs)
-    output: path("consensus_01.vcf")
+    output: path("consensus_04.vcf")
     script:
     """
     #! /usr/bin/env bash
-    cat ${vcfs.get(0)} | grep "^#" > consensus_01.vcf
-    cat ${vcfs} | grep -v "^#" >> consensus_01.vcf
+    cat ${vcfs.get(0)} | grep "^#" > consensus_04.vcf
+    cat ${vcfs} | grep -v "^#" >> consensus_04.vcf
     """
 }
 
 process vcf_to_fasta_04 {
     publishDir "${params.outdir}/04_FreeBayesPolish", mode: 'symlink'
     input: tuple path(vcf), path(genome_fasta)
-    output: path("consensus_01.fasta")
+    output: path("consensus_04.fasta")
     script:
     """
     #! /usr/bin/env bash
     bcftools view -Oz ${vcf} > ${vcf.simpleName}.gz
     bcftools index ${vcf.simpleName}.gz
-    bcftools consensus ${vcf.simpleName}.gz -f ${genome_fasta} -H 1 > consensus_01.fasta
+    bcftools consensus ${vcf.simpleName}.gz -f ${genome_fasta} -H 1 > consensus_04.fasta
     """
 }
 
@@ -354,8 +354,8 @@ process align_shortreads_06 {
     mkdir tmp
     bwa-mem2 index ${assembly_fasta}
     bwa-mem2 mem -SP -t \${PROC} ${assembly_fasta} ${illumina_one} ${illumina_two} |
-      samtools sort -T tmp -m 8G --threads 4 - > ${illumina_one.simpleName}_02_aln.bam
-    samtools index -@ \${PROC} ${illumina_one.simpleName}_02_aln.bam
+      samtools sort -T tmp -m 8G --threads 4 - > ${illumina_one.simpleName}_06_aln.bam
+    samtools index -@ \${PROC} ${illumina_one.simpleName}_06_aln.bam
     """
 }
 // -m 5G -@ 36
@@ -388,7 +388,7 @@ process freebayes_06 {
       --min-alternate-fraction 0.2 \
       --max-complex-gap 0 \
       --bam ${illumina_bam} \
-      --vcf ${illumina_bam.simpleName}_${window.replace(':','_').replace('|','_')}.vcf \
+      --vcf ${illumina_bam.simpleName}_${window.replace(':','_').replace('|','_')}_06.vcf \
       --fasta-reference ${assembly_fasta}
     """
 }
@@ -396,12 +396,12 @@ process freebayes_06 {
 process combineVCF_06 {
     publishDir "${params.outdir}/06_FreeBayesPolish", mode: 'symlink'
     input: path(vcfs)
-    output: path("consensus_02.vcf")
+    output: path("consensus_06.vcf")
     script:
     """
     #! /usr/bin/env bash
-    cat ${vcfs.get(0)} | grep "^#" > consensus_02.vcf
-    cat ${vcfs} | grep -v "^#" >> consensus_02.vcf
+    cat ${vcfs.get(0)} | grep "^#" > consensus_06.vcf
+    cat ${vcfs} | grep -v "^#" >> consensus_06.vcf
     """
 }
 
