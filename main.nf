@@ -312,8 +312,9 @@ process combineVCF_04 {
     script:
     """
     #! /usr/bin/env bash
-    cat ${vcfs.get(0)} | grep "^#" > consensus_04.vcf
-    cat ${vcfs} | grep -v "^#" >> consensus_04.vcf
+    > consensus_04.vcf
+    cat ${vcfs.get(0)} | xargs -0 -n10 -P4 grep "^#" >> consensus_04.vcf
+    cat ${vcfs} | xargs -0 -n10 -P4 grep -v "^#" >> consensus_04.vcf
     """
 }
 
