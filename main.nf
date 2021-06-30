@@ -22,7 +22,7 @@ def helpMessage() {
    Optional arguments:
    --outdir                       Output directory to place final output [default: 'PolishCLR_Results']
    --clusterOptions               Cluster options for slurm or sge profiles [default slurm: '-N 1 -n 40 -t 04:00:00'; default sge: ' ']
-   --threads                      Number of CPUs to use during each job [default: 40]
+   --threads                      Number of CPUs to use during each job [default: 1]
    --queueSize                    Maximum number of jobs to be queued [default: 50]
    --account                      Some HPCs require you supply an account name for tracking usage.  You can supply that here.
    --help                         This usage statement.
