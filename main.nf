@@ -51,6 +51,12 @@ if (!params.pacbio_reads) {
   exit 0
 }
 
+def dthread (thread) {
+    cpu=$(( `nproc`/2+1 ))
+    thread=$(( thread/2+1 ))
+    echo $(( $cpu > $thread ? $cpu : $thread ))
+}
+
 // 00 Preprocess: Unzip any bz2 files
 process bz_to_gz {
     publishDir "${params.outdir}/00_Preprocess", mode: 'symlink'
@@ -117,7 +123,7 @@ process pbmm2_align_02 {
     script:
     """
     #! /usr/bin/env bash
-    PROC=\$((`nproc` /2+1))
+    PROC=$(dthread ${threads})
     mkdir tmp
     pbmm2 align -j \$PROC ${assembly_fasta} ${pacbio_read} | samtools sort -T tmp -m 8G --threads 8 - > ${pacbio_read.simpleName}_aln.bam
     samtools index -@ \${PROC} ${pacbio_read.simpleName}_aln.bam
@@ -143,7 +149,7 @@ process gcc_Arrow_02 {
     script:
     """
     #! /usr/bin/env bash
-    PROC=\$((`nproc` /2+1))
+    PROC=$(dthread ${threads})
     gcpp --algorithm=arrow \
       -x 10 -X 120 -q 0 \
       -j \${PROC} -w \"$window\" \
@@ -195,7 +201,7 @@ process pbmm2_align_02b {
     script:
     """
     #! /usr/bin/env bash
-    PROC=\$((`nproc` /2+1))
+    PROC=$(dthread ${threads})
     mkdir tmp
     pbmm2 align -j \$PROC ${assembly_fasta} ${pacbio_read} | samtools sort -T tmp -m 8G --threads 8 - > ${pacbio_read.simpleName}_aln_2b.bam
     samtools index -@ \${PROC} ${pacbio_read.simpleName}_aln_2b.bam
@@ -221,7 +227,7 @@ process gcc_Arrow_02b {
     script:
     """
     #! /usr/bin/env bash
-    PROC=\$((`nproc` /2+1))
+    PROC=$(dthread ${threads})
     gcpp --algorithm=arrow \
       -x 10 -X 120 -q 0 \
       -j \${PROC} -w \"$window\" \
@@ -262,7 +268,7 @@ process align_shortreads_04 {
     script:
     """
     #! /usr/bin/env bash
-    PROC=\$((`nproc` /2+1))
+    PROC=$(dthread ${threads})
     mkdir tmp
     bwa-mem2 index ${assembly_fasta}
     bwa-mem2 mem -SP -t \${PROC} ${assembly_fasta} ${illumina_one} ${illumina_two} |
@@ -350,7 +356,7 @@ process align_shortreads_06 {
     script:
     """
     #! /usr/bin/env bash
-    PROC=\$((`nproc` /2+1))
+    PROC=$(dthread ${threads})
     mkdir tmp
     bwa-mem2 index ${assembly_fasta}
     bwa-mem2 mem -SP -t \${PROC} ${assembly_fasta} ${illumina_one} ${illumina_two} |
