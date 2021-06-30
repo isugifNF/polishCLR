@@ -312,9 +312,10 @@ process combineVCF_04 {
     script:
     """
     #! /usr/bin/env bash
+    PROC=\$((`nproc` /2+1))
     > consensus_04.vcf
-    cat ${vcfs.get(0)} | xargs -0 -n10 -P4 grep "^#" >> consensus_04.vcf
-    cat ${vcfs} | xargs -0 -n10 -P4 grep -v "^#" >> consensus_04.vcf
+    cat ${vcfs.get(0)} | xargs -0 -n10 -P${PROC} grep "^#" >> consensus_04.vcf
+    cat ${vcfs} | xargs -0 -n10 -P${PROC} grep -v "^#" >> consensus_04.vcf
     """
 }
 
