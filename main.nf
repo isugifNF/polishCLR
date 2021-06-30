@@ -314,8 +314,8 @@ process combineVCF_04 {
     #! /usr/bin/env bash
     PROC=\$((`nproc` /2+1))
     > consensus_04.vcf
-    cat ${vcfs.get(0)} | xargs -0 -n10 -P${PROC} grep "^#" >> consensus_04.vcf
-    cat ${vcfs} | xargs -0 -n10 -P${PROC} grep -v "^#" >> consensus_04.vcf
+    cat ${vcfs.get(0)} | parallel --max-procs $PROC --spreadstdin --pipe grep "^#" >> consensus_04.vcf
+    cat ${vcfs} | parallel --max-procs $PROC --spreadstdin --pipe grep -v "^#" >> consensus_04.vcf
     """
 }
 
@@ -402,8 +402,10 @@ process combineVCF_06 {
     script:
     """
     #! /usr/bin/env bash
-    cat ${vcfs.get(0)} | grep "^#" > consensus_06.vcf
-    cat ${vcfs} | grep -v "^#" >> consensus_06.vcf
+    PROC=\$((`nproc` /2+1))
+    > consensus_06.vcf
+    cat ${vcfs.get(0)} | parallel --max-procs $PROC --spreadstdin --pipe grep "^#" >> consensus_06.vcf
+    cat ${vcfs} | parallel --max-procs $PROC --spreadstdin --pipe grep -v "^#" >> consensus_06.vcf
     """
 }
 
