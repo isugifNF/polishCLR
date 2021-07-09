@@ -51,12 +51,6 @@ if (!params.pacbio_reads) {
   exit 0
 }
 
-def dthread (thread) {
-    cpu=$(( `nproc`/2+1 ))
-    thread=$(( thread/2+1 ))
-    echo $(( $cpu > $thread ? $cpu : $thread ))
-}
-
 // 00 Preprocess: Unzip any bz2 files
 process bz_to_gz {
     publishDir "${params.outdir}/00_Preprocess", mode: 'symlink'
@@ -65,7 +59,7 @@ process bz_to_gz {
     script:
     """
     #! /usr/bin/env bash
-    PROC=\$((`nproc` /2+1))
+    cpu=\$(( `nproc`/2+1 )); thread=\$(( $threads/2+1 )); PROC=\$(( $cpu > $thread ? $cpu : $thread ))
     parallel -j 2 "bzcat {1} | pigz -p \${PROC} > {1/.}.gz" ::: *.bz2
     """
 }
@@ -73,7 +67,7 @@ process bz_to_gz {
 // 01 Merqury: Quality value of primary assembly
 process meryl_count_01 {
     publishDir "${params.outdir}/01_MerquryQV", mode: 'symlink'
-    input: tuple val(k), path(illumina_read)
+    e(illumina_read)
     output: path("*.meryl")
     script:
     """
@@ -123,7 +117,7 @@ process pbmm2_align_02 {
     script:
     """
     #! /usr/bin/env bash
-    PROC=$(dthread ${threads})
+    cpu=\$(( `nproc`/2+1 )); thread=\$(( $threads/2+1 )); PROC=\$(( $cpu > $thread ? $cpu : $thread ))
     mkdir tmp
     pbmm2 align -j \$PROC ${assembly_fasta} ${pacbio_read} | samtools sort -T tmp -m 8G --threads 8 - > ${pacbio_read.simpleName}_aln.bam
     samtools index -@ \${PROC} ${pacbio_read.simpleName}_aln.bam
@@ -149,7 +143,7 @@ process gcc_Arrow_02 {
     script:
     """
     #! /usr/bin/env bash
-    PROC=$(dthread ${threads})
+    cpu=\$(( `nproc`/2+1 )); thread=\$(( $threads/2+1 )); PROC=\$(( $cpu > $thread ? $cpu : $thread ))
     gcpp --algorithm=arrow \
       -x 10 -X 120 -q 0 \
       -j \${PROC} -w \"$window\" \
@@ -201,7 +195,7 @@ process pbmm2_align_02b {
     script:
     """
     #! /usr/bin/env bash
-    PROC=$(dthread ${threads})
+    cpu=\$(( `nproc`/2+1 )); thread=\$(( $threads/2+1 )); PROC=\$(( $cpu > $thread ? $cpu : $thread ))
     mkdir tmp
     pbmm2 align -j \$PROC ${assembly_fasta} ${pacbio_read} | samtools sort -T tmp -m 8G --threads 8 - > ${pacbio_read.simpleName}_aln_2b.bam
     samtools index -@ \${PROC} ${pacbio_read.simpleName}_aln_2b.bam
@@ -227,7 +221,7 @@ process gcc_Arrow_02b {
     script:
     """
     #! /usr/bin/env bash
-    PROC=$(dthread ${threads})
+    cpu=\$(( `nproc`/2+1 )); thread=\$(( $threads/2+1 )); PROC=\$(( $cpu > $thread ? $cpu : $thread ))
     gcpp --algorithm=arrow \
       -x 10 -X 120 -q 0 \
       -j \${PROC} -w \"$window\" \
@@ -268,7 +262,7 @@ process align_shortreads_04 {
     script:
     """
     #! /usr/bin/env bash
-    PROC=$(dthread ${threads})
+    cpu=\$(( `nproc`/2+1 )); thread=\$(( $threads/2+1 )); PROC=\$(( $cpu > $thread ? $cpu : $thread ))
     mkdir tmp
     bwa-mem2 index ${assembly_fasta}
     bwa-mem2 mem -SP -t \${PROC} ${assembly_fasta} ${illumina_one} ${illumina_two} |
@@ -356,7 +350,7 @@ process align_shortreads_06 {
     script:
     """
     #! /usr/bin/env bash
-    PROC=$(dthread ${threads})
+    cpu=\$(( `nproc`/2+1 )); thread=\$(( $threads/2+1 )); PROC=\$(( $cpu > $thread ? $cpu : $thread ))
     mkdir tmp
     bwa-mem2 index ${assembly_fasta}
     bwa-mem2 mem -SP -t \${PROC} ${assembly_fasta} ${illumina_one} ${illumina_two} |
