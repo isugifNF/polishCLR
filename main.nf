@@ -440,7 +440,8 @@ workflow {
     }
 
     // Step 1: Check quality of assembly with Merqury
-    meryldb_ch = mk_MerylDB(k_ch, pill_ch)
+    k_ch | combine(pill_ch) | meryl_count | collect | meryl_union
+    //meryldb_ch = mk_MerylDB(k_ch, pill_ch)
     // QV_01(meryldb_ch, asm_ch)
     //
     // // Step 2: Arrow Polish with PacBio reads
