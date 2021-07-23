@@ -84,17 +84,24 @@ process MerquryQV_01 {
 }
 
 // 1st Arrow Polish
-// process pbmm2_index {
-//     publishDir "${params.outdir}/02_ArrowPolish", mode: 'symlink'
-//     input:path(assembly_fasta)
-//     output:tuple path("$assembly_fasta"), path("*.mmi")
-//     script:
-//     """
-//     #! /usr/bin/env bash
-//     ${pbmm2_app} index ${assembly_fasta} ${assembly_fasta}.mmi
-//     """
-// }
-//
+process pbmm2_index {
+    publishDir "${params.outdir}/0${i}_ArrowPolish", mode: 'symlink'
+    input: tuple val(i), path(assembly_fasta)
+    output: tuple val("$i"), path("$assembly_fasta"), path("*.mmi")
+    script:
+    template 'pbmm2_index.sh'
+}
+
+workflow ARROW_01 {
+  take:
+    asm_ch
+    pac_ch
+  main:
+    newasm_ch = channel.of("2") | combine(asm_ch) | pbmm2_index
+  emit:
+    newasm_ch
+}
+
 // process pbmm2_align {
 //     publishDir "${params.outdir}/02_ArrowPolish", mode: 'symlink'
 //     input:tuple path(assembly_fasta), path(assembly_mmi), path(pacbio_read)
@@ -419,7 +426,8 @@ workflow {
     merylDB_ch | combine(asm_ch) | MerquryQV_01
     
     // // Step 2: Arrow Polish with PacBio reads
-    // asm_arrow_ch = Arrow_02(asm_ch, pac_ch)
+    asm_arrow_ch = ARROW_02(asm_ch, pac_ch)
+    asm_arrow_ch | view
     //
     // // Step 3: Check quality of new assembly with Merqury (turns out we can reuse the illumina database)
     // QV_03(meryldb_ch, asm_arrow_ch)
