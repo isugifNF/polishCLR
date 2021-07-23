@@ -117,7 +117,7 @@ process gcc_Arrow {
 }
 
 process merge_consensus {
-    publishDir "${params.outdir}/0${i}_ArrowPolish", mode: 'symlink'
+    publishDir "${params.outdir}/0${i}_ArrowPolish", mode: 'copy'
     input: tuple val(i), path(windows_fasta)
     output: path("${i}_consensus.fasta")
     script:
@@ -134,7 +134,8 @@ workflow ARROW_02 {
     fai_ch = create_windows.out | map { n -> n.get(0) }
 
     newasm_ch = channel.of("2") | combine(asm_ch) | pbmm2_index | combine(pac_ch) | pbmm2_align |
-      combine(asm_ch) | combine(fai_ch) | combine(win_ch) | gcc_Arrow | map { n -> [n.get(0), n.get(1)] } | groupTuple
+      combine(asm_ch) | combine(fai_ch) | combine(win_ch) | gcc_Arrow | 
+      map { n -> [ n.get(0), n.get(1) ] } | groupTuple | merge_consensus
   
   emit:
     newasm_ch
