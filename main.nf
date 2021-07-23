@@ -44,22 +44,7 @@ def helpMessage() {
 //   --bzip                         if illumina paired reads are in bz2 format [default: true]. If true, will convert to gz.
 
 // Show help message
-if (params.help) {
-  helpMessage()
-  exit 0
-}
-
-if (!params.primary_assembly) {
-  helpMessage()
-  exit 0
-}
-
-if (!params.illumina_reads) {
-  helpMessage()
-  exit 0
-}
-
-if (!params.pacbio_reads) {
+if (params.help || !params.primary_assembly || !params.illumina_reads || !params.pacbio_reads ) {
   helpMessage()
   exit 0
 }
