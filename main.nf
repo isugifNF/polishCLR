@@ -84,6 +84,14 @@ process MerquryQV_01 {
 }
 
 // 1st Arrow Polish
+process create_windows {
+    publishDir "${params.outdir}/0${i}_ArrowPolish", mode: 'symlink'
+    input: tuple val(i), path(assembly_fasta)
+    output: tuple path("*.fai"), path("win.txt")
+    script:
+    template 'create_windows.sh'
+}
+
 process pbmm2_index {
     publishDir "${params.outdir}/0${i}_ArrowPolish", mode: 'symlink'
     input: tuple val(i), path(assembly_fasta)
@@ -91,7 +99,6 @@ process pbmm2_index {
     script:
     template 'pbmm2_index.sh'
 }
-
 
 process pbmm2_align {
     publishDir "${params.outdir}/0${i}_ArrowPolish", mode: 'symlink'
@@ -101,44 +108,33 @@ process pbmm2_align {
     template 'pbmm2_align.sh'
 }
 
+process gcc_Arrow {
+    publishDir "${params.outdir}/0${i}_ArrowPolish", mode: 'symlink'
+    input: tuple val(i), path(pacbio_bam), path(pacbio_bai),  path(assembly_fasta), path(assembly_fai), val(window)
+    output: tuple val("$i"), path("*.fasta"), path("*.vcf")
+    script:
+    template 'gcc_arrow.sh'
+}
+
 workflow ARROW_02 {
   take:
     asm_ch
     pac_ch
   main:
-    newasm_ch = channel.of("2") | combine(asm_ch) | pbmm2_index | combine(pac_ch) | pbmm2_align
+    win_ch = channel.of("2") | combine(asm_ch) | create_windows | 
+      map { n -> n.get(1) } | splitText() {it.trim() }
+    fai_ch = create_windows | map { n -> n.get(0) }
+
+    newasm_ch = channel.of("2") | combine(asm_ch) | pbmm2_index | combine(pac_ch) | pbmm2_align |
+      combine(asm_ch) | combine(fai_ch) | combine(win_ch) | gcc_Arrow
+  
   emit:
     newasm_ch
 }
 
+
 //
-// process create_windows {
-//     publishDir "${params.outdir}/02_ArrowPolish", mode: 'symlink'
-//     input: path(assembly_fasta)
-//     output: tuple path("*.fai"), path("win_02.txt")
-//     shell:
-//     """
-//     #! /usr/bin/env bash
-//     ${samtools_app} faidx ${assembly_fasta}
-//     cat ${assembly_fasta}.fai | awk '{print \$1 ":0-" \$2}' > win.txt
-//     """
-// }
-//
-// process gcc_Arrow {
-//     publishDir "${params.outdir}/02_ArrowPolish", mode: 'symlink'
-//     input: tuple val(window), path(assembly_fasta), path(assembly_fai), path(pacbio_bam), path(pacbio_bai)
-//     output: tuple path("*.fasta"), path("*.vcf")
-//     script:
-//     """
-//     #! /usr/bin/env bash
-//     PROC=\$((`nproc` /2+1))
-//     ${gcpp_app} --algorithm=arrow \
-//       -x 10 -X 120 -q 0 \
-//       -j \${PROC} -w \"$window\" \
-//       -r ${assembly_fasta} ${pacbio_bam} \
-//       -o ${window.replace(':','_').replace('|','_')}.vcf,${window.replace(':','_').replace('|','_')}.fasta
-//     """
-// }
+
 //
 // // add nproc
 // process merge_consensus {
