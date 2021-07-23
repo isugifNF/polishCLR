@@ -92,29 +92,25 @@ process pbmm2_index {
     template 'pbmm2_index.sh'
 }
 
+
+process pbmm2_align {
+    publishDir "${params.outdir}/0${i}_ArrowPolish", mode: 'symlink'
+    input:tuple val(i), path(assembly_fasta), path(assembly_mmi), path(pacbio_read)
+    output: tuple val("$i"), path("*.bam"), path("*.bai")
+    script:
+    template 'pbmm2_align.sh'
+}
+
 workflow ARROW_02 {
   take:
     asm_ch
     pac_ch
   main:
-    newasm_ch = channel.of("2") | combine(asm_ch) | pbmm2_index
+    newasm_ch = channel.of("2") | combine(asm_ch) | pbmm2_index | combine(pac_ch) | pbmm2_align
   emit:
     newasm_ch
 }
 
-// process pbmm2_align {
-//     publishDir "${params.outdir}/02_ArrowPolish", mode: 'symlink'
-//     input:tuple path(assembly_fasta), path(assembly_mmi), path(pacbio_read)
-//     output: tuple path("*.bam"), path("*.bai")
-//     script:
-//     """
-//     #! /usr/bin/env bash
-//     PROC=\$((`nproc` /2+1))
-//     mkdir tmp
-//     ${pbmm2_app} align -j \$PROC ${assembly_fasta} ${pacbio_read} | ${samtools_app} sort -T tmp -m 8G --threads 8 - > ${pacbio_read.simpleName}_aln.bam
-//     ${samtools_app} index -@ \${PROC} ${pacbio_read.simpleName}_aln.bam
-//     """
-// }
 //
 // process create_windows {
 //     publishDir "${params.outdir}/02_ArrowPolish", mode: 'symlink'
