@@ -92,7 +92,7 @@ process pbmm2_index {
     template 'pbmm2_index.sh'
 }
 
-workflow ARROW_01 {
+workflow ARROW_02 {
   take:
     asm_ch
     pac_ch
