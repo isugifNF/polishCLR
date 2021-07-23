@@ -116,6 +116,14 @@ process gcc_Arrow {
     template 'gcc_arrow.sh'
 }
 
+process merge_consensus {
+    publishDir "${params.outdir}/0${i}_ArrowPolish", mode: 'symlink'
+    input: tuple val(i), path(windows_fasta)
+    output: path("${i}_consensus.fasta")
+    script:
+    template 'merge_consensus.sh'
+}
+
 workflow ARROW_02 {
   take:
     asm_ch
@@ -123,30 +131,26 @@ workflow ARROW_02 {
   main:
     win_ch = channel.of("2") | combine(asm_ch) | create_windows | 
       map { n -> n.get(1) } | splitText() {it.trim() }
-    fai_ch = create_windows | map { n -> n.get(0) }
+    fai_ch = create_windows.out | map { n -> n.get(0) }
 
     newasm_ch = channel.of("2") | combine(asm_ch) | pbmm2_index | combine(pac_ch) | pbmm2_align |
-      combine(asm_ch) | combine(fai_ch) | combine(win_ch) | gcc_Arrow
+      combine(asm_ch) | combine(fai_ch) | combine(win_ch) | gcc_Arrow | map { n -> [n.get(0), n.get(1)] } | groupTuple
   
   emit:
     newasm_ch
 }
 
-
-//
+process MerquryQV_03 {
+    publishDir "${params.outdir}/03_MerquryQV", mode: 'copy'
+    input: tuple path(illumina_db), path(assembly_fasta)
+    output: path("*")
+    script:
+    template 'merquryqv.sh'
+}
 
 //
 // // add nproc
-// process merge_consensus {
-//     publishDir "${params.outdir}/02_ArrowPolish", mode: 'symlink'
-//     input: path(windows_fasta)
-//     output: path("consensus.fasta")
-//     script:
-//     """
-//     #! /usr/bin/env bash
-//     cat ${windows_fasta} > consensus.fasta
-//     """
-// }
+
 //
 // // 2nd Merqury QV value
 // workflow Arrow_02 {
@@ -170,15 +174,6 @@ workflow ARROW_02 {
 //     new_asm_ch
 // }
 //
-// workflow QV_03 {
-//   take:
-//     meryldb_ch
-//     fasta_ch
-//   main:
-//     qv_ch = meryldb_ch | combine(fasta_ch) | MerquryQV
-//   emit:
-//     qv_ch
-// }
 //
 // // 2nd Arrow Polish (skip if falcon unzip)
 // workflow Arrow_04 {
