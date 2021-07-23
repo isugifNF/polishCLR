@@ -19,6 +19,19 @@ def helpMessage() {
    --same_specimen                if illumina and pacbio reads are from the same specimin [default: true].
    --falcon_unzip                 if primary assembly has already undergone falcon unzip [default: false]. If true, will Arrow polish once instead of twice.
 
+   Optional configuration arguments
+   --parallel_app                 Link to parallel executable [default: 'parallel']
+   --bzcat_app                    Link to bzcat executable [default: 'bzcat']
+   --pigz_app                     Link to pigz executable [default: 'pigz']
+   --meryl_app                    Link to meryl executable [default: 'meryl']
+   --merqury_sh                   Link to merqury script [default: '\$MERQURY/merqury.sh']
+   --pbmm2_app                    Link to pbmm2 executable [default: 'pbmm2']
+   --samtools_app                 Link to samtools executable [default: 'samtools']
+   --gcpp_app                     Link to gcpp executable [default: 'gcpp']
+   --bwamem2_app                  Link to bwamem2 executable [default: 'bwa-mem2']
+   --freebayes_app                Link to freebayes executable [default: 'freebayes']
+   --bcftools_app                 Link to bcftools executable [default: 'bcftools']
+
    Optional arguments:
    --outdir                       Output directory to place final output [default: 'PolishCLR_Results']
    --clusterOptions               Cluster options for slurm or sge profiles [default slurm: '-N 1 -n 40 -t 04:00:00'; default sge: ' ']
@@ -77,38 +90,15 @@ process meryl_union {
     template 'meryl_union.sh'
 }
 
-// workflow mk_MerylDB {
-//   take:
-//     k_ch
-//     illumina_ch
-//   main:
-//     meryldb_ch = k_ch | combine(illumina_ch) | meryl_count | collect | meryl_union
-//   emit:
-//     meryldb_ch
-// }
-//
-// process MerquryQV {
-//     publishDir "${params.outdir}/0${i}_MerquryQV", mode: 'copy'
-//     input: tuple val(i), path(illumina_db), path(assembly_fasta)
-//     output: path("*")
-//     script:
-//     """
-//     #! /usr/bin/env bash
-//     ${merqury_sh} $illumina_db $assembly_fasta ${assembly_fasta.simpleName}
-//     """
-// }
-//
-// workflow QV_01 {
-//   take:
-//     meryldb_ch
-//     fasta_ch
-//   main:
-//     qv_ch = meryldb_ch | combine(fasta_ch) | MerquryQV
-//   emit:
-//     qv_ch
-// }
-//
-// // 1st Arrow Polish
+process MerquryQV_01 {
+    publishDir "${params.outdir}/01_MerquryQV", mode: 'copy'
+    input: tuple path(illumina_db), path(assembly_fasta)
+    output: path("*")
+    script:
+    template 'merquryqv.sh'
+}
+
+// 1st Arrow Polish
 // process pbmm2_index {
 //     publishDir "${params.outdir}/02_ArrowPolish", mode: 'symlink'
 //     input:path(assembly_fasta)
@@ -429,10 +419,10 @@ workflow {
     asm_ch = channel.fromPath(params.primary_assembly, checkIfExists:true)
     ill_ch = channel.fromFilePairs(params.illumina_reads, checkIfExists:true)
     pac_ch = channel.fromPath(params.pacbio_reads, checkIfExists:true)
-    k_ch   = channel.of(params.k)
+    k_ch   = channel.of(params.k) // Either passed in or autodetect (there's a script for this)
 
     // Step 0: Preprocess illumina files from bz2 to gz files
-//    if(params.bzip2){     // Instead of a flag, auto detect, however it must be in the pattern, * will fail
+    // Instead of a flag, auto detect, however it must be in the pattern, * will fail
     if(params.illumina_reads =~ /bz2$/){
       pill_ch = ill_ch | bz_to_gz | map { n -> n.get(1) } | flatten
     }else{
@@ -440,10 +430,9 @@ workflow {
     }
 
     // Step 1: Check quality of assembly with Merqury
-    k_ch | combine(pill_ch) | meryl_count | collect | meryl_union
-    //meryldb_ch = mk_MerylDB(k_ch, pill_ch)
-    // QV_01(meryldb_ch, asm_ch)
-    //
+    merylDB_ch = k_ch | combine(pill_ch) | meryl_count | collect | meryl_union 
+    merylDB_ch | combine(asm_ch) | MerquryQV_01
+    
     // // Step 2: Arrow Polish with PacBio reads
     // asm_arrow_ch = Arrow_02(asm_ch, pac_ch)
     //
