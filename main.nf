@@ -149,65 +149,40 @@ process MerquryQV_03 {
     template 'merquryqv.sh'
 }
 
-//
-// // add nproc
+process merfin {
+    publishDir "${params.outdir}/0${i}_ArrowPolish", mode: 'copy'
+    input: tuple val(i), path(asm), path(vcf)
+    output: path("*")
+    script:
+    template 'merfin.sh'
+}
 
-//
-// // 2nd Merqury QV value
-// workflow Arrow_02 {
-//   take:
-//     asm_ch
-//     pac_ch
-//   main:
-//     // Step 2: Arrow Polish with PacBio reads
-//     asm_ch | pbmm2_index | combine(pac_ch) | pbmm2_align
-//     fai_ch = asm_ch | create_windows | map { n -> n.get(0) }
-//     create_windows.out |
-//       map { n -> n.get(1) } |
-//       splitText() {it.trim()} |
-//       combine(asm_ch) | combine(fai_ch) | combine(pbmm2_align.out) |
-//       gcc_Arrow |
-//       map { n -> n.get(0)} |
-//       collect |
-//       merge_consensus
-//     new_asm_ch = merge_consensus.out   // <= New Assembly
-//   emit:
-//     new_asm_ch
-// }
-//
-//
-// // 2nd Arrow Polish (skip if falcon unzip)
-// workflow Arrow_04 {
-//   take:
-//     asm_ch
-//     pac_ch
-//   main:
-//     // Step 2: Arrow Polish with PacBio reads
-//     asm_ch | pbmm2_index | combine(pac_ch) | pbmm2_align
-//     fai_ch = asm_ch | create_windows | map { n -> n.get(0) }
-//     create_windows.out |
-//       map { n -> n.get(1) } |
-//       splitText() {it.trim()} |
-//       combine(asm_ch) | combine(fai_ch) | combine(pbmm2_align.out) |
-//       gcc_Arrow |
-//       map { n -> n.get(0)} |
-//       collect |
-//       merge_consensus
-//     new_asm_ch = merge_consensus.out   // <= New Assembly
-//   emit:
-//     new_asm_ch
-// }
-//
-// workflow QV_05 {
-//   take:
-//     meryldb_ch
-//     fasta_ch
-//   main:
-//     qv_ch = meryldb_ch | combine(fasta_ch) | MerquryQV
-//   emit:
-//     qv_ch
-// }
-//
+workflow ARROW_04 {
+  take:
+    asm_ch
+    pac_ch
+  main:
+    win_ch = channel.of("4") | combine(asm_ch) | create_windows | 
+      map { n -> n.get(1) } | splitText() {it.trim() }
+    fai_ch = create_windows.out | map { n -> n.get(0) }
+
+    newasm_ch = channel.of("4") | combine(asm_ch) | pbmm2_index | combine(pac_ch) | pbmm2_align |
+      combine(asm_ch) | combine(fai_ch) | combine(win_ch) | gcc_Arrow | 
+      map { n -> [ n.get(0), n.get(2) ] } |combine(asm_ch) | 
+      merfin | groupTuple | merge_consensus
+  
+  emit:
+    newasm_ch
+}
+
+process MerquryQV_05 {
+    publishDir "${params.outdir}/05_MerquryQV", mode: 'copy'
+    input: tuple path(illumina_db), path(assembly_fasta)
+    output: path("*")
+    script:
+    template 'merquryqv.sh'
+}
+
 // // 1st FreeBayes Polish
 // process align_shortreads {
 //     publishDir "${params.outdir}/04_FreeBayesPolish", mode: 'symlink'
@@ -413,22 +388,22 @@ workflow {
     merylDB_ch = k_ch | combine(pill_ch) | meryl_count | collect | meryl_union 
     merylDB_ch | combine(asm_ch) | MerquryQV_01
     
-    // // Step 2: Arrow Polish with PacBio reads
+    // Step 2: Arrow Polish with PacBio reads
     asm_arrow_ch = ARROW_02(asm_ch, pac_ch)
     asm_arrow_ch | view
     //
-    // // Step 3: Check quality of new assembly with Merqury (turns out we can reuse the illumina database)
-    // QV_03(meryldb_ch, asm_arrow_ch)
-    //
-    // // if the primary assembly came from falcon unzip, skip the 2nd arrow polish
-    // if(!params.falcon_unzip) {
-    //   // Step 2b: Arrow Polish with PacBio reads
-    //   asm_arrow2_ch = Arrow_04(asm_arrow_ch, pac_ch)
-    //   // Step 3b: Check quality of new assembly with Merqury (turns out we can reuse the illumina database)
-    //   QV_05(meryldb_ch, asm_arrow2_ch)
-    // } else {
-    //   asm_arrow2_ch = asm_arrow_ch
-    // }
+    // Step 3: Check quality of new assembly with Merqury (turns out we can reuse the illumina database)
+    meryldb_ch | combine(asm_arrow_ch) | MerquryQV_03
+
+    // if the primary assembly came from falcon unzip, skip the 2nd arrow polish
+    if(!params.falcon_unzip) {
+      // Step 2b: Arrow Polish with PacBio reads
+      asm_arrow2_ch = ARROW_04(asm_arrow_ch, pac_ch)
+      // Step 3b: Check quality of new assembly with Merqury (turns out we can reuse the illumina database)
+      meryldb_ch | combine(asm_arrow2_ch) | MerquryQV_05
+    } else {
+      asm_arrow2_ch = asm_arrow_ch
+    }
     //
     // // Step 4: FreeBayes Polish with Illumina reads
     //
