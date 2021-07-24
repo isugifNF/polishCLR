@@ -168,8 +168,9 @@ workflow ARROW_04 {
 
     newasm_ch = channel.of("4") | combine(asm_ch) | pbmm2_index | combine(pac_ch) | pbmm2_align |
       combine(asm_ch) | combine(fai_ch) | combine(win_ch) | gcc_Arrow | 
-      map { n -> [ n.get(0), n.get(2) ] } |combine(asm_ch) | 
-      merfin | groupTuple | merge_consensus
+      map { n -> [ n.get(0), n.get(1) ] } | 
+      //combine(asm_ch) |  merfin | 
+      groupTuple | merge_consensus
   
   emit:
     newasm_ch
@@ -393,17 +394,18 @@ workflow {
     asm_arrow_ch | view
     //
     // Step 3: Check quality of new assembly with Merqury (turns out we can reuse the illumina database)
-    meryldb_ch | combine(asm_arrow_ch) | MerquryQV_03
+    merylDB_ch | combine(asm_arrow_ch) | MerquryQV_03
 
     // if the primary assembly came from falcon unzip, skip the 2nd arrow polish
     if(!params.falcon_unzip) {
       // Step 2b: Arrow Polish with PacBio reads
       asm_arrow2_ch = ARROW_04(asm_arrow_ch, pac_ch)
       // Step 3b: Check quality of new assembly with Merqury (turns out we can reuse the illumina database)
-      meryldb_ch | combine(asm_arrow2_ch) | MerquryQV_05
+      merylDB_ch | combine(asm_arrow2_ch) | MerquryQV_05
     } else {
       asm_arrow2_ch = asm_arrow_ch
     }
+    asm_arrow2_ch | view
     //
     // // Step 4: FreeBayes Polish with Illumina reads
     //
