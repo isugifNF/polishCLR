@@ -2,7 +2,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=4
 #SBATCH --time=24:00:00
-#SBATCH --job-name=NF_PolishCLR
+#SBATCH --job-name=NF_refactor
 #SBATCH --output=R-%x.%J.out
 #SBATCH --error=R-%x.%J.err
 # --mail-user=username@email.com
