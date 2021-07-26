@@ -186,105 +186,69 @@ process MerquryQV_05 {
     template 'merquryqv.sh'
 }
 
-// // 1st FreeBayes Polish
-// process align_shortreads {
-//     publishDir "${params.outdir}/04_FreeBayesPolish", mode: 'symlink'
-//     input: tuple path(assembly_fasta), path(illumina_one), path(illumina_two)
-//     output: tuple path("*.bam"), path("*.bai")
-//     script:
-//     """
-//     #! /usr/bin/env bash
-//     PROC=\$((`nproc` /2+1))
-//     mkdir tmp
-//     ${bwamem2_app} index ${assembly_fasta}
-//     ${bwamem2_app} mem -SP -t \${PROC} ${assembly_fasta} ${illumina_one} ${illumina_two} |
-//       ${samtools_app} sort -T tmp -m 8G --threads 4 - > ${illumina_one.simpleName}_aln.bam
-//     ${samtools_app} index -@ \${PROC} ${illumina_one.simpleName}_aln.bam
-//     """
-// }
+// 1st FreeBayes Polish
+process align_shortreads {
+    publishDir "${params.outdir}/0${i}_FreeBayesPolish", mode: 'symlink'
+    input: tuple val(i), path(assembly_fasta), path(illumina_one), path(illumina_two)
+    output: tuple path("*.bam"), path("*.bai")
+    script:
+    template 'align_shortreads.sh'
+}
 // // -m 5G -@ 36
 //
-// process freebayes {
-//     publishDir "${params.outdir}/04_FreeBayesPolish", mode: 'symlink'
-//     input: tuple val(window), path(assembly_fasta), path(assembly_fai), path(illumina_bam), path(illumina_bai)
-//     output: path("*.vcf")
-//     script:
-//     """
-//     #! /usr/bin/env bash
-//     ${freebayes_app} \
-//       --region \"${window}\" \
-//       --min-mapping-quality 0 \
-//       --min-coverage 3 \
-//       --min-supporting-allele-qsum 0 \
-//       --ploidy 2 \
-//       --min-alternate-fraction 0.2 \
-//       --max-complex-gap 0 \
-//       --bam ${illumina_bam} \
-//       --vcf ${illumina_bam.simpleName}_${window.replace(':','_').replace('|','_')}.vcf \
-//       --fasta-reference ${assembly_fasta}
-//     """
-// }
-//
-// process combineVCF {
-//     publishDir "${params.outdir}/04_FreeBayesPolish", mode: 'symlink'
-//     input: path(vcfs)
-//     output: path("consensus_04.vcf")
-//     script:
-//     """
-//     #! /usr/bin/env bash
-//     cat ${vcfs.get(0)} | grep "^#" > consensus_04.vcf
-//     cat ${vcfs} | grep -v "^#" >> consensus_04.vcf
-//     """
-// }
-//
-// process vcf_to_fasta {
-//     publishDir "${params.outdir}/04_FreeBayesPolish", mode: 'symlink'
-//     input: tuple path(vcf), path(genome_fasta)
-//     output: path("consensus_04.fasta")
-//     script:
-//     """
-//     #! /usr/bin/env bash
-//     ${bcftools_app} view -Oz ${vcf} > ${vcf.simpleName}.gz
-//     ${bcftools_app} index ${vcf.simpleName}.gz
-//     ${bcftools_app} consensus ${vcf.simpleName}.gz -f ${genome_fasta} -H 1 > consensus_04.fasta
-//     """
-// }
-//
-// workflow Freebayes_06 {
-//   take:
-//     assembly_ch
-//     illumina_ch
-//   main:
-//     assembly_ch | combine(illumina_ch.collect()) | align_shortreads
-//     fai_ch = assembly_ch | create_windows | map { n -> n.get(0) }
-//     create_windows.out |
-//       map { n -> n.get(1) } |
-//       splitText() {it.trim()} |
-//       combine(assembly_ch) | combine(fai_ch) | combine(align_shortreads.out) |
-//       freebayes |
-//       collect |
-//       combineVCF |
-//       combine(assembly_ch) |
-//       vcf_to_fasta
-//     new_asm_ch = vcf_to_fasta.out         // <= New assembly
-//   emit:
-//     new_asm_ch
-// }
-//
-//
-// // 3rd Merqury QV value
-// process MerquryQV_05 {
-//     publishDir "${params.outdir}/05_MerquryQV", mode: 'symlink'
-//     input: tuple path(illumina_db), path(assembly_fasta)
-//     output: path("*")
-//     script:
-//     """
-//     #! /usr/bin/env bash
-//     $MERQURY/merqury.sh $illumina_db $assembly_fasta ${assembly_fasta.simpleName}
-//     """
-// }
-//
-// // 2nd Freebayes polish
+process freebayes {
+    publishDir "${params.outdir}/0${i}_FreeBayesPolish", mode: 'symlink'
+    input: tuple val(i), path(assembly_fasta), path(assembly_fai), path(illumina_bam), path(illumina_bai), val(window)
+    output: tuple val(i), path("*.vcf")
+    script:
+    template 'freebayes.sh'
+}
+
+process combineVCF {
+    publishDir "${params.outdir}/0${i}_FreeBayesPolish", mode: 'symlink'
+    input: tuple val(i), path(vcfs)
+    output: tuple val(i), path("${i}_consensus.vcf")
+    script:
+    template 'combine.sh'
+}
+
+process vcf_to_fasta {
+    publishDir "${params.outdir}/0${i}_FreeBayesPolish", mode: 'symlink'
+    input: tuple val(i), path(vcf), path(genome_fasta)
+    output: path("${i}_consensus.fasta")
+    script:
+    template 'vcf_to_fasta.sh'
+}
+
+// First freebayes
+workflow FREEBAYES_06 {
+  take:
+    asm_ch
+    ill_ch
+  main:
+    win_ch = channel.of("6") | combine(asm_ch) | create_windows | 
+      map { n -> n.get(1) } | splitText() {it.trim() }
+    fai_ch = create_windows.out | map { n -> n.get(0) }
+
+    new_asm_ch = channel.of("6") | combine(asm_ch) | combine(ill_ch.collect()) | align_shortreads |
+      combine(asm_ch) | combine(fai_ch) | combine(win_ch) |
+      freebayes | groupTuple |
+      combineVCF |
+      combine(asm_ch) |
+      vcf_to_fasta
+  emit:
+    new_asm_ch
+}
+
+process MerquryQV_07 {
+    publishDir "${params.outdir}/07_MerquryQV", mode: 'copy'
+    input: tuple path(illumina_db), path(assembly_fasta)
+    output: path("*")
+    script:
+    template 'merquryqv.sh'
+}
+
+// 2nd Freebayes polish
 // process align_shortreads_06 {
 //     publishDir "${params.outdir}/06_FreeBayesPolish", mode: 'symlink'
 //     input: tuple path(assembly_fasta), path(illumina_one), path(illumina_two)
@@ -408,21 +372,11 @@ workflow {
       asm_arrow2_ch = asm_arrow_ch
     }
     asm_arrow2_ch | view
-    //
-    // // Step 4: FreeBayes Polish with Illumina reads
-    //
-    // asm2b_ch | combine(pill_ch.collect()) | align_shortreads_04 | view
-    // fai2_ch = asm2b_ch | create_windows_04 | map { n -> n.get(0) } | view
-    // create_windows_04.out |
-    //   map { n -> n.get(1) } |
-    //   splitText() {it.trim()} |
-    //   combine(asm2b_ch) | combine(fai2_ch) | combine(align_shortreads_04.out) |
-    //   freebayes_04 |
-    //   collect |
-    //   combineVCF_04 |
-    //   combine(asm2b_ch) |
-    //   vcf_to_fasta_04
-    // asm3_ch = vcf_to_fasta_04.out         // <= New assembly
+    
+    // Step 4: FreeBayes Polish with Illumina reads
+    asm_freebayes_ch = FREEBAYES_06(asm_arrow_ch, ill_ch)
+    merylDB_ch | combine(asm_freebayes_ch) | MerquryQV_07
+
     //
     // // Step 5: Check quality of assembly with Merqury
     // meryl_union_01.out | combine(asm3_ch) | MerquryQV_05
