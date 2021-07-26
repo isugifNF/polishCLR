@@ -149,10 +149,12 @@ process MerquryQV_03 {
     template 'merquryqv.sh'
 }
 
+// 2nd Arrow run with merfin
+
 process merfin {
     publishDir "${params.outdir}/0${i}_ArrowPolish", mode: 'copy'
     input: tuple val(i), path(vcf), path(asm)
-    output: path("*")
+    output: path("${i}_reshaped.reshaped.vcf.gz")
     script:
     template 'merfin.sh'
 }
@@ -169,7 +171,7 @@ workflow ARROW_04 {
     newasm_ch = channel.of("4") | combine(asm_ch) | pbmm2_index | combine(pac_ch) | pbmm2_align |
       combine(asm_ch) | combine(fai_ch) | combine(win_ch) | gcc_Arrow | 
       map { n -> [ n.get(0), n.get(2) ] } | groupTuple |
-      combine(asm_ch) |  merfin //| 
+      combine(asm_ch) |  merfin  //| 
 //      groupTuple | merge_consensus
   
   emit:
