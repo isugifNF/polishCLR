@@ -190,7 +190,7 @@ process MerquryQV_05 {
 process align_shortreads {
     publishDir "${params.outdir}/0${i}_FreeBayesPolish", mode: 'symlink'
     input: tuple val(i), path(assembly_fasta), path(illumina_one), path(illumina_two)
-    output: tuple path("*.bam"), path("*.bai")
+    output: tuple val("$i"), path("*.bam"), path("*.bai")
     script:
     template 'align_shortreads.sh'
 }
@@ -198,7 +198,7 @@ process align_shortreads {
 //
 process freebayes {
     publishDir "${params.outdir}/0${i}_FreeBayesPolish", mode: 'symlink'
-    input: tuple val(i), path(assembly_fasta), path(assembly_fai), path(illumina_bam), path(illumina_bai), val(window)
+    input: tuple val(i), path(illumina_bam), path(illumina_bai), path(assembly_fasta), path(assembly_fai), val(window)
     output: tuple val(i), path("*.vcf")
     script:
     template 'freebayes.sh'
@@ -374,7 +374,7 @@ workflow {
     asm_arrow2_ch | view
     
     // Step 4: FreeBayes Polish with Illumina reads
-    asm_freebayes_ch = FREEBAYES_06(asm_arrow_ch, ill_ch)
+    asm_freebayes_ch = FREEBAYES_06(asm_arrow_ch, pill_ch)
     merylDB_ch | combine(asm_freebayes_ch) | MerquryQV_07
 
     //
