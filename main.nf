@@ -41,7 +41,6 @@ def helpMessage() {
    --help                         This usage statement.
   """
 }
-//   --bzip                         if illumina paired reads are in bz2 format [default: true]. If true, will convert to gz.
 
 // Show help message
 if (params.help || !params.primary_assembly || !params.illumina_reads || !params.pacbio_reads ) {
@@ -249,92 +248,33 @@ process MerquryQV_07 {
 }
 
 // 2nd Freebayes polish
-// process align_shortreads_06 {
-//     publishDir "${params.outdir}/06_FreeBayesPolish", mode: 'symlink'
-//     input: tuple path(assembly_fasta), path(illumina_one), path(illumina_two)
-//     output: tuple path("*.bam"), path("*.bai")
-//     script:
-//     """
-//     #! /usr/bin/env bash
-//     PROC=\$((`nproc` /2+1))
-//     mkdir tmp
-//     bwa-mem2 index ${assembly_fasta}
-//     bwa-mem2 mem -SP -t \${PROC} ${assembly_fasta} ${illumina_one} ${illumina_two} |
-//       samtools sort -T tmp -m 8G --threads 4 - > ${illumina_one.simpleName}_06_aln.bam
-//     samtools index -@ \${PROC} ${illumina_one.simpleName}_06_aln.bam
-//     """
-// }
-// // -m 5G -@ 36
-//
-// process create_windows_06 {
-//     publishDir "${params.outdir}/06_FreeBayesPolish", mode: 'symlink'
-//     input: path(assembly_fasta)
-//     output: tuple path("*.fai"), path("win_06.txt")
-//     shell:
-//     """
-//     #! /usr/bin/env bash
-//     samtools faidx ${assembly_fasta}
-//     cat ${assembly_fasta}.fai | awk '{print \$1 ":0-" \$2}' > win_06.txt
-//     """
-// }
-//
-// process freebayes_06 {
-//     publishDir "${params.outdir}/06_FreeBayesPolish", mode: 'symlink'
-//     input: tuple val(window), path(assembly_fasta), path(assembly_fai), path(illumina_bam), path(illumina_bai)
-//     output: path("*.vcf")
-//     script:
-//     """
-//     #! /usr/bin/env bash
-//     freebayes \
-//       --region \"${window}\" \
-//       --min-mapping-quality 0 \
-//       --min-coverage 3 \
-//       --min-supporting-allele-qsum 0 \
-//       --ploidy 2 \
-//       --min-alternate-fraction 0.2 \
-//       --max-complex-gap 0 \
-//       --bam ${illumina_bam} \
-//       --vcf ${illumina_bam.simpleName}_${window.replace(':','_').replace('|','_')}_06.vcf \
-//       --fasta-reference ${assembly_fasta}
-//     """
-// }
-//
-// process combineVCF_06 {
-//     publishDir "${params.outdir}/06_FreeBayesPolish", mode: 'symlink'
-//     input: path(vcfs)
-//     output: path("consensus_06.vcf")
-//     script:
-//     """
-//     #! /usr/bin/env bash
-//     cat ${vcfs.get(0)} | grep "^#" > consensus_06.vcf
-//     cat ${vcfs} | grep -v "^#" >> consensus_06.vcf
-//     """
-// }
-//
-// process vcf_to_fasta_06 {
-//     publishDir "${params.outdir}/06_FreeBayesPolish", mode: 'symlink'
-//     input: tuple path(vcf), path(genome_fasta)
-//     output: path("final_polished_assembly.fasta")
-//     script:
-//     """
-//     #! /usr/bin/env bash
-//     bcftools view -Oz ${vcf} > ${vcf}.gz
-//     bcftools index ${vcf.simpleName}.vcf.gz
-//     bcftools consensus ${vcf.simpleName}.vcf.gz -f ${genome_fasta} -H 1 > final_polished_assembly.fasta
-//     """
-// }
-//
-// // 3rd Merqury QV value
-// process MerquryQV_07 {
-//     publishDir "${params.outdir}/07_MerquryQV", mode: 'symlink'
-//     input: tuple path(illumina_db), path(assembly_fasta)
-//     output: path("*")
-//     script:
-//     """
-//     #! /usr/bin/env bash
-//     $MERQURY/merqury.sh $illumina_db $assembly_fasta ${assembly_fasta.simpleName}
-//     """
-// }
+
+workflow FREEBAYES_08 {
+  take:
+    asm_ch
+    ill_ch
+  main:
+    win_ch = channel.of("8") | combine(asm_ch) | create_windows | 
+      map { n -> n.get(1) } | splitText() {it.trim() }
+    fai_ch = create_windows.out | map { n -> n.get(0) }
+
+    new_asm_ch = channel.of("8") | combine(asm_ch) | combine(ill_ch.collect()) | align_shortreads |
+      combine(asm_ch) | combine(fai_ch) | combine(win_ch) |
+      freebayes | groupTuple |
+      combineVCF |
+      combine(asm_ch) |
+      vcf_to_fasta
+  emit:
+    new_asm_ch
+}
+
+process MerquryQV_09 {
+    publishDir "${params.outdir}/09_MerquryQV", mode: 'copy'
+    input: tuple path(illumina_db), path(assembly_fasta)
+    output: path("*")
+    script:
+    template 'merquryqv.sh'
+}
 
 workflow {
     // Setup input channels, starting assembly (asm), Illumina reads (ill), and pacbio reads (pac)
@@ -357,46 +297,28 @@ workflow {
     
     // Step 2: Arrow Polish with PacBio reads
     asm_arrow_ch = ARROW_02(asm_ch, pac_ch)
-    asm_arrow_ch | view
-    //
-    // Step 3: Check quality of new assembly with Merqury (turns out we can reuse the illumina database)
+
+    // Step 3: Check quality of new assembly with Merqury 
     merylDB_ch | combine(asm_arrow_ch) | MerquryQV_03
 
     // if the primary assembly came from falcon unzip, skip the 2nd arrow polish
     if(!params.falcon_unzip) {
-      // Step 2b: Arrow Polish with PacBio reads
+      // Step 4: Arrow Polish with PacBio reads
       asm_arrow2_ch = ARROW_04(asm_arrow_ch, pac_ch)
-      // Step 3b: Check quality of new assembly with Merqury (turns out we can reuse the illumina database)
+      // Step 5: Check quality of new assembly with Merqury 
       merylDB_ch | combine(asm_arrow2_ch) | MerquryQV_05
     } else {
       asm_arrow2_ch = asm_arrow_ch
     }
     asm_arrow2_ch | view
     
-    // Step 4: FreeBayes Polish with Illumina reads
-    asm_freebayes_ch = FREEBAYES_06(asm_arrow_ch, ill_ch)
+    // Step 6: FreeBayes Polish with Illumina reads
+    asm_freebayes_ch = FREEBAYES_06(asm_arrow_ch, pill_ch)
     merylDB_ch | combine(asm_freebayes_ch) | MerquryQV_07
 
-    //
-    // // Step 5: Check quality of assembly with Merqury
-    // meryl_union_01.out | combine(asm3_ch) | MerquryQV_05
-    //
-    // // Step 6: FreeBayes Polish 2nd time
-    // asm3_ch | combine(pill_ch.collect()) | align_shortreads_06 | view
-    // fai3_ch = asm3_ch | create_windows_06 | map { n -> n.get(0) } | view
-    // create_windows_06.out |
-    //   map { n -> n.get(1) } |
-    //   splitText() {it.trim()} |
-    //   combine(asm3_ch) | combine(fai3_ch) | combine(align_shortreads_06.out) |
-    //   freebayes_06 |
-    //   collect |
-    //   combineVCF_06 |
-    //   combine(asm3_ch) |
-    //   vcf_to_fasta_06
-    // asm4_ch = vcf_to_fasta_06.out         // <= New assembly
-    //
-    // // Step 7: Check quality of assembly with Merqury
-    // meryl_union_01.out | combine(asm4_ch) | MerquryQV_07
+    // Step 8: FreeBayes Polish with Illumina reads
+    asm_freebayes2_ch = FREEBAYES_08(asm_freebayes_ch, pill_ch)
+    merylDB_ch | combine(asm_freebayes2_ch) | MerquryQV_09
 }
 
 def isuGIFHeader() {
