@@ -151,7 +151,7 @@ process MerquryQV_03 {
 
 process merfin {
     publishDir "${params.outdir}/0${i}_ArrowPolish", mode: 'copy'
-    input: tuple val(i), path(asm), path(vcf)
+    input: tuple val(i), path(vcf), path(asm)
     output: path("*")
     script:
     template 'merfin.sh'
@@ -168,9 +168,9 @@ workflow ARROW_04 {
 
     newasm_ch = channel.of("4") | combine(asm_ch) | pbmm2_index | combine(pac_ch) | pbmm2_align |
       combine(asm_ch) | combine(fai_ch) | combine(win_ch) | gcc_Arrow | 
-      map { n -> [ n.get(0), n.get(1) ] } | 
-      //combine(asm_ch) |  merfin | 
-      groupTuple | merge_consensus
+      map { n -> [ n.get(0), n.get(2) ] } | groupTuple |
+      combine(asm_ch) |  merfin //| 
+//      groupTuple | merge_consensus
   
   emit:
     newasm_ch
