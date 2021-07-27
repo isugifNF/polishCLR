@@ -149,13 +149,12 @@ process MerquryQV_03 {
 }
 
 // 2nd Arrow run with merfin
-
-process merfin {
+process reshape_arrow {
     publishDir "${params.outdir}/0${i}_ArrowPolish", mode: 'copy'
     input: tuple val(i), path(vcf), path(asm)
-    output: path("${i}_reshaped.reshaped.vcf.gz")
+    output: path("${i}_merged.reshaped.vcf.gz")
     script:
-    template 'merfin.sh'
+    template 'reshape_arrow.sh'
 }
 
 workflow ARROW_04 {
@@ -170,7 +169,7 @@ workflow ARROW_04 {
     newasm_ch = channel.of("4") | combine(asm_ch) | pbmm2_index | combine(pac_ch) | pbmm2_align |
       combine(asm_ch) | combine(fai_ch) | combine(win_ch) | gcc_Arrow | 
       map { n -> [ n.get(0), n.get(2) ] } | groupTuple |
-      combine(asm_ch) |  merfin  //| 
+      combine(asm_ch) |  reshape_arrow  //| 
 //      groupTuple | merge_consensus
   
   emit:
@@ -211,6 +210,22 @@ process combineVCF {
     template 'combine.sh'
 }
 
+process jellyfish_peak {
+    publishDir "${params.outdir}/0${i}_FreeBayesPolish", mode: 'copy'
+    input: tuple val(i), path(illumina_reads)
+    output: path("peak.txt")
+    script:
+    template 'jellyfish_peak.sh'
+}
+
+process merfin_polish {
+    publishDir "${params.outdir}/0${i}_MerfinPolish", mode: 'symlink'
+    input: tuple val(i), path(vcf), path(genome_fasta), val(peak), path(meryldb)
+    output: path("*")
+    script:
+    template 'merfin_polish.sh'
+}
+
 process vcf_to_fasta {
     publishDir "${params.outdir}/0${i}_FreeBayesPolish", mode: 'symlink'
     input: tuple val(i), path(vcf), path(genome_fasta)
@@ -224,17 +239,21 @@ workflow FREEBAYES_06 {
   take:
     asm_ch
     ill_ch
+    merylDB_ch
   main:
     win_ch = channel.of("6") | combine(asm_ch) | create_windows | 
       map { n -> n.get(1) } | splitText() {it.trim() }
     fai_ch = create_windows.out | map { n -> n.get(0) }
 
+    peak_ch = channel.of("6") | combine(ill_ch) | jellyfish_peak | splitText() {it.trim()}
+
     new_asm_ch = channel.of("6") | combine(asm_ch) | combine(ill_ch.collect()) | align_shortreads |
       combine(asm_ch) | combine(fai_ch) | combine(win_ch) |
       freebayes | groupTuple |
       combineVCF |
-      combine(asm_ch) |
-      vcf_to_fasta
+      combine(asm_ch) | combine(peak_ch) | combine(merylDB_ch) |
+      merfin_polish
+//      vcf_to_fasta
   emit:
     new_asm_ch
 }
@@ -313,12 +332,13 @@ workflow {
     asm_arrow2_ch | view
     
     // Step 6: FreeBayes Polish with Illumina reads
-    asm_freebayes_ch = FREEBAYES_06(asm_arrow_ch, pill_ch)
-    merylDB_ch | combine(asm_freebayes_ch) | MerquryQV_07
+    asm_freebayes_ch = FREEBAYES_06(asm_arrow_ch, pill_ch, merylDB_ch)
+/*    merylDB_ch | combine(asm_freebayes_ch) | MerquryQV_07
 
     // Step 8: FreeBayes Polish with Illumina reads
     asm_freebayes2_ch = FREEBAYES_08(asm_freebayes_ch, pill_ch)
     merylDB_ch | combine(asm_freebayes2_ch) | MerquryQV_09
+*/
 }
 
 def isuGIFHeader() {
