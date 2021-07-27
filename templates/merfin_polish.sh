@@ -2,7 +2,7 @@
 
 # lookup_table.txt from bin folder, maybe need to run genomescope?
 merfin -polish \
-  -sequence ${assembly_fasta} \
+  -sequence ${genome_fasta} \
   -readmers ${meryldb} \
   -peak ${peak} \
   -prob lookup_table.txt \

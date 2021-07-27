@@ -207,13 +207,13 @@ process combineVCF {
     input: tuple val(i), path(vcfs)
     output: tuple val(i), path("${i}_consensus.vcf")
     script:
-    template 'combine.sh'
+    template 'combineVCF.sh'
 }
 
 process jellyfish_peak {
-    publishDir "${params.outdir}/0${i}_FreeBayesPolish", mode: 'copy'
+    publishDir "${params.outdir}/0${i}_MerfinPolish", mode: 'copy'
     input: tuple val(i), path(illumina_reads)
-    output: path("peak.txt")
+    output: path("*")
     script:
     template 'jellyfish_peak.sh'
 }
@@ -245,14 +245,14 @@ workflow FREEBAYES_06 {
       map { n -> n.get(1) } | splitText() {it.trim() }
     fai_ch = create_windows.out | map { n -> n.get(0) }
 
-    peak_ch = channel.of("6") | combine(ill_ch) | jellyfish_peak | splitText() {it.trim()}
+    peak_ch = channel.of("6") | combine( ill_ch.collect() | map { n-> [n]} ) | jellyfish_peak | splitText() { it.trim()}
 
     new_asm_ch = channel.of("6") | combine(asm_ch) | combine(ill_ch.collect()) | align_shortreads |
       combine(asm_ch) | combine(fai_ch) | combine(win_ch) |
       freebayes | groupTuple |
       combineVCF |
-      combine(asm_ch) | combine(peak_ch) | combine(merylDB_ch) |
-      merfin_polish
+      combine(asm_ch) | combine(peak_ch) | combine(merylDB_ch) //|
+//      merfin_polish
 //      vcf_to_fasta
   emit:
     new_asm_ch

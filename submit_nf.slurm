@@ -5,9 +5,9 @@
 #SBATCH --job-name=NF_refactor
 #SBATCH --output=R-%x.%J.out
 #SBATCH --error=R-%x.%J.err
-# --mail-user=username@email.com
-# --mail-type=begin
-# --mail-type=end
+#SBATCH --mail-user=jenchang@iastate.edu
+#SBATCH --mail-type=begin
+#SBATCH --mail-type=end
 # --account=project_name    # <= put HPC account name here, required on Atlas
 
 # === Load Modules here
@@ -18,6 +18,7 @@
 # == Ceres HPC
 module load nextflow
 NEXTFLOW=nextflow
+module load merfin
 
 # == Nova HPC
 # module load gcc/7.3.0-xegsmw4 nextflow
