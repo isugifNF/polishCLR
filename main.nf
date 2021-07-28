@@ -84,6 +84,15 @@ process MerquryQV_01 {
     template 'merquryqv.sh'
 }
 
+// 01 bbstat: Length distribtions of initial assembly
+process bbstat_01 {
+    publishDir "${params.outdir}/01_bbstat", mode: 'copy'
+    input:  path(assembly_fasta)
+    output: path("*")
+    script:
+    template 'bbstats.sh'
+}
+
 // 1st Arrow Polish
 process create_windows {
     publishDir "${params.outdir}/0${i}_ArrowPolish", mode: 'symlink'
@@ -151,6 +160,14 @@ process MerquryQV_03 {
     template 'merquryqv.sh'
 }
 
+process bbstat_03 {
+    publishDir "${params.outdir}/03_bbstat", mode: 'copy'
+    input:  path(assembly_fasta)
+    output: path("*")
+    script:
+    template 'bbstats.sh'
+}
+
 // 2nd Arrow run with merfin
 process reshape_arrow {
     publishDir "${params.outdir}/0${i}_MerfinPolish", mode: 'copy'
@@ -186,6 +203,15 @@ process MerquryQV_05 {
     script:
     template 'merquryqv.sh'
 }
+
+process bbstat_05 {
+    publishDir "${params.outdir}/05_bbstat", mode: 'copy'
+    input:  path(assembly_fasta)
+    output: path("*")
+    script:
+    template 'bbstats.sh'
+}
+
 
 // 1st FreeBayes Polish
 process align_shortreads {
@@ -265,6 +291,14 @@ process MerquryQV_07 {
     template 'merquryqv.sh'
 }
 
+process bbstat_07 {
+    publishDir "${params.outdir}/07_bbstat", mode: 'copy'
+    input:  path(assembly_fasta)
+    output: path("*")
+    script:
+    template 'bbstats.sh'
+}
+
 // 2nd Freebayes polish
 workflow FREEBAYES_08 {
   take:
@@ -292,6 +326,14 @@ process MerquryQV_09 {
     output: path("*")
     script:
     template 'merquryqv.sh'
+}
+
+process bbstat_09 {
+    publishDir "${params.outdir}/09_bbstat", mode: 'copy'
+    input:  path(assembly_fasta)
+    output: path("*")
+    script:
+    template 'bbstats.sh'
 }
 
 workflow {
