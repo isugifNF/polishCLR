@@ -13,6 +13,7 @@ def helpMessage() {
    --primary_assembly             genome assembly fasta file to polish
    --illumina_reads               paired end illumina reads, to be used for Merqury QV scores, and freebayes polish primary assembly
    --pacbio_reads                 pacbio reads in bam format, to be used to arrow polish primary assembly
+   --species                      if a string is given, rename the final assembly by species name [default:false]
 
    Optional modifiers
    --k                            kmer to use in MerquryQV scoring [default:21]
@@ -31,6 +32,7 @@ def helpMessage() {
    --bwamem2_app                  Link to bwamem2 executable [default: 'bwa-mem2']
    --freebayes_app                Link to freebayes executable [default: 'freebayes']
    --bcftools_app                 Link to bcftools executable [default: 'bcftools']
+   --merfin_app                   Link to merfin executable [default: 'merfin']
 
    Optional arguments:
    --outdir                       Output directory to place final output [default: 'PolishCLR_Results']
@@ -134,7 +136,8 @@ workflow ARROW_02 {
 
     newasm_ch = channel.of("2") | combine(asm_ch) | pbmm2_index | combine(pac_ch) | pbmm2_align |
       combine(asm_ch) | combine(fai_ch) | combine(win_ch) | gcc_Arrow | 
-      map { n -> [ n.get(0), n.get(1) ] } | groupTuple | merge_consensus
+      map { n -> [ n.get(0), n.get(1) ] } | groupTuple | 
+      merge_consensus
   
   emit:
     newasm_ch
@@ -150,7 +153,7 @@ process MerquryQV_03 {
 
 // 2nd Arrow run with merfin
 process reshape_arrow {
-    publishDir "${params.outdir}/0${i}_ArrowPolish", mode: 'copy'
+    publishDir "${params.outdir}/0${i}_MerfinPolish", mode: 'copy'
     input: tuple val(i), path(vcf), path(asm)
     output: path("${i}_merged.reshaped.vcf.gz")
     script:
@@ -169,8 +172,8 @@ workflow ARROW_04 {
     newasm_ch = channel.of("4") | combine(asm_ch) | pbmm2_index | combine(pac_ch) | pbmm2_align |
       combine(asm_ch) | combine(fai_ch) | combine(win_ch) | gcc_Arrow | 
       map { n -> [ n.get(0), n.get(2) ] } | groupTuple |
-      combine(asm_ch) |  reshape_arrow  //| 
-//      groupTuple | merge_consensus
+//      combine(asm_ch) |  reshape_arrow  //| 
+      merge_consensus
   
   emit:
     newasm_ch
@@ -192,8 +195,8 @@ process align_shortreads {
     script:
     template 'align_shortreads.sh'
 }
-// // -m 5G -@ 36
-//
+// -m 5G -@ 36
+
 process freebayes {
     publishDir "${params.outdir}/0${i}_FreeBayesPolish", mode: 'symlink'
     input: tuple val(i), path(illumina_bam), path(illumina_bai), path(assembly_fasta), path(assembly_fai), val(window)
@@ -234,26 +237,22 @@ process vcf_to_fasta {
     template 'vcf_to_fasta.sh'
 }
 
-// First freebayes
 workflow FREEBAYES_06 {
   take:
     asm_ch
     ill_ch
-    merylDB_ch
+    //merylDB_ch
   main:
     win_ch = channel.of("6") | combine(asm_ch) | create_windows | 
       map { n -> n.get(1) } | splitText() {it.trim() }
     fai_ch = create_windows.out | map { n -> n.get(0) }
-
-    peak_ch = channel.of("6") | combine( ill_ch.collect() | map { n-> [n]} ) | jellyfish_peak | splitText() { it.trim()}
+    //peak_ch = channel.of("6") | combine( ill_ch.collect() | map { n-> [n]} ) | jellyfish_peak | splitText() { it.trim()}
 
     new_asm_ch = channel.of("6") | combine(asm_ch) | combine(ill_ch.collect()) | align_shortreads |
       combine(asm_ch) | combine(fai_ch) | combine(win_ch) |
-      freebayes | groupTuple |
-      combineVCF |
-      combine(asm_ch) | combine(peak_ch) | combine(merylDB_ch) //|
-//      merfin_polish
-//      vcf_to_fasta
+      freebayes | groupTuple | combineVCF | combine(asm_ch) | 
+      //combine(peak_ch) | combine(merylDB_ch) |  merfin_polish |
+      vcf_to_fasta
   emit:
     new_asm_ch
 }
@@ -267,21 +266,21 @@ process MerquryQV_07 {
 }
 
 // 2nd Freebayes polish
-
 workflow FREEBAYES_08 {
   take:
     asm_ch
     ill_ch
+    //merylDB_ch
   main:
     win_ch = channel.of("8") | combine(asm_ch) | create_windows | 
       map { n -> n.get(1) } | splitText() {it.trim() }
     fai_ch = create_windows.out | map { n -> n.get(0) }
+    //peak_ch = channel.of("6") | combine( ill_ch.collect() | map { n-> [n]} ) | jellyfish_peak | splitText() { it.trim()}
 
     new_asm_ch = channel.of("8") | combine(asm_ch) | combine(ill_ch.collect()) | align_shortreads |
       combine(asm_ch) | combine(fai_ch) | combine(win_ch) |
-      freebayes | groupTuple |
-      combineVCF |
-      combine(asm_ch) |
+      freebayes | groupTuple | combineVCF | combine(asm_ch) |
+      // combine(peak_ch) | combine(merylDB_ch) |  merfin_polish |
       vcf_to_fasta
   emit:
     new_asm_ch
@@ -333,12 +332,11 @@ workflow {
     
     // Step 6: FreeBayes Polish with Illumina reads
     asm_freebayes_ch = FREEBAYES_06(asm_arrow_ch, pill_ch, merylDB_ch)
-/*    merylDB_ch | combine(asm_freebayes_ch) | MerquryQV_07
+    merylDB_ch | combine(asm_freebayes_ch) | MerquryQV_07
 
     // Step 8: FreeBayes Polish with Illumina reads
     asm_freebayes2_ch = FREEBAYES_08(asm_freebayes_ch, pill_ch)
     merylDB_ch | combine(asm_freebayes2_ch) | MerquryQV_09
-*/
 }
 
 def isuGIFHeader() {
