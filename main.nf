@@ -351,15 +351,17 @@ workflow {
       pill_ch = ill_ch | map { n -> n.get(1) } | flatten
     }
 
-    // Step 1: Check quality of assembly with Merqury
+    // Step 1: Check quality of assembly with Merqury and length dist. with bbstat
     merylDB_ch = k_ch | combine(pill_ch) | meryl_count | collect | meryl_union 
     merylDB_ch | combine(asm_ch) | MerquryQV_01
-    
+    asm_ch | bbstat_01    
+
     // Step 2: Arrow Polish with PacBio reads
     asm_arrow_ch = ARROW_02(asm_ch, pac_ch)
 
     // Step 3: Check quality of new assembly with Merqury 
     merylDB_ch | combine(asm_arrow_ch) | MerquryQV_03
+    asm_arrow_ch | bbstat_03
 
     // if the primary assembly came from falcon unzip, skip the 2nd arrow polish
     if(!params.falcon_unzip) {
@@ -367,6 +369,7 @@ workflow {
       asm_arrow2_ch = ARROW_04(asm_arrow_ch, pac_ch)
       // Step 5: Check quality of new assembly with Merqury 
       merylDB_ch | combine(asm_arrow2_ch) | MerquryQV_05
+      asm_arrow2_ch | bbstat_05
     } else {
       asm_arrow2_ch = asm_arrow_ch
     }
@@ -375,10 +378,12 @@ workflow {
     // Step 6: FreeBayes Polish with Illumina reads
     asm_freebayes_ch = FREEBAYES_06(asm_arrow_ch, pill_ch)
     merylDB_ch | combine(asm_freebayes_ch) | MerquryQV_07
+    asm_freebayes_ch | bbstat_07
 
     // Step 8: FreeBayes Polish with Illumina reads
     asm_freebayes2_ch = FREEBAYES_08(asm_freebayes_ch, pill_ch)
     merylDB_ch | combine(asm_freebayes2_ch) | MerquryQV_09
+    asm_freebayes2_ch | bbstat_09
 }
 
 def isuGIFHeader() {
