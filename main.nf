@@ -331,7 +331,7 @@ workflow {
     asm_arrow2_ch | view
     
     // Step 6: FreeBayes Polish with Illumina reads
-    asm_freebayes_ch = FREEBAYES_06(asm_arrow_ch, pill_ch, merylDB_ch)
+    asm_freebayes_ch = FREEBAYES_06(asm_arrow_ch, pill_ch)
     merylDB_ch | combine(asm_freebayes_ch) | MerquryQV_07
 
     // Step 8: FreeBayes Polish with Illumina reads
