@@ -5,4 +5,4 @@ module load bbtools
 
 echo "Assmbly stats of $assembly_fasta  according to bbtools stats.sh"
 
-stats.sh in=$assmbly.fasta out=${assembly_fasta.simpleName}
+stats.sh in=$assembly_fasta out=${assembly_fasta.simpleName}
