@@ -1,0 +1,42 @@
+N E X T F L O W  ~  version 20.07.1
+Launching `main.nf` [sick_noyce] - revision: 48d2370e06
+executor >  slurm (2061)
+[37/28238f] process > bz_to_gz (1)                   [100%] 1 of 1 ✔
+[2d/86062d] process > meryl_count (2)                [100%] 2 of 2 ✔
+[9a/726064] process > meryl_union                    [100%] 1 of 1 ✔
+[fe/7218ad] process > MerquryQV_01 (1)               [100%] 1 of 1 ✔
+[2e/7b09d3] process > bbstat_01 (1)                  [100%] 1 of 1 ✔
+[5a/6ef64a] process > ARROW_02:create_windows (1)    [100%] 1 of 1, cached: 1 ✔
+[c2/ecae5a] process > ARROW_02:pbmm2_index (1)       [100%] 1 of 1 ✔
+[b7/8419e2] process > ARROW_02:pbmm2_align (1)       [100%] 1 of 1 ✔
+[e2/adca69] process > ARROW_02:gcc_Arrow (83)        [100%] 508 of 508 ✔
+[23/c84cfc] process > ARROW_02:merge_consensus (1)   [100%] 1 of 1 ✔
+[ec/426ddf] process > MerquryQV_03 (1)               [100%] 1 of 1 ✔
+[8d/b30129] process > bbstat_03 (1)                  [100%] 1 of 1 ✔
+[27/a9dd18] process > ARROW_04:create_windows (1)    [100%] 1 of 1 ✔
+[36/405bb6] process > ARROW_04:pbmm2_index (1)       [100%] 1 of 1 ✔
+[41/fd8211] process > ARROW_04:pbmm2_align (1)       [100%] 1 of 1 ✔
+[5a/64e000] process > ARROW_04:gcc_Arrow (395)       [100%] 508 of 508 ✔
+[4e/25c528] process > ARROW_04:merge_consensus (1)   [100%] 1 of 1 ✔
+[2b/8fecc4] process > MerquryQV_05 (1)               [100%] 1 of 1 ✔
+[27/f34a63] process > bbstat_05 (1)                  [100%] 1 of 1 ✔
+[5b/ae95f3] process > FREEBAYES_06:create_windows... [100%] 1 of 1 ✔
+[ab/0e0eeb] process > FREEBAYES_06:align_shortrea... [100%] 1 of 1 ✔
+[86/7dfbab] process > FREEBAYES_06:freebayes (219)   [100%] 508 of 508 ✔
+[a6/c8c7f9] process > FREEBAYES_06:combineVCF (1)    [100%] 1 of 1 ✔
+[0a/76ec2b] process > FREEBAYES_06:vcf_to_fasta (1)  [100%] 1 of 1 ✔
+[ce/1ccb21] process > MerquryQV_07 (1)               [100%] 1 of 1 ✔
+[69/d37d4f] process > bbstat_07 (1)                  [100%] 1 of 1 ✔
+[c7/8c4013] process > FREEBAYES_08:create_windows... [100%] 1 of 1 ✔
+[1d/7f2c67] process > FREEBAYES_08:align_shortrea... [100%] 1 of 1 ✔
+[4c/b51b80] process > FREEBAYES_08:freebayes (413)   [100%] 508 of 508 ✔
+[07/83d4f8] process > FREEBAYES_08:combineVCF (1)    [100%] 1 of 1 ✔
+[72/41b0ed] process > FREEBAYES_08:vcf_to_fasta (1)  [100%] 1 of 1 ✔
+[6f/089263] process > MerquryQV_09 (1)               [100%] 1 of 1 ✔
+[0f/29d54a] process > bbstat_09 (1)                  [100%] 1 of 1 ✔
+
+Completed at: 04-Aug-2021 09:29:25
+Duration    : 19h 48m 42s
+CPU hours   : 83.6 (0% cached)
+Succeeded   : 2'061
+Cached      : 1
