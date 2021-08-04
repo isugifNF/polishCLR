@@ -24,30 +24,43 @@ Launching `main.nf` [condescending_gutenberg] - revision: 54771c06ba
   isugifNF/polishCLR  v1.0.0       
 ----------------------------------------------------
 
+Usage:
+ The typical command for running the pipeline are as follows:
+ nextflow run main.nf --primary_assembly "*fasta" --illumina_reads "*{1,2}.fastq.bz2" --pacbio_reads "*_subreads.bam" -resume
 
-   Usage:
-   The typical command for running the pipeline are as follows:
-   nextflow run main.nf --primary_assembly "*fasta" --illumina_reads "*{1,2}.fastq.bz2" --pacbio_reads "*_subreads.bam" -resume
+ Mandatory arguments:
+ --primary_assembly             genome assembly fasta file to polish
+ --illumina_reads               paired end illumina reads, to be used for Merqury QV scores, and freebayes polish primary assembly
+ --pacbio_reads                 pacbio reads in bam format, to be used to arrow polish primary assembly
+ --species                      if a string is given, rename the final assembly by species name [default:false]
 
-   Mandatory arguments:
-   --primary_assembly             genome assembly fasta file to polish
-   --illumina_reads               paired end illumina reads, to be used for Merqury QV scores, and freebayes polish primary assembly
-   --pacbio_reads                 pacbio reads in bam format, to be used to arrow polish primary assembly
+ Optional modifiers
+ --k                            kmer to use in MerquryQV scoring [default:21]
+ --same_specimen                if illumina and pacbio reads are from the same specimin [default: true].
+ --falcon_unzip                 if primary assembly has already undergone falcon unzip [default: false]. If true, will Arrow polish once instead of twice.
 
-   Optional modifiers
-   --k                            kmer to use in MerquryQV scoring [default:21]
-   --bzip                         if illumina paired reads are in bz2 format [default: true]. If true, will convert to gz.
-   --same_specimen                if illumina and pacbio reads are from the same specimin [default: true]. 
-   --falcon_unzip                 if primary assembly has already undergone falcon unzip [default: false]. If true, will Arrow polish once instead of twice.
+ Optional configuration arguments
+ --parallel_app                 Link to parallel executable [default: 'parallel']
+ --bzcat_app                    Link to bzcat executable [default: 'bzcat']
+ --pigz_app                     Link to pigz executable [default: 'pigz']
+ --meryl_app                    Link to meryl executable [default: 'meryl']
+ --merqury_sh                   Link to merqury script [default: '$MERQURY/merqury.sh']
+ --pbmm2_app                    Link to pbmm2 executable [default: 'pbmm2']
+ --samtools_app                 Link to samtools executable [default: 'samtools']
+ --gcpp_app                     Link to gcpp executable [default: 'gcpp']
+ --bwamem2_app                  Link to bwamem2 executable [default: 'bwa-mem2']
+ --freebayes_app                Link to freebayes executable [default: 'freebayes']
+ --bcftools_app                 Link to bcftools executable [default: 'bcftools']
+ --merfin_app                   Link to merfin executable [default: 'merfin']
 
-   Optional arguments:
-   --outdir                       Output directory to place final output [default: 'PolishCLR_Results']
-   --clusterOptions               Cluster options for slurm or sge profiles [default slurm: '-N 1 -n 40 -t 04:00:00'; default sge: ' ']
-   --threads                      Number of CPUs to use during each job [default: 40]
-   --queueSize                    Maximum number of jobs to be queued [default: 50]
-   --account                      Some HPCs require you supply an account name for tracking usage.  You can supply that here.
-   --help                         This usage statement.
-  ```
+ Optional arguments:
+ --outdir                       Output directory to place final output [default: 'PolishCLR_Results']
+ --clusterOptions               Cluster options for slurm or sge profiles [default slurm: '-N 1 -n 40 -t 04:00:00'; default sge: ' ']
+ --threads                      Number of CPUs to use during each job [default: 40]
+ --queueSize                    Maximum number of jobs to be queued [default: 50]
+ --account                      Some HPCs require you supply an account name for tracking usage.  You can supply that here.
+ --help                         This usage statement.
+```
   
 </details>
 
