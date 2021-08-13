@@ -72,6 +72,38 @@ For now, installing dependencies in a [miniconda](https://docs.conda.io/en/lates
 conda env create -f environment.yml -p ${PWD}/env/polishCLR_env
 ```
 
+<details><summary>Install `merfin` if not already in a module</summary>
+  
+https://github.com/arangrhie/merfin
+
+```
+alloc -N 1 -n 8 -p scavenger -t 04:00:00
+module load git
+module load gcc/8.1.0
+git clone https://github.com/arangrhie/merfin.git
+cd merfin/src
+make -j 8
+./merfin --version
+```
+  
+</details>
+
+<details><summary>Install `genomescope2.0` if not already in a module</summary>
+ 
+https://github.com/tbenavi1/genomescope2.0
+
+```
+git clone https://github.com/tbenavi1/genomescope2.0.git
+cd genomescope2.0
+emacs install.R       # edit to set 'local_lib_path = "/project/ag100pest/software/R_libs/"'
+module load r/3.4.1
+Rscript install.R
+emacs genomescope.R   # add the lib path to each library 'library(XXXXX, lib.loc = local_lib_path)'
+Rscript genomescope.R --help
+```
+  
+</details>
+
 ## Basic Run
 
 **Ceres HPC**
