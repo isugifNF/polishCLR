@@ -171,6 +171,7 @@ Output Directory
 PolishCLR_Results/
   |_ 00_Preprocess/               # Illumina bz2 reads converted to gz files
   |_ 01_MerquryQV/                # quality value of primary assembly (before polishing)
+  |_ 03_bbstat
   |_ 02_ArrowPolish/              # polished with pacbio reads
   |_ 03_MerquryQV/                # new quality value
   |_ 03_bbstat
