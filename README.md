@@ -127,23 +127,23 @@ Current progress:
 ```
 N E X T F L O W  ~  version 20.07.1
 Launching `main.nf` [special_bartik] - revision: 7cb2c8ac31
-executor >  slurm (9)
-[45/e5018c] process > bz_to_gz (1)                  [100%] 1 of 1 ✔
-[a7/a5b5a1] process > meryl_count (2)               [100%] 2 of 2 ✔
-[c2/81d8d5] process > meryl_union                   [100%] 1 of 1 ✔
-[d3/984a04] process > MerquryQV_01 (1)              [100%] 1 of 1 ✔
-[40/aa96c3] process > bbstat_01 (1)                 [100%] 1 of 1 ✔
-[03/9b95b5] process > ARROW_02:create_windows (1)   [100%] 1 of 1 ✔
-[62/7a60a8] process > ARROW_02:pbmm2_index (1)      [100%] 1 of 1 ✔
-[9a/42ade6] process > ARROW_02:pbmm2_align (1)      [  0%] 0 of 1      // pause, add in merfin as a check
-[-        ] process > ARROW_02:gcc_Arrow            -
-[-        ] process > ARROW_02:merge_consensus      -
-[-        ] process > MerquryQV_03                  -
-[-        ] process > bbstat_03                     -
-[-        ] process > ARROW_04:create_windows       -
-[-        ] process > ARROW_04:pbmm2_index          -
-[-        ] process > ARROW_04:pbmm2_align          -
-[-        ] process > ARROW_04:gcc_Arrow            -
+executor >  slurm (967)
+[45/e5018c] process > bz_to_gz (1)                 [100%] 1 of 1, cached: 1 ✔
+[a7/a5b5a1] process > meryl_count (2)              [100%] 2 of 2, cached: 2 ✔
+[c2/81d8d5] process > meryl_union                  [100%] 1 of 1, cached: 1 ✔
+[d3/984a04] process > MerquryQV_01 (1)             [100%] 1 of 1, cached: 1 ✔
+[40/aa96c3] process > bbstat_01 (1)                [100%] 1 of 1, cached: 1 ✔
+[03/9b95b5] process > ARROW_02:create_windows (1)  [100%] 1 of 1, cached: 1 ✔
+[62/7a60a8] process > ARROW_02:pbmm2_index (1)     [100%] 1 of 1, cached: 1 ✔
+[5c/5f0217] process > ARROW_02:pbmm2_align (1)     [100%] 1 of 1 ✔
+[1c/3b58a6] process > ARROW_02:gcc_Arrow (95)      [100%] 480 of 480 ✔
+[67/97354d] process > ARROW_02:merge_consensus (1) [100%] 1 of 1 ✔
+[e7/b6a605] process > MerquryQV_03 (1)             [100%] 1 of 1 ✔
+[41/b87aea] process > bbstat_03 (1)                [100%] 1 of 1 ✔
+[b2/2dc1e1] process > ARROW_04:create_windows (1)  [100%] 1 of 1 ✔
+[eb/f11dc2] process > ARROW_04:pbmm2_index (1)     [100%] 1 of 1 ✔
+[eb/9c76e8] process > ARROW_04:pbmm2_align (1)     [100%] 1 of 1 ✔
+[ea/6f9cb5] process > ARROW_04:gcc_Arrow (134)     [100%] 480 of 480 ✔ // pause, add in merfin as check
 [-        ] process > ARROW_04:merge_consensus      -
 [-        ] process > MerquryQV_05                  -
 [-        ] process > bbstat_05                     -
@@ -170,20 +170,19 @@ Output Directory
 ```
 PolishCLR_Results/
   |_ 00_Preprocess/               # Illumina bz2 reads converted to gz files
-  |_ 01_MerquryQV/                # quality value of primary assembly (before polishing)
-  |_ 03_bbstat
+  |_ 01_QV/                       # quality value of primary assembly (before polishing)
+  |  |_ MerquryQV/                # Merqury quality value and histogram plots
+  |  |_ bbstat/                   # bbstat quality value
   |_ 02_ArrowPolish/              # polished with pacbio reads
-  |_ 03_MerquryQV/                # new quality value
-  |_ 03_bbstat
+  |  |_ gccruns/                  # subfolder of vcf and fasta files per window
+  |  |_ 2_consensus.fasta         # arrow polished new consensus sequence
+  |_ 03_QV/                       # New merqury and bbstat quality values in subfolders
   |_ 04_ArrowPolish/              # polished again with pacbio reads
-  |_ 05_MerquryQV/                # new quality value
-  |_ 05_bbstat/                   # new quality value
+  |_ 05_QV/
   |_ 06_FreeBayesPolish/          # polished with illumina reads
-  |_ 07_MerquryQV/                 
-  |_ 07_bbstat/
+  |_ 07_QV/
   |_ 08_FreeBayesPolish/          # <= should contain final polished assembly 8_consensus.fasta
-  |_ 09_MerquryQV/
-  |_ 07_bbstat/ 
+  |_ 09_QV/ 
   |_ report.html
   |_ timeline.html         # <= runtime for each step
 ```
