@@ -234,7 +234,7 @@ workflow ARROW_04 {
 
     if (params.same_specimen) {
       /* calculate peak, and create a genome meryl db */
-      peak_ch = merylDB_ch | meryl_peak | splitText() { it.trim() }
+      peak_ch = channel.of("4")| combine(merylDB_ch) | meryl_peak | splitText() { it.trim() }
       asm_meryl = channel.of(params.k) | combine(asm_ch) | meryl_count
 
       /* prepare and run merfin polish */
