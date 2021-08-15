@@ -61,7 +61,7 @@ process bz_to_gz {
 
 // 01 Merqury: Quality value of primary assembly
 process meryl_count {
-    publishDir "${params.outdir}/01_MerquryQV", mode: 'symlink'
+    publishDir "${params.outdir}/01_QV", mode: 'symlink'
     input: tuple val(k), path(illumina_read)
     output: path("*.meryl")
     script:
@@ -69,7 +69,7 @@ process meryl_count {
 }
 
 process meryl_union {
-    publishDir "${params.outdir}/01_MerquryQV", mode: 'copy'
+    publishDir "${params.outdir}/01_QV", mode: 'copy'
     input: path(illumina_meryls)
     output: path("illumina.meryl")
     script:
@@ -77,7 +77,7 @@ process meryl_union {
 }
 
 process MerquryQV_01 {
-    publishDir "${params.outdir}/01_MerquryQV", mode: 'copy'
+    publishDir "${params.outdir}/01_QV/MerquryQV", mode: 'copy'
     input: tuple path(illumina_db), path(assembly_fasta)
     output: path("*")
     script:
@@ -86,7 +86,7 @@ process MerquryQV_01 {
 
 // 01 bbstat: Length distribtions of initial assembly
 process bbstat_01 {
-    publishDir "${params.outdir}/01_bbstat", mode: 'copy'
+    publishDir "${params.outdir}/01_QV/bbstat", mode: 'copy'
     input:  path(assembly_fasta)
     output: path("*")
     script:
@@ -119,7 +119,7 @@ process pbmm2_align {
 }
 
 process gcc_Arrow {
-    publishDir "${params.outdir}/0${i}_ArrowPolish", mode: 'symlink'
+    publishDir "${params.outdir}/0${i}_ArrowPolish/gccruns", mode: 'symlink'
     input: tuple val(i), path(pacbio_bam), path(pacbio_bai),  path(assembly_fasta), path(assembly_fai), val(window)
     output: tuple val("$i"), path("*.fasta"), path("*.vcf")
     script:
@@ -153,7 +153,7 @@ workflow ARROW_02 {
 }
 
 process MerquryQV_03 {
-    publishDir "${params.outdir}/03_MerquryQV", mode: 'copy'
+    publishDir "${params.outdir}/03_QV/MerquryQV", mode: 'copy'
     input: tuple path(illumina_db), path(assembly_fasta)
     output: path("*")
     script:
@@ -161,7 +161,7 @@ process MerquryQV_03 {
 }
 
 process bbstat_03 {
-    publishDir "${params.outdir}/03_bbstat", mode: 'copy'
+    publishDir "${params.outdir}/03_QV/bbstat", mode: 'copy'
     input:  path(assembly_fasta)
     output: path("*")
     script:
@@ -187,10 +187,11 @@ workflow ARROW_04 {
     fai_ch = create_windows.out | map { n -> n.get(0) }
 
     newasm_ch = channel.of("4") | combine(asm_ch) | pbmm2_index | combine(pac_ch) | pbmm2_align |
-      combine(asm_ch) | combine(fai_ch) | combine(win_ch) | gcc_Arrow | 
-      map { n -> [ n.get(0), n.get(2) ] } | groupTuple |
+      combine(asm_ch) | combine(fai_ch) | combine(win_ch) | gcc_Arrow //| 
+//      map { n -> [ n.get(0), n.get(2) ] } | groupTuple |
 //      combine(asm_ch) |  reshape_arrow  //| 
-      merge_consensus
+//      merge_consensus
+// pause here for merfin
   
   emit:
     newasm_ch
@@ -284,7 +285,7 @@ workflow FREEBAYES_06 {
 }
 
 process MerquryQV_07 {
-    publishDir "${params.outdir}/07_MerquryQV", mode: 'copy'
+    publishDir "${params.outdir}/07_QV/MerquryQV", mode: 'copy'
     input: tuple path(illumina_db), path(assembly_fasta)
     output: path("*")
     script:
@@ -292,7 +293,7 @@ process MerquryQV_07 {
 }
 
 process bbstat_07 {
-    publishDir "${params.outdir}/07_bbstat", mode: 'copy'
+    publishDir "${params.outdir}/07_QV/bbstat", mode: 'copy'
     input:  path(assembly_fasta)
     output: path("*")
     script:
@@ -361,29 +362,29 @@ workflow {
 
     // Step 3: Check quality of new assembly with Merqury 
     merylDB_ch | combine(asm_arrow_ch) | MerquryQV_03
-    asm_arrow_ch | bbstat_03
-
+      asm_arrow_ch | bbstat_03
+ 
     // if the primary assembly came from falcon unzip, skip the 2nd arrow polish
     if(!params.falcon_unzip) {
-      // Step 4: Arrow Polish with PacBio reads
-      asm_arrow2_ch = ARROW_04(asm_arrow_ch, pac_ch)
-      // Step 5: Check quality of new assembly with Merqury 
-      merylDB_ch | combine(asm_arrow2_ch) | MerquryQV_05
-      asm_arrow2_ch | bbstat_05
-    } else {
-      asm_arrow2_ch = asm_arrow_ch
-    }
-    asm_arrow2_ch | view
-    
-    // Step 6: FreeBayes Polish with Illumina reads
-    asm_freebayes_ch = FREEBAYES_06(asm_arrow_ch, pill_ch)
-    merylDB_ch | combine(asm_freebayes_ch) | MerquryQV_07
-    asm_freebayes_ch | bbstat_07
-
-    // Step 8: FreeBayes Polish with Illumina reads
-    asm_freebayes2_ch = FREEBAYES_08(asm_freebayes_ch, pill_ch)
-    merylDB_ch | combine(asm_freebayes2_ch) | MerquryQV_09
-    asm_freebayes2_ch | bbstat_09
+       // Step 4: Arrow Polish with PacBio reads
+       asm_arrow2_ch = ARROW_04(asm_arrow_ch, pac_ch)
+//       // Step 5: Check quality of new assembly with Merqury 
+//       // merylDB_ch | combine(asm_arrow2_ch) | MerquryQV_05
+//       // asm_arrow2_ch | bbstat_05
+     } else {
+       asm_arrow2_ch = asm_arrow_ch
+     }
+//     asm_arrow2_ch | view
+//     
+//     // Step 6: FreeBayes Polish with Illumina reads
+//     asm_freebayes_ch = FREEBAYES_06(asm_arrow_ch, pill_ch)
+//     merylDB_ch | combine(asm_freebayes_ch) | MerquryQV_07
+//     asm_freebayes_ch | bbstat_07
+// 
+//     // Step 8: FreeBayes Polish with Illumina reads
+//     asm_freebayes2_ch = FREEBAYES_08(asm_freebayes_ch, pill_ch)
+//     merylDB_ch | combine(asm_freebayes2_ch) | MerquryQV_09
+//     asm_freebayes2_ch | bbstat_09
 }
 
 def isuGIFHeader() {
