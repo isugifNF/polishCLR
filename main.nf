@@ -50,6 +50,13 @@ if (params.help || !params.primary_assembly || !params.illumina_reads || !params
   exit 0
 }
 
+// If user uses --profile, exit early. The param should be -profile (one hyphen)
+if ( params.profile ) {
+  helpMessage()
+  println("Instead of --profile, use -profile")
+  exit 0
+}
+
 // 00 Preprocess: Unzip any bz2 files
 process bz_to_gz {
     publishDir "${params.outdir}/00_Preprocess", mode: 'copy'
@@ -78,6 +85,7 @@ process meryl_union {
 
 process MerquryQV_01 {
     publishDir "${params.outdir}/01_QV/MerquryQV", mode: 'copy'
+    publishDir "${params.outdir}/01_QV", mode: 'copy', pattern: "merqury.qv"
     input: tuple path(illumina_db), path(assembly_fasta)
     output: path("*")
     script:
@@ -154,6 +162,7 @@ workflow ARROW_02 {
 
 process MerquryQV_03 {
     publishDir "${params.outdir}/03_QV/MerquryQV", mode: 'copy'
+    publishDir "${params.outdir}/03_QV", mode: 'copy', pattern: "merqury.qv"
     input: tuple path(illumina_db), path(assembly_fasta)
     output: path("*")
     script:
@@ -169,36 +178,81 @@ process bbstat_03 {
 }
 
 // 2nd Arrow run with merfin
+process meryl_peak {
+    publishDir "${params.outdir}/0${i}_ArrowPolish/merfin", mode: 'symlink'
+    input: tuple val(i), path(illumina_meryl)
+    output: path("peak.txt")
+    script:
+    template 'meryl_peak.sh'
+}
+
+process meryl_genome {
+    publishDir "${params.outdir}/0{i}_ArrowPolish/merfin", mode: 'symlink'
+    input: tuple val(k), path(illumina_read)
+    output: path("*.meryl")
+    script:
+    template 'meryl_count.sh'
+}
+
+process combineVCF_arrow {
+    publishDir "${params.outdir}/0${i}_ArrowPolish/merfin", mode: 'symlink'
+    input: tuple val(i), path(vcfs)
+    output: tuple val(i), path("${i}_consensus.vcf")
+    script:
+    template 'combineVCF.sh'
+}
+
 process reshape_arrow {
-    publishDir "${params.outdir}/0${i}_MerfinPolish", mode: 'copy'
-    input: tuple val(i), path(vcf), path(asm)
-    output: path("${i}_merged.reshaped.vcf.gz")
+    publishDir "${params.outdir}/0${i}_ArrowPolish/merfin", mode: 'symlink'
+    input: tuple val(i), path(vcf)
+    output: tuple val(i), path("${i}_merged.reshaped.vcf.gz")
     script:
     template 'reshape_arrow.sh'
+}
+
+process merfin_polish_arrow {
+    publishDir "${params.outdir}/0${i}_ArrowPolish/merfin", mode: 'symlink'
+    input: tuple val(i), path(vcf), path(genome_fasta), path(genome_meryl), val(peak), path(meryldb)
+    output: path("*")
+    script:
+    template 'merfin_polish_arrow.sh'
 }
 
 workflow ARROW_04 {
   take:
     asm_ch
     pac_ch
+    merylDB_ch
+    
   main:
     win_ch = channel.of("4") | combine(asm_ch) | create_windows | 
       map { n -> n.get(1) } | splitText() {it.trim() }
     fai_ch = create_windows.out | map { n -> n.get(0) }
 
-    newasm_ch = channel.of("4") | combine(asm_ch) | pbmm2_index | combine(pac_ch) | pbmm2_align |
-      combine(asm_ch) | combine(fai_ch) | combine(win_ch) | gcc_Arrow //| 
-//      map { n -> [ n.get(0), n.get(2) ] } | groupTuple |
-//      combine(asm_ch) |  reshape_arrow  //| 
-//      merge_consensus
-// pause here for merfin
+    arrow_run_ch = channel.of("4") | combine(asm_ch) | pbmm2_index | combine(pac_ch) | pbmm2_align |
+      combine(asm_ch) | combine(fai_ch) | combine(win_ch) | gcc_Arrow 
+
+    if (params.same_specimen) {
+      /* calculate peak, and create a genome meryl db */
+      peak_ch = merylDB_ch | meryl_peak | splitText() { it.trim() }
+      asm_meryl = channel.of(params.k) | combine(asm_ch) | meryl_count
+
+      /* prepare and run merfin polish */
+      newasm_ch = arrow_run_ch | map { n -> [ n.get(0), n.get(2) ] } | groupTuple |
+        combineVCF_arrow | reshape_arrow | combine(asm_ch) | combine(asm_meryl) | combine(peak_ch) |
+        combine(merylDB_ch) | merfin_polish_arrow
+    } else {
+      newasm_ch = arrow_run_ch | map { n -> [ n.get(0), n.get(1) ] } | groupTuple |
+        merge_consensus
+    }
   
   emit:
     newasm_ch
 }
 
 process MerquryQV_05 {
-    publishDir "${params.outdir}/05_MerquryQV", mode: 'copy'
+    publishDir "${params.outdir}/05_QV/MerquryQV", mode: 'copy'
+    publishDir "${params.outdir}/05_QV", mode: 'copy', pattern: "merqury.qv"
     input: tuple path(illumina_db), path(assembly_fasta)
     output: path("*")
     script:
@@ -206,7 +260,7 @@ process MerquryQV_05 {
 }
 
 process bbstat_05 {
-    publishDir "${params.outdir}/05_bbstat", mode: 'copy'
+    publishDir "${params.outdir}/05_QV/bbstat", mode: 'copy'
     input:  path(assembly_fasta)
     output: path("*")
     script:
@@ -216,7 +270,7 @@ process bbstat_05 {
 
 // 1st FreeBayes Polish
 process align_shortreads {
-    publishDir "${params.outdir}/0${i}_FreeBayesPolish", mode: 'symlink'
+    publishDir "${params.outdir}/0${i}_FreeBayesPolish/bam", mode: 'symlink'
     input: tuple val(i), path(assembly_fasta), path(illumina_one), path(illumina_two)
     output: tuple val("$i"), path("*.bam"), path("*.bai")
     script:
@@ -225,14 +279,14 @@ process align_shortreads {
 // -m 5G -@ 36
 
 process freebayes {
-    publishDir "${params.outdir}/0${i}_FreeBayesPolish", mode: 'symlink'
+    publishDir "${params.outdir}/0${i}_FreeBayesPolish/vcf", mode: 'symlink'
     input: tuple val(i), path(illumina_bam), path(illumina_bai), path(assembly_fasta), path(assembly_fai), val(window)
     output: tuple val(i), path("*.vcf")
     script:
     template 'freebayes.sh'
 }
 
-process combineVCF {
+process combineVCF_fb {
     publishDir "${params.outdir}/0${i}_FreeBayesPolish", mode: 'symlink'
     input: tuple val(i), path(vcfs)
     output: tuple val(i), path("${i}_consensus.vcf")
@@ -241,7 +295,7 @@ process combineVCF {
 }
 
 process jellyfish_peak {
-    publishDir "${params.outdir}/0${i}_MerfinPolish", mode: 'copy'
+    publishDir "${params.outdir}/0${i}_FreeBayesPolish/merfin", mode: 'copy'
     input: tuple val(i), path(illumina_reads)
     output: path("*")
     script:
@@ -249,7 +303,7 @@ process jellyfish_peak {
 }
 
 process merfin_polish {
-    publishDir "${params.outdir}/0${i}_MerfinPolish", mode: 'symlink'
+    publishDir "${params.outdir}/0${i}_FreeBayesPolish/merfin", mode: 'symlink'
     input: tuple val(i), path(vcf), path(genome_fasta), val(peak), path(meryldb)
     output: path("*")
     script:
@@ -286,6 +340,7 @@ workflow FREEBAYES_06 {
 
 process MerquryQV_07 {
     publishDir "${params.outdir}/07_QV/MerquryQV", mode: 'copy'
+    publishDir "${params.outdir}/07_QV", mode: 'copy', pattern: "merqury.qv"
     input: tuple path(illumina_db), path(assembly_fasta)
     output: path("*")
     script:
@@ -322,7 +377,8 @@ workflow FREEBAYES_08 {
 }
 
 process MerquryQV_09 {
-    publishDir "${params.outdir}/09_MerquryQV", mode: 'copy'
+    publishDir "${params.outdir}/09_QV/MerquryQV", mode: 'copy'
+    publishDir "${params.outdir}/09_QV", mode: 'copy', pattern: "merqury.qv"
     input: tuple path(illumina_db), path(assembly_fasta)
     output: path("*")
     script:
@@ -330,7 +386,7 @@ process MerquryQV_09 {
 }
 
 process bbstat_09 {
-    publishDir "${params.outdir}/09_bbstat", mode: 'copy'
+    publishDir "${params.outdir}/09_QV/bbstat", mode: 'copy'
     input:  path(assembly_fasta)
     output: path("*")
     script:
@@ -367,7 +423,7 @@ workflow {
     // if the primary assembly came from falcon unzip, skip the 2nd arrow polish
     if(!params.falcon_unzip) {
        // Step 4: Arrow Polish with PacBio reads
-       asm_arrow2_ch = ARROW_04(asm_arrow_ch, pac_ch)
+       asm_arrow2_ch = ARROW_04(asm_arrow_ch, pac_ch, merylDB_ch)
 //       // Step 5: Check quality of new assembly with Merqury 
 //       // merylDB_ch | combine(asm_arrow2_ch) | MerquryQV_05
 //       // asm_arrow2_ch | bbstat_05
