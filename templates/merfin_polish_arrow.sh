@@ -9,9 +9,9 @@ ${merfin_app} -polish \
   -vcf ${vcf} \
   -output ${i}_merfin
 # merfin -polish \
-#   -sequence ${GENOME_FASTA} \
+#   -sequence GENOME_FASTA \
 #   -seqmers genome.meryl \
-#   -readmers ${ILLUMINA_MERYL} \
+#   -readmers ILLUMINA_MERYL \
 #   -peak 79 \
 #   -vcf arrow_merged.reshaped.vcf.gz \
 #   -output arrow_merfinpolish.gz > arrow_merfinpolish.out

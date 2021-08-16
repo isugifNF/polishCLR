@@ -205,7 +205,7 @@ process combineVCF_arrow {
 process reshape_arrow {
     publishDir "${params.outdir}/0${i}_ArrowPolish/merfin", mode: 'symlink'
     input: tuple val(i), path(vcf)
-    output: tuple val(i), path("${i}_merged.reshaped.vcf.gz")
+    output: tuple val(i), path("*.reshaped.vcf.gz")
     script:
     template 'reshape_arrow.sh'
 }
@@ -235,7 +235,7 @@ workflow ARROW_04 {
     if (params.same_specimen) {
       /* calculate peak, and create a genome meryl db */
       peak_ch = channel.of("4")| combine(merylDB_ch) | meryl_peak | splitText() { it.trim() }
-      asm_meryl = channel.of(params.k) | combine(asm_ch) | meryl_count
+      asm_meryl = channel.of(params.k) | combine(asm_ch) | meryl_genome
 
       /* prepare and run merfin polish */
       newasm_ch = arrow_run_ch | map { n -> [ n.get(0), n.get(2) ] } | groupTuple |
