@@ -294,7 +294,7 @@ process freebayes {
     template 'freebayes.sh'
 }
 
-process combineVCF_fb {
+process combineVCF {
     publishDir "${params.outdir}/0${i}_FreeBayesPolish", mode: 'symlink'
     input: tuple val(i), path(vcfs)
     output: tuple val(i), path("${i}_consensus.vcf")
