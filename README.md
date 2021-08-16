@@ -143,8 +143,13 @@ executor >  slurm (967)
 [b2/2dc1e1] process > ARROW_04:create_windows (1)  [100%] 1 of 1 ✔
 [eb/f11dc2] process > ARROW_04:pbmm2_index (1)     [100%] 1 of 1 ✔
 [eb/9c76e8] process > ARROW_04:pbmm2_align (1)     [100%] 1 of 1 ✔
-[ea/6f9cb5] process > ARROW_04:gcc_Arrow (134)     [100%] 480 of 480 ✔ // pause, add in merfin as check
-[-        ] process > ARROW_04:merge_consensus      -
+[ea/6f9cb5] process > ARROW_04:gcc_Arrow (134)     [100%] 480 of 480 ✔ 
+[cf/53361f] process > ARROW_04:meryl_peak (1)      [100%] 1 of 1, cached: 1 ✔
+[20/5f153d] process > ARROW_04:meryl_genome (1)    [100%] 1 of 1, cached: 1 ✔
+[3e/7bef6a] process > ARROW_04:combineVCF_arrow (1)[100%] 1 of 1, cached: 1 ✔
+[36/40b176] process > ARROW_04:reshape_arrow (1)   [100%] 1 of 1, cached: 1 ✔
+[aa/2bf085] process > ARROW_04:merfin_polish_arro..[  0%] 0 of 1         // <= hoping merfin works... running
+[-        ] process > ARROW_04:vcf_to_fasta         -
 [-        ] process > MerquryQV_05                  -
 [-        ] process > bbstat_05                     -
 [-        ] process > FREEBAYES_06:create_windows   -
@@ -173,10 +178,11 @@ PolishCLR_Results/
   |_ 01_QV/                       # quality value of primary assembly (before polishing)
   |  |_ MerquryQV/                # Merqury quality value and histogram plots
   |  |_ bbstat/                   # bbstat quality value
+  |  |_ merqury.qv                # <= text file with only the merqury qv value, can use as a checkpoint
   |_ 02_ArrowPolish/              # polished with pacbio reads
   |  |_ gccruns/                  # subfolder of vcf and fasta files per window
   |  |_ 2_consensus.fasta         # arrow polished new consensus sequence
-  |_ 03_QV/                       # New merqury and bbstat quality values in subfolders
+  |_ 03_QV/                       # New merqury and bbstat quality values in subfolders. Continue with the assembly with the higher merqury.qv value
   |_ 04_ArrowPolish/              # polished again with pacbio reads
   |_ 05_QV/
   |_ 06_FreeBayesPolish/          # polished with illumina reads
