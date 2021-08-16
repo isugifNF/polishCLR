@@ -1,12 +1,9 @@
 #! /usr/bin/env bash
 
-
-
-
 ${merfin_app} -polish \
   -sequence ${genome_fasta} \
+  -seqmers ${genome_meryl} \
   -readmers ${meryldb} \
   -peak ${peak} \
-  -prob lookup_table.txt \
   -vcf ${vcf} \
   -output ${i}_merfin
