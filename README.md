@@ -148,7 +148,10 @@ executor >  slurm (967)
 [20/5f153d] process > ARROW_04:meryl_genome (1)    [100%] 1 of 1, cached: 1 ✔
 [3e/7bef6a] process > ARROW_04:combineVCF_arrow (1)[100%] 1 of 1, cached: 1 ✔
 [36/40b176] process > ARROW_04:reshape_arrow (1)   [100%] 1 of 1, cached: 1 ✔
-[aa/2bf085] process > ARROW_04:merfin_polish_arro..[  0%] 0 of 1         // <= hoping merfin works... running
+[55/aca211] process > ARROW_04:merfin_polish_arro..[  0%] 0 of 1  // <= Merfin ran to comletion! Just need to get new polished sequence and qv score
+[-        ] process > ARROW_04:vcf_to_fasta_arrow   -
+[-        ] process > MerquryQV_05                  -
+[-        ] process > bbstat_05                     -
 [-        ] process > ARROW_04:vcf_to_fasta         -
 [-        ] process > MerquryQV_05                  -
 [-        ] process > bbstat_05                     -

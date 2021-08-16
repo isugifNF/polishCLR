@@ -213,9 +213,17 @@ process reshape_arrow {
 process merfin_polish_arrow {
     publishDir "${params.outdir}/0${i}_ArrowPolish/merfin", mode: 'symlink'
     input: tuple val(i), path(vcf), path(genome_fasta), path(genome_meryl), val(peak), path(meryldb)
-    output: path("*")
+    output: tuple val("$i"), path("*merfin.polish.vcf")
     script:
     template 'merfin_polish_arrow.sh'
+}
+
+process vcf_to_fasta_arrow {
+    publishDir "${params.outdir}/0${i}_ArrowPolish", mode: 'symlink'
+    input: tuple val(i), path(vcf), path(genome_fasta)
+    output: path("${i}_consensus.fasta")
+    script:
+    template 'vcf_to_fasta.sh'
 }
 
 workflow ARROW_04 {
@@ -240,7 +248,7 @@ workflow ARROW_04 {
       /* prepare and run merfin polish */
       newasm_ch = arrow_run_ch | map { n -> [ n.get(0), n.get(2) ] } | groupTuple |
         combineVCF_arrow | reshape_arrow | combine(asm_ch) | combine(asm_meryl) | combine(peak_ch) |
-        combine(merylDB_ch) | merfin_polish_arrow
+        combine(merylDB_ch) | merfin_polish_arrow | combine(asm_ch) | vcf_to_fasta_arrow
     } else {
       newasm_ch = arrow_run_ch | map { n -> [ n.get(0), n.get(1) ] } | groupTuple |
         merge_consensus
@@ -424,9 +432,9 @@ workflow {
     if(!params.falcon_unzip) {
        // Step 4: Arrow Polish with PacBio reads
        asm_arrow2_ch = ARROW_04(asm_arrow_ch, pac_ch, merylDB_ch)
-//       // Step 5: Check quality of new assembly with Merqury 
-//       // merylDB_ch | combine(asm_arrow2_ch) | MerquryQV_05
-//       // asm_arrow2_ch | bbstat_05
+       // Step 5: Check quality of new assembly with Merqury 
+       merylDB_ch | combine(asm_arrow2_ch) | MerquryQV_05
+       asm_arrow2_ch | bbstat_05
      } else {
        asm_arrow2_ch = asm_arrow_ch
      }
