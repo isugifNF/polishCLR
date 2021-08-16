@@ -152,13 +152,13 @@ executor >  slurm (967)
 [d3/919202] process > ARROW_04:vcf_to_fasta_arrow..[100%] 1 of 1 ✔
 [de/5a06a8] process > MerquryQV_05 (1)             [100%] 1 of 1 ✔   // Wow, QV score of 41.1038, use 2nd arrow polish and pass to FreeBayes
 [a7/abfafd] process > bbstat_05 (1)                [100%] 1 of 1 ✔
-[-        ] process > FREEBAYES_06:create_windows   -
-[-        ] process > FREEBAYES_06:align_shortreads -
-[-        ] process > FREEBAYES_06:freebayes        -
-[-        ] process > FREEBAYES_06:combineVCF       -
-[-        ] process > FREEBAYES_06:vcf_to_fasta     -
-[-        ] process > MerquryQV_07                  -
-[-        ] process > bbstat_07                     -
+[8a/17ed90] process > FREEBAYES_06:create_windows..[100%] 1 of 1 ✔
+[20/1cbb5c] process > FREEBAYES_06:align_shortrea..[100%] 1 of 1 ✔
+[7f/f6072a] process > FREEBAYES_06:freebayes (283) [100%] 480 of 480 ✔
+[72/fb44a3] process > FREEBAYES_06:combineVCF (1)  [100%] 1 of 1 ✔
+[2d/9e6ba9] process > FREEBAYES_06:vcf_to_fasta (1)[100%] 1 of 1 ✔
+[b3/9691ad] process > MerquryQV_07 (1)             [100%] 1 of 1 ✔    // QV value of 42.7133, toggle on merfin and check score again
+[04/3103f6] process > bbstat_07 (1)                [100%] 1 of 1 ✔
 [-        ] process > FREEBAYES_08:create_windows   -
 [-        ] process > FREEBAYES_08:align_shortreads -
 [-        ] process > FREEBAYES_08:freebayes        -
