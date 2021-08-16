@@ -440,11 +440,11 @@ workflow {
      }
 //     asm_arrow2_ch | view
 //     
-//     // Step 6: FreeBayes Polish with Illumina reads
-//     asm_freebayes_ch = FREEBAYES_06(asm_arrow_ch, pill_ch)
-//     merylDB_ch | combine(asm_freebayes_ch) | MerquryQV_07
-//     asm_freebayes_ch | bbstat_07
-// 
+     // Step 6: FreeBayes Polish with Illumina reads
+     asm_freebayes_ch = FREEBAYES_06(asm_arrow2_ch, pill_ch)
+     merylDB_ch | combine(asm_freebayes_ch) | MerquryQV_07
+     asm_freebayes_ch | bbstat_07
+ 
 //     // Step 8: FreeBayes Polish with Illumina reads
 //     asm_freebayes2_ch = FREEBAYES_08(asm_freebayes_ch, pill_ch)
 //     merylDB_ch | combine(asm_freebayes2_ch) | MerquryQV_09

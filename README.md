@@ -131,14 +131,14 @@ executor >  slurm (967)
 [45/e5018c] process > bz_to_gz (1)                 [100%] 1 of 1, cached: 1 ✔
 [a7/a5b5a1] process > meryl_count (2)              [100%] 2 of 2, cached: 2 ✔
 [c2/81d8d5] process > meryl_union                  [100%] 1 of 1, cached: 1 ✔
-[d3/984a04] process > MerquryQV_01 (1)             [100%] 1 of 1, cached: 1 ✔
+[d3/984a04] process > MerquryQV_01 (1)             [100%] 1 of 1, cached: 1 ✔ // QV score of 31.1459
 [40/aa96c3] process > bbstat_01 (1)                [100%] 1 of 1, cached: 1 ✔
 [03/9b95b5] process > ARROW_02:create_windows (1)  [100%] 1 of 1, cached: 1 ✔
 [62/7a60a8] process > ARROW_02:pbmm2_index (1)     [100%] 1 of 1, cached: 1 ✔
 [5c/5f0217] process > ARROW_02:pbmm2_align (1)     [100%] 1 of 1 ✔
 [1c/3b58a6] process > ARROW_02:gcc_Arrow (95)      [100%] 480 of 480 ✔
 [67/97354d] process > ARROW_02:merge_consensus (1) [100%] 1 of 1 ✔
-[e7/b6a605] process > MerquryQV_03 (1)             [100%] 1 of 1 ✔
+[e7/b6a605] process > MerquryQV_03 (1)             [100%] 1 of 1 ✔  // QV score of 38.7086
 [41/b87aea] process > bbstat_03 (1)                [100%] 1 of 1 ✔
 [b2/2dc1e1] process > ARROW_04:create_windows (1)  [100%] 1 of 1 ✔
 [eb/f11dc2] process > ARROW_04:pbmm2_index (1)     [100%] 1 of 1 ✔
@@ -148,13 +148,10 @@ executor >  slurm (967)
 [20/5f153d] process > ARROW_04:meryl_genome (1)    [100%] 1 of 1, cached: 1 ✔
 [3e/7bef6a] process > ARROW_04:combineVCF_arrow (1)[100%] 1 of 1, cached: 1 ✔
 [36/40b176] process > ARROW_04:reshape_arrow (1)   [100%] 1 of 1, cached: 1 ✔
-[55/aca211] process > ARROW_04:merfin_polish_arro..[  0%] 0 of 1  // <= Merfin ran to comletion! Just need to get new polished sequence and qv score
-[-        ] process > ARROW_04:vcf_to_fasta_arrow   -
-[-        ] process > MerquryQV_05                  -
-[-        ] process > bbstat_05                     -
-[-        ] process > ARROW_04:vcf_to_fasta         -
-[-        ] process > MerquryQV_05                  -
-[-        ] process > bbstat_05                     -
+[55/aca211] process > ARROW_04:merfin_polish_arro..[100%] 1 of 1 ✔
+[d3/919202] process > ARROW_04:vcf_to_fasta_arrow..[100%] 1 of 1 ✔
+[de/5a06a8] process > MerquryQV_05 (1)             [100%] 1 of 1 ✔   // Wow, QV score of 41.1038, use 2nd arrow polish and pass to FreeBayes
+[a7/abfafd] process > bbstat_05 (1)                [100%] 1 of 1 ✔
 [-        ] process > FREEBAYES_06:create_windows   -
 [-        ] process > FREEBAYES_06:align_shortreads -
 [-        ] process > FREEBAYES_06:freebayes        -
