@@ -423,7 +423,7 @@ process bbstat_09 {
 workflow {
     // Setup input channels, starting assembly (asm), Illumina reads (ill), and pacbio reads (pac)
     if( params.mito_assembly ){
-      mito_ch = channel.of(params.mito_assembly, checkIfExists:true)
+      mito_ch = channel.fromPath(params.mito_assembly, checkIfExists:true)
       asm_ch = channel.fromPath(params.primary_assembly, checkIfExists:true) | combine(mito_ch) | addMito
     } else {
       asm_ch = channel.fromPath(params.primary_assembly, checkIfExists:true)
