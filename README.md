@@ -152,17 +152,21 @@ executor >  slurm (967)
 [d3/919202] process > ARROW_04:vcf_to_fasta_arrow..[100%] 1 of 1 ✔
 [de/5a06a8] process > MerquryQV_05 (1)             [100%] 1 of 1 ✔   // Wow, QV score of 41.1038, use 2nd arrow polish and pass to FreeBayes
 [a7/abfafd] process > bbstat_05 (1)                [100%] 1 of 1 ✔
-[8a/17ed90] process > FREEBAYES_06:create_windows..[100%] 1 of 1 ✔
-[20/1cbb5c] process > FREEBAYES_06:align_shortrea..[100%] 1 of 1 ✔
-[7f/f6072a] process > FREEBAYES_06:freebayes (283) [100%] 480 of 480 ✔
-[72/fb44a3] process > FREEBAYES_06:combineVCF (1)  [100%] 1 of 1 ✔
-[2d/9e6ba9] process > FREEBAYES_06:vcf_to_fasta (1)[100%] 1 of 1 ✔
-[b3/9691ad] process > MerquryQV_07 (1)             [100%] 1 of 1 ✔    // QV value of 42.7133, toggle on merfin and check score again
-[04/3103f6] process > bbstat_07 (1)                [100%] 1 of 1 ✔
-[-        ] process > FREEBAYES_08:create_windows   -
-[-        ] process > FREEBAYES_08:align_shortreads -
+[8a/17ed90] process > FREEBAYES_06:create_windows..[100%] 1 of 1, cached: 1 ✔
+[4d/e8cd59] process > FREEBAYES_06:meryl_genome_f..[100%] 1 of 1, cached: 1 ✔
+[20/1cbb5c] process > FREEBAYES_06:align_shortrea..[100%] 1 of 1, cached: 1 ✔
+[74/6a11c5] process > FREEBAYES_06:freebayes (475) [100%] 480 of 480, cache...
+[72/fb44a3] process > FREEBAYES_06:combineVCF (1)  [100%] 1 of 1, cached: 1 ✔
+[5c/05ecb1] process > FREEBAYES_06:merfin_polish (1[100%] 1 of 1, cached: 1 ✔
+[38/f8c31b] process > FREEBAYES_06:vcf_to_fasta (1)[100%] 1 of 1 ✔
+[a3/c96d68] process > MerquryQV_07 (1)             [100%] 1 of 1 ✔  // QV without merfin 42.7133, QV with merfin 45.0122
+[69/48a675] process > bbstat_07 (1)                [100%] 1 of 1 ✔
+[60/91de55] process > FREEBAYES_08:create_windows..[100%] 1 of 1 ✔
+[ee/927c53] process > FREEBAYES_08:meryl_genome_f..[100%] 1 of 1 ✔
+[b1/a1dfef] process > FREEBAYES_08:align_shortrea..[  0%] 0 of 1
 [-        ] process > FREEBAYES_08:freebayes        -
 [-        ] process > FREEBAYES_08:combineVCF       -
+[-        ] process > FREEBAYES_08:merfin_polish    -
 [-        ] process > FREEBAYES_08:vcf_to_fasta     -
 [-        ] process > MerquryQV_09                  -
 [-        ] process > bbstat_09                     -

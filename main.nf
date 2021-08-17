@@ -350,7 +350,7 @@ workflow FREEBAYES_06 {
     new_asm_ch = channel.of("6") | combine(asm_ch) | combine(ill_ch.collect()) | align_shortreads |
       combine(asm_ch) | combine(fai_ch) | combine(win_ch) |
       freebayes | groupTuple | combineVCF | combine(asm_ch) | 
-      combine(asm_meryl) | combine(peak_ch) | combine(merylDB_ch) |  merfin_polish |
+      combine(asm_meryl) | combine(peak_ch) | combine(merylDB_ch) |  merfin_polish | combine(asm_ch) |
       vcf_to_fasta
   emit:
     new_asm_ch
@@ -389,7 +389,7 @@ workflow FREEBAYES_08 {
     new_asm_ch = channel.of("8") | combine(asm_ch) | combine(ill_ch.collect()) | align_shortreads |
       combine(asm_ch) | combine(fai_ch) | combine(win_ch) |
       freebayes | groupTuple | combineVCF | combine(asm_ch) |
-      // combine(peak_ch) | combine(merylDB_ch) |  merfin_polish |
+      combine(asm_meryl) | combine(peak_ch) | combine(merylDB_ch) |  merfin_polish | combine(asm_ch) |
       vcf_to_fasta
   emit:
     new_asm_ch
@@ -470,8 +470,9 @@ workflow {
 //     asm_arrow2_ch | view
 //     
      // Step 6: FreeBayes Polish with Illumina reads
-     peak_ch = channel.of("6") | combine( pill_ch.collect() | map { n-> [n]} ) | jellyfish_peak | splitText() { it.trim()}
-     peak_ch | view
+     //peak_ch = channel.of("6") | combine( pill_ch.collect() | map { n-> [n]} ) | jellyfish_peak | splitText() { it.trim()}
+     //peak_ch | view
+     peak_ch = channel.of("79") // fix this later
      asm_freebayes_ch = FREEBAYES_06(asm_arrow2_ch, pill_ch, peak_ch, merylDB_ch)
      merylDB_ch | combine(asm_freebayes_ch) | MerquryQV_07
      asm_freebayes_ch | bbstat_07
