@@ -67,9 +67,23 @@ process bz_to_gz {
     template 'bz_to_gz.sh'
 }
 
-// 01 Merqury: Quality value of primary assembly
+// concat genome and mito together
+process addMito {
+    publishDir "${params.outdir}/00_Preprocess", mode: 'copy'
+    input: tuple path(asm_file), path(mito_file)
+    output: path("${asm_file.simpleName}_mito.fasta")
+    script:
+    """
+    #! /usr/bin/env bash
+    cat ${asm_file} > ${asm_file.simpleName}_mito.fasta
+    echo "" >> ${asm_file.simpleName}_mito.fasta
+    cat ${mito_file} >> ${asm_file.simpleName}_mito.fasta
+    """
+}
+
+// create meryl database for merqury qv and merfin
 process meryl_count {
-    publishDir "${params.outdir}/01_QV", mode: 'symlink'
+    publishDir "${params.outdir}/00_Preprocess", mode: 'symlink'
     input: tuple val(k), path(illumina_read)
     output: path("*.meryl")
     script:
@@ -77,13 +91,23 @@ process meryl_count {
 }
 
 process meryl_union {
-    publishDir "${params.outdir}/01_QV", mode: 'copy'
+    publishDir "${params.outdir}/00_Preprocess", mode: 'copy'
     input: path(illumina_meryls)
     output: path("illumina.meryl")
     script:
     template 'meryl_union.sh'
 }
 
+// calculate illumina peak for merfin
+process meryl_peak {
+    publishDir "${params.outdir}/00_Preprocess", mode: 'symlink'
+    input: tuple val(i), path(illumina_meryl)
+    output: tuple path("peak.txt"), path("illumina.hist")
+    script:
+    template 'meryl_peak.sh'
+}
+
+// 01 Merqury QV value
 process MerquryQV_01 {
     publishDir "${params.outdir}/01_QV/MerquryQV", mode: 'copy'
     publishDir "${params.outdir}/01_QV", mode: 'copy', pattern: "merqury.qv"
@@ -179,14 +203,6 @@ process bbstat_03 {
 }
 
 // 2nd Arrow run with merfin
-process meryl_peak {
-    publishDir "${params.outdir}/0${i}_ArrowPolish/merfin", mode: 'symlink'
-    input: tuple val(i), path(illumina_meryl)
-    output: path("peak.txt")
-    script:
-    template 'meryl_peak.sh'
-}
-
 process meryl_genome {
     publishDir "${params.outdir}/04_ArrowPolish/merfin", mode: 'symlink'
     input: tuple val(k), path(illumina_read)
@@ -216,7 +232,7 @@ process merfin_polish_arrow {
     input: tuple val(i), path(vcf), path(genome_fasta), path(genome_meryl), val(peak), path(meryldb)
     output: tuple val("$i"), path("*merfin.polish.vcf")
     script:
-    template 'merfin_polish_arrow.sh'
+    template 'merfin_polish.sh'
 }
 
 process vcf_to_fasta_arrow {
@@ -231,6 +247,7 @@ workflow ARROW_04 {
   take:
     asm_ch
     pac_ch
+    peak_ch
     merylDB_ch
     
   main:
@@ -242,8 +259,7 @@ workflow ARROW_04 {
       combine(asm_ch) | combine(fai_ch) | combine(win_ch) | gcc_Arrow 
 
     if (params.same_specimen) {
-      /* calculate peak, and create a genome meryl db */
-      peak_ch = channel.of("4")| combine(merylDB_ch) | meryl_peak | splitText() { it.trim() }
+      /* create a genome meryl db */
       asm_meryl = channel.of(params.k) | combine(asm_ch) | meryl_genome
 
       /* prepare and run merfin polish */
@@ -301,14 +317,6 @@ process combineVCF {
     output: tuple val(i), path("${i}_consensus.vcf")
     script:
     template 'combineVCF.sh'
-}
-
-process jellyfish_peak {
-    publishDir "${params.outdir}/0${i}_FreeBayesPolish/merfin", mode: 'copy'
-    input: tuple val(i), path(illumina_reads)
-    output: path("*")
-    script:
-    template 'jellyfish_peak.sh'
 }
 
 process meryl_genome_fb {
@@ -412,30 +420,17 @@ process bbstat_09 {
     template 'bbstats.sh'
 }
 
-process addMito {
-    publishDir "${params.outdir}/00_Preprocess", mode: 'copy'
-    input: tuple path(asm_file), path(mito_file)
-    output: path("${asm_file.simpleName}_mito.fasta")
-    script:
-    """
-    #! /usr/bin/env bash
-    cat ${asm_file} ${mito_file} > ${asm_file.simpleName}_mito.fasta
-    """
-}
-
 workflow {
     // Setup input channels, starting assembly (asm), Illumina reads (ill), and pacbio reads (pac)
-    asm_ch = channel.fromPath(params.primary_assembly, checkIfExists:true)
+    if( params.mito_assembly ){
+      mito_ch = channel.of(params.mito_assembly, checkIfExists:true)
+      asm_ch = channel.fromPath(params.primary_assembly, checkIfExists:true) | combine(mito_ch) | addMito
+    } else {
+      asm_ch = channel.fromPath(params.primary_assembly, checkIfExists:true)
+    }
     ill_ch = channel.fromFilePairs(params.illumina_reads, checkIfExists:true)
     pac_ch = channel.fromPath(params.pacbio_reads, checkIfExists:true)
     k_ch   = channel.of(params.k) // Either passed in or autodetect (there's a script for this)
-
-    //if(params.mito_assembly){
-    //  mito_ch = channel.of(params.mito_assembly, checkIfExists:true)
-    //  asm_ch = channel.fromPath(params.primary_assembly, checkIfExists:true) | combine(mito_ch) | addMito
-    //} else {
-    //  asm_ch = channel.fromPath(params.primary_assembly, checkIfExists:true)
-    //}
 
     // Step 0: Preprocess illumina files from bz2 to gz files
     // Instead of a flag, auto detect, however it must be in the pattern, * will fail
@@ -445,8 +440,11 @@ workflow {
       pill_ch = ill_ch | map { n -> n.get(1) } | flatten
     }
 
-    // Step 1: Check quality of assembly with Merqury and length dist. with bbstat
+    // Create meryl database and compute peak
     merylDB_ch = k_ch | combine(pill_ch) | meryl_count | collect | meryl_union 
+    peak_ch = merylDB_ch | meryl_peak | map { n -> n.get(0) } | splitText() { it.trim() }
+
+    // Step 1: Check quality of assembly with Merqury and length dist. with bbstat   
     merylDB_ch | combine(asm_ch) | MerquryQV_01
     asm_ch | bbstat_01    
 
@@ -455,32 +453,29 @@ workflow {
 
     // Step 3: Check quality of new assembly with Merqury 
     merylDB_ch | combine(asm_arrow_ch) | MerquryQV_03
-      asm_arrow_ch | bbstat_03
+    asm_arrow_ch | bbstat_03
  
     // if the primary assembly came from falcon unzip, skip the 2nd arrow polish
     if(!params.falcon_unzip) {
        // Step 4: Arrow Polish with PacBio reads
-       asm_arrow2_ch = ARROW_04(asm_arrow_ch, pac_ch, merylDB_ch)
+       asm_arrow2_ch = ARROW_04(asm_arrow_ch, pac_ch, peak_ch, merylDB_ch)
        // Step 5: Check quality of new assembly with Merqury 
        merylDB_ch | combine(asm_arrow2_ch) | MerquryQV_05
        asm_arrow2_ch | bbstat_05
      } else {
        asm_arrow2_ch = asm_arrow_ch
      }
-//     asm_arrow2_ch | view
-//     
-     // Step 6: FreeBayes Polish with Illumina reads
-     //peak_ch = channel.of("6") | combine( pill_ch.collect() | map { n-> [n]} ) | jellyfish_peak | splitText() { it.trim()}
-     //peak_ch | view
-     peak_ch = channel.of("79") // fix this later
-     asm_freebayes_ch = FREEBAYES_06(asm_arrow2_ch, pill_ch, peak_ch, merylDB_ch)
-     merylDB_ch | combine(asm_freebayes_ch) | MerquryQV_07
-     asm_freebayes_ch | bbstat_07
+
+     
+    // Step 6: FreeBayes Polish with Illumina reads
+    asm_freebayes_ch = FREEBAYES_06(asm_arrow2_ch, pill_ch, peak_ch, merylDB_ch)
+    merylDB_ch | combine(asm_freebayes_ch) | MerquryQV_07
+    asm_freebayes_ch | bbstat_07
  
-     // Step 8: FreeBayes Polish with Illumina reads
-     asm_freebayes2_ch = FREEBAYES_08(asm_freebayes_ch, pill_ch, peak_ch, merylDB_ch)
-     merylDB_ch | combine(asm_freebayes2_ch) | MerquryQV_09
-     asm_freebayes2_ch | bbstat_09
+    // Step 8: FreeBayes Polish with Illumina reads
+    asm_freebayes2_ch = FREEBAYES_08(asm_freebayes_ch, pill_ch, peak_ch, merylDB_ch)
+    merylDB_ch | combine(asm_freebayes2_ch) | MerquryQV_09
+    asm_freebayes2_ch | bbstat_09
 }
 
 def isuGIFHeader() {
