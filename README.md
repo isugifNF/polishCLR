@@ -163,13 +163,18 @@ executor >  slurm (967)
 [69/48a675] process > bbstat_07 (1)                [100%] 1 of 1 ✔
 [60/91de55] process > FREEBAYES_08:create_windows..[100%] 1 of 1 ✔
 [ee/927c53] process > FREEBAYES_08:meryl_genome_f..[100%] 1 of 1 ✔
-[b1/a1dfef] process > FREEBAYES_08:align_shortrea..[  0%] 0 of 1
-[-        ] process > FREEBAYES_08:freebayes        -
-[-        ] process > FREEBAYES_08:combineVCF       -
-[-        ] process > FREEBAYES_08:merfin_polish    -
-[-        ] process > FREEBAYES_08:vcf_to_fasta     -
-[-        ] process > MerquryQV_09                  -
-[-        ] process > bbstat_09                     -
+[b1/a1dfef] process > FREEBAYES_08:align_shortrea... [100%] 1 of 1 ✔
+[2f/ae39b7] process > FREEBAYES_08:freebayes (303)   [100%] 480 of 480 ✔
+[12/a14839] process > FREEBAYES_08:combineVCF (1)    [100%] 1 of 1 ✔
+[c0/8a3aeb] process > FREEBAYES_08:merfin_polish (1) [100%] 1 of 1 ✔
+[40/0f9772] process > FREEBAYES_08:vcf_to_fasta (1)  [100%] 1 of 1 ✔
+[9b/e157d4] process > MerquryQV_09 (1)               [100%] 1 of 1 ✔ // QV 45.0425
+[d6/476547] process > bbstat_09 (1)                  [100%] 1 of 1 ✔
+Completed at: 16-Aug-2021 23:26:44
+Duration    : 3h 43m 34s
+CPU hours   : 96.5 (93.9% cached)
+Succeeded   : 491
+Cached      : 1'468
 ```
 
 [timeline.html](https://isugifnf.github.io/polishCLR/timeline.html) | [report.html](https://isugifnf.github.io/polishCLR/report.html)
@@ -197,6 +202,7 @@ PolishCLR_Results/
   |_ timeline.html         # <= runtime for each step
 ```
 
+<!--
 Merqury QV (quality value increases each polish, except 2nd arrow polish (investigate why)
 
 ```
@@ -211,5 +217,6 @@ consensus_01  1089557	567025929	40.3817	9.15852e-05
 === Freebayes polish
 final_polished_assembly	1068195	567027516	40.4678	8.97877e-05
 ```
+-->
 
-Final Polished Assembly QV = 40.4678
+Final Polished Assembly QV = 45.0425
