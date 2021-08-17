@@ -101,7 +101,7 @@ process meryl_union {
 // calculate illumina peak for merfin
 process meryl_peak {
     publishDir "${params.outdir}/00_Preprocess", mode: 'symlink'
-    input: tuple val(i), path(illumina_meryl)
+    input: path(illumina_meryl)
     output: tuple path("peak.txt"), path("illumina.hist")
     script:
     template 'meryl_peak.sh'
