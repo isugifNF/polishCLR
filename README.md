@@ -113,11 +113,15 @@ Rscript genomescope.R --help
 module load nextflow
 module load miniconda
 source activate ${PWD}/env/polishCLR_env
+module load merfin
+
+SP_DIR=/project/ag100pest/Pectinophora_gossypiella_male/
 
 nextflow run main.nf \
-  --primary_assembly "/project/ag100pest/Pgos/RawData/3-unzip/all_p_ctg.fasta" \
-  --illumina_reads "/project/ag100pest/Illumina_polishing/JAMU*{R1,R2}.fastq.bz2" \
-  --pacbio_reads "/project/ag100pest/Pgos/RawData/m54334U_190823_194159.subreads.bam" \
+  --primary_assembly "$SP_DIR/RawData/3-unzip/all_p_ctg.fasta" \
+  --mito_assembly "$SP_DIR/MT_Contig/Pgos/Pgos_MitoFinder_mitfi_Final_Results/Pgos_mtDNA_contig.fasta" \
+  --illumina_reads "$SP_DIR/Illumina_polishing/JAMU*{R1,R2}.fastq.bz2" \
+  --pacbio_reads "$SP_DIR/RawData/m54334U_190823_194159.subreads.bam" \
   --k "21" \
   -resume
 ```
@@ -127,6 +131,59 @@ Current progress:
 ```
 N E X T F L O W  ~  version 20.07.1
 Launching `main.nf` [special_bartik] - revision: 7cb2c8ac31
+executor >  slurm (1954)
+[4b/d5fb33] process > addMito (1)                    [100%] 1 of 1, cached: 1 ✔
+[9d/d3d19f] process > bz_to_gz (1)                   [100%] 1 of 1, cached: 1 ✔
+[de/ef0633] process > meryl_count (2)                [100%] 2 of 2, cached: 2 ✔
+[fb/7ef659] process > meryl_union                    [100%] 1 of 1, cached: 1 ✔
+[23/ae01da] process > meryl_peak                     [100%] 1 of 1, cached: 1 ✔
+[bb/96e7da] process > MerquryQV_01 (1)               [100%] 1 of 1, cached: 1 ✔  // QV=31.1461
+[ae/c81f3c] process > bbstat_01 (1)                  [100%] 1 of 1, cached: 1 ✔
+[1c/f9f4a2] process > ARROW_02:create_windows (1)    [100%] 1 of 1, cached: 1 ✔
+[f6/a11eb2] process > ARROW_02:pbmm2_index (1)       [100%] 1 of 1, cached: 1 ✔
+[99/55ebfc] process > ARROW_02:pbmm2_align (1)       [100%] 1 of 1 ✔
+[8c/e62875] process > ARROW_02:gcc_Arrow (107)       [100%] 481 of 481 ✔
+[0e/e86ee7] process > ARROW_02:merge_consensus (1)   [100%] 1 of 1 ✔
+[a7/2a2420] process > MerquryQV_03 (1)               [100%] 1 of 1 ✔   // QV=38.7089
+[3f/8c66e2] process > bbstat_03 (1)                  [100%] 1 of 1 ✔
+[05/220810] process > ARROW_04:create_windows (1)    [100%] 1 of 1 ✔
+[ab/1cab8c] process > ARROW_04:pbmm2_index (1)       [100%] 1 of 1 ✔
+[0c/1a92d7] process > ARROW_04:pbmm2_align (1)       [100%] 1 of 1 ✔
+[4e/80a70b] process > ARROW_04:gcc_Arrow (68)        [100%] 481 of 481 ✔
+[1a/530d23] process > ARROW_04:meryl_genome (1)      [100%] 1 of 1 ✔
+[79/d30118] process > ARROW_04:combineVCF_arrow (1)  [100%] 1 of 1 ✔
+[5a/ca838c] process > ARROW_04:reshape_arrow (1)     [100%] 1 of 1 ✔
+[b7/2cc664] process > ARROW_04:merfin_polish_arro... [100%] 1 of 1 ✔
+[25/c8d4cd] process > ARROW_04:vcf_to_fasta_arrow... [100%] 1 of 1 ✔  // QV=41.0985
+[71/21f8ea] process > MerquryQV_05 (1)               [100%] 1 of 1 ✔
+[17/8bee1a] process > bbstat_05 (1)                  [100%] 1 of 1 ✔
+[99/dd5c4f] process > FREEBAYES_06:create_windows... [100%] 1 of 1 ✔
+[ea/62b6f0] process > FREEBAYES_06:meryl_genome_f... [100%] 1 of 1 ✔
+[0d/b74cde] process > FREEBAYES_06:align_shortrea... [100%] 1 of 1 ✔
+[39/2f8bbc] process > FREEBAYES_06:freebayes (335)   [100%] 481 of 481 ✔
+[23/75ce2a] process > FREEBAYES_06:combineVCF (1)    [100%] 1 of 1 ✔
+[e0/298ae8] process > FREEBAYES_06:merfin_polish (1) [100%] 1 of 1 ✔
+[41/27460a] process > FREEBAYES_06:vcf_to_fasta (1)  [100%] 1 of 1 ✔
+[48/cf8399] process > MerquryQV_07 (1)               [100%] 1 of 1 ✔  // QV=45.0154
+[3e/5a07de] process > bbstat_07 (1)                  [100%] 1 of 1 ✔
+[2b/515801] process > FREEBAYES_08:create_windows... [100%] 1 of 1 ✔
+[23/53bd22] process > FREEBAYES_08:meryl_genome_f... [100%] 1 of 1 ✔
+[db/2833ab] process > FREEBAYES_08:align_shortrea... [100%] 1 of 1 ✔
+[35/71633c] process > FREEBAYES_08:freebayes (68)    [100%] 481 of 481 ✔
+[57/6d06bb] process > FREEBAYES_08:combineVCF (1)    [100%] 1 of 1 ✔
+[40/cc4a82] process > FREEBAYES_08:merfin_polish (1) [100%] 1 of 1 ✔
+[f5/de1f18] process > FREEBAYES_08:vcf_to_fasta (1)  [100%] 1 of 1 ✔
+[3c/fdab12] process > MerquryQV_09 (1)               [100%] 1 of 1 ✔  // QV=45.0468
+[d3/009a91] process > bbstat_09 (1)                  [100%] 1 of 1 ✔
+Completed at: 17-Aug-2021 23:14:48
+Duration    : 17h 33m 38s
+CPU hours   : 89.2 (0.9% cached)
+Succeeded   : 1'954
+Cached      : 10
+```
+
+<!--
+```
 executor >  slurm (967)
 [45/e5018c] process > bz_to_gz (1)                 [100%] 1 of 1, cached: 1 ✔
 [a7/a5b5a1] process > meryl_count (2)              [100%] 2 of 2, cached: 2 ✔
@@ -176,6 +233,7 @@ CPU hours   : 96.5 (93.9% cached)
 Succeeded   : 491
 Cached      : 1'468
 ```
+-->
 
 [timeline.html](https://isugifnf.github.io/polishCLR/timeline.html) | [report.html](https://isugifnf.github.io/polishCLR/report.html)
 
@@ -193,11 +251,13 @@ PolishCLR_Results/
   |  |_ 2_consensus.fasta         # arrow polished new consensus sequence
   |_ 03_QV/                       # New merqury and bbstat quality values in subfolders. Continue with the assembly with the higher merqury.qv value
   |_ 04_ArrowPolish/              # polished again with pacbio reads
+  |  |_ merfin/                   # merfin filtering if illumina and pacbio from same sample
   |_ 05_QV/
   |_ 06_FreeBayesPolish/          # polished with illumina reads
+  |  |_ merfin/                   # merfin filtering
   |_ 07_QV/
   |_ 08_FreeBayesPolish/          # <= should contain final polished assembly 8_consensus.fasta
-  |_ 09_QV/ 
+  |_ 09_QV/
   |_ report.html
   |_ timeline.html         # <= runtime for each step
 ```
