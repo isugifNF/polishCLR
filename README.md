@@ -88,8 +88,6 @@ make -j 8
   
 </details>
 
-<!--
-
 <details><summary>Install `genomescope2.0` if not already in a module</summary>
  
 https://github.com/tbenavi1/genomescope2.0
@@ -106,8 +104,6 @@ Rscript genomescope.R --help
 ```
   
 </details>
-
---> 
 
 ## Basic Run
 
