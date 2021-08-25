@@ -88,6 +88,8 @@ make -j 8
   
 </details>
 
+<!--
+
 <details><summary>Install `genomescope2.0` if not already in a module</summary>
  
 https://github.com/tbenavi1/genomescope2.0
@@ -105,6 +107,8 @@ Rscript genomescope.R --help
   
 </details>
 
+--> 
+
 ## Basic Run
 
 **Ceres HPC**
@@ -120,6 +124,7 @@ SP_DIR=/project/ag100pest/Pectinophora_gossypiella_male/
 nextflow run main.nf \
   --primary_assembly "$SP_DIR/RawData/3-unzip/all_p_ctg.fasta" \
   --mito_assembly "$SP_DIR/MT_Contig/Pgos/Pgos_MitoFinder_mitfi_Final_Results/Pgos_mtDNA_contig.fasta" \
+  --alt_assembly "$SP_DIR/RawData/4-polish/..../all_h_ctg.fasta" \
   --illumina_reads "$SP_DIR/Illumina_polishing/JAMU*{R1,R2}.fastq.bz2" \
   --pacbio_reads "$SP_DIR/RawData/m54334U_190823_194159.subreads.bam" \
   --k "21" \
