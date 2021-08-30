@@ -454,6 +454,7 @@ workflow {
     merylDB_ch | combine(asm_ch) | MerquryQV_01
     asm_ch | bbstat_01    
 
+    if(!params.steptwo)
     // Step 2: Arrow Polish with PacBio reads
     asm_arrow_ch = ARROW_02(asm_ch, pac_ch)
 
