@@ -71,7 +71,7 @@ process bz_to_gz {
 // concat genome and mito together
 process addMito { // pass in alt_assembly
     publishDir "${params.outdir}/00_Preprocess", mode: 'copy'
-    input: tuple path(asm_file), path(mito_file)
+    input: tuple path(asm_file), path(mito_file), path(alt_file)
     output: path("${asm_file.simpleName}_mito.fasta")
     script:
     """
@@ -79,6 +79,8 @@ process addMito { // pass in alt_assembly
     cat ${asm_file} | sed 's/>/>pri_/g' > ${asm_file.simpleName}_mito.fasta
     echo "" >> ${asm_file.simpleName}_mito.fasta
     cat ${mito_file} | sed 's/>/>mit_/g' >> ${asm_file.simpleName}_mito.fasta
+    echo "" >> ${asm_file.simpleName}_mito.fasta
+    cat ${alt_file} | sed 's/>/>alt_/g' >> ${asm_file.simpleName}_mito.fasta
     """
 }
 
@@ -427,7 +429,8 @@ workflow {
     // Setup input channels, starting assembly (asm), Illumina reads (ill), and pacbio reads (pac)
     if( params.mito_assembly ){
       mito_ch = channel.fromPath(params.mito_assembly, checkIfExists:true)
-      asm_ch = channel.fromPath(params.primary_assembly, checkIfExists:true) | combine(mito_ch) | addMito
+      alt_ch = channel.fromPath(params.alt_assembly, checkIfExists:true)
+      asm_ch = channel.fromPath(params.primary_assembly, checkIfExists:true) | combine(mito_ch) | combine(alt_ch) | addMito
     } else {
       asm_ch = channel.fromPath(params.primary_assembly, checkIfExists:true)
     }
@@ -454,13 +457,16 @@ workflow {
     merylDB_ch | combine(asm_ch) | MerquryQV_01
     asm_ch | bbstat_01    
 
-    if(!params.steptwo)
+    if(!params.steptwo) {
     // Step 2: Arrow Polish with PacBio reads
     asm_arrow_ch = ARROW_02(asm_ch, pac_ch)
 
     // Step 3: Check quality of new assembly with Merqury 
     merylDB_ch | combine(asm_arrow_ch) | MerquryQV_03
     asm_arrow_ch | bbstat_03
+    } else {
+      asm_arrow_ch = asm_ch
+    }
 
     // purge_dup would go here  
     // (1) split merged into primary, alt, and mito again
