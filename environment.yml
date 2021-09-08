@@ -18,3 +18,4 @@ dependencies:
   - pigz
   - jellyfish
   - bbtools
+  - purge_dups
