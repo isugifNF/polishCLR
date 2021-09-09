@@ -427,6 +427,28 @@ process bbstat_09 {
     template 'bbstats.sh'
 }
 
+process SPLIT_FILE {
+  input: path(assembly_fasta)
+  output: tuple path("p_assembly.fasta"), path("h_assembly.fasta"), path("m_assembly.fasta")
+  script:
+  template 'split_file.sh'
+}
+
+process PURGE_DUPS { //TODO: split this into purge_dups, and bbstat
+  publishDir "${params.outdir}/00_PurgeDups", mode:'copy'
+  input: tuple path(genome_fasta), path(haplotig_fasta), path(pacbio_reads)
+  output: tuple path("primary.fasta"), path("haplotig.fasta"), path("*.stats")
+  script:
+  template 'purge_dups.sh'
+}
+
+process MERGE_FILE {
+  input: tuple path(primary_assembly), path(alternate_assembly),path(mito_assembly)
+  output: tuple path("merged_${primary_assembly}")
+  script:
+  template 'merge_file.sh'
+}
+
 workflow {
     // Setup input channels, starting assembly (asm), Illumina reads (ill), and pacbio reads (pac)
     if( params.mito_assembly ){
@@ -466,15 +488,19 @@ workflow {
     // Step 3: Check quality of new assembly with Merqury 
     merylDB_ch | combine(asm_arrow_ch) | MerquryQV_03
     asm_arrow_ch | bbstat_03
-    } else {
-      asm_arrow_ch = asm_ch
-    }
-
+    
     // purge_dup would go here  
     // (1) split merged into primary, alt, and mito again
     // (2) purge primary, hap merged with alt, purge hap_alt
     // (3) purged primary -> scaffolding pipeline? (might just need a part1, part2 pipeline)
     // (4) merge scaffolded prime, purged alt, and mito
+    asm_arrow_ch | SPLIT_FILE | PURGE_DUPS | MERGE_FILE | BBSTAT 
+
+    } else {
+      asm_arrow_ch = asm_ch
+    }
+
+    
  
     if(params.steptwo){ // TODO: redo this more elegantly later
     
