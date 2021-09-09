@@ -476,6 +476,8 @@ workflow {
     // (3) purged primary -> scaffolding pipeline? (might just need a part1, part2 pipeline)
     // (4) merge scaffolded prime, purged alt, and mito
  
+    if(params.steptwo){ // TODO: redo this more elegantly later
+    
     // if the primary assembly came from falcon unzip, skip the 2nd arrow polish
     if(!params.falcon_unzip) {
        // Step 4: Arrow Polish with PacBio reads
@@ -498,6 +500,7 @@ workflow {
     asm_freebayes2_ch | bbstat_09
 
     // split prim, hap, and mito here
+    }
 }
 
 def isuGIFHeader() {
