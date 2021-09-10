@@ -53,7 +53,12 @@ def helpMessage() {
 }
 
 // Show help message
-if ( params.help || !params.primary_assembly || !params.paternal_assembly || !params.illumina_reads || !params.pacbio_reads ) {
+if ( params.help || !params.illumina_reads || !params.pacbio_reads ) {
+  helpMessage()
+  exit 0
+}
+
+if ( !params.primary_assembly && !params.paternal_assembly ) {
   helpMessage()
   exit 0
 }
@@ -77,8 +82,8 @@ process bz_to_gz {
 // concat genome and mito together
 process MERGE_FILE_00 {
   publishDir "${params.outdir}/00_Preprocess", mode: 'copy'
-  input: tuple path(primary_assembly), path(alternate_assembly),path(mito_assembly)
-  output: tuple path("${primary_assembly.simpleName}_merged")
+  input: tuple path(primary_assembly), path(alternate_assembly), path(mito_assembly)
+  output: path("${primary_assembly.simpleName}_merged.fasta")
   script:
   template 'merge_file.sh'
 }
@@ -214,7 +219,7 @@ process SPLIT_FILE_03 {
 process PURGE_DUPS_03b {
   publishDir "${params.outdir}/03b_PurgeDups", mode:'copy'
   input: tuple path(genome_fasta), path(haplotig_fasta), path(pacbio_reads)
-  output: tuple path("primary_hap.fa"), path("primary_purged.fa") path("haps_hap.fa"), path("haps_purged.fa"), path("h_${haplo_fasta}") //, path("*.stats")
+  output: tuple path("primary_hap.fa"), path("primary_purged.fa"), path("haps_hap.fa"), path("haps_purged.fa"), path("h_${haplo_fasta}") //, path("*.stats")
   script:
   template 'purge_dups.sh'
 }

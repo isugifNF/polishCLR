@@ -1,4 +1,4 @@
-#! /usr/local/bin bash
+#! /usr/bin/env bash
 
 # === Inputs
 # primary_assembly = p_ctg.fasta     # From FALCON or FALCON-Unzip 
