@@ -89,6 +89,14 @@ process MERGE_FILE_00 {
   template 'merge_file.sh'
 }
 
+process MERGE_FILE_TRIO {
+  publishDir "${params.outdir}/00_Preprocess", mode: 'copy'
+  input: tuple path(primary_assembly), path(mito_assembly)
+  output: path("${primary_assembly.simpleName}_merged.fasta")
+  script:
+  template 'merge_file_trio.sh'
+}
+
 // create meryl database for merqury qv and merfin
 process meryl_count {
   publishDir "${params.outdir}/00_Preprocess", mode: 'symlink'
@@ -444,20 +452,21 @@ process bbstat_09 {
 
 workflow {
   // === Setup input channels
-  // Either load FALCON or FALCON-Unzip assembly
-  if( params.alt_assembly ){
+  // Option 1: read in FALCON assembly
+  if( params.alt_assembly ){ // FALCON or FALCON-Unzip
     mito_ch = channel.fromPath(params.mito_assembly, checkIfExists:true)
     alt_ch = channel.fromPath(params.alt_assembly, checkIfExists:true)
     pri_ch = channel.fromPath(params.primary_assembly, checkIfExists:true) |
-      map { n -> n.copyTo("${params.outdir}/00_Preprocess/${params.species}.fasta")} 
+      map { n -> n.copyTo("${params.outdir}/00_Preprocess/${params.species}_pri.fasta")} 
     
     asm_ch = pri_ch | combine(alt_ch) | combine(mito_ch) | MERGE_FILE_00
 
   } else if ( params.primary_assembly ) {
-    asm_ch = channel.fromPath(params.primary_assembly, checkIfExists:true)
+    asm_ch = channel.fromPath(params.primary_assembly, checkIfExists:true) |
+      map { n -> n.copyTo("${params.outdir}/00_Preprocess/${params.species}_pri.fasta")} 
   }
 
-  // Or load TrioCanu assembly
+  // Option 2: read in TrioCanu assembly
   if( params.paternal_assembly ) {
     mito_ch = channel.fromPath(params.mito_assembly, checkIfExists:true)
     pat_ch = channel.fromPath(params.paternal_assembly, checkIfExists:true) | 
@@ -478,7 +487,7 @@ workflow {
     ill_ch = channel.fromFilePairs(params.illumina_reads, checkIfExists:true) | map { n -> n.get(1) } | flatten
   }
   // Create meryl database and compute peak
-  if( params.merylDB ) {
+  if( params.merylDB ) {  // If prebuilt, will save time
     merylDB_ch = channel.fromPath(params.merylDB, checkIfExists:true)
   } else {
     merylDB_ch = k_ch | combine(ill_ch) | meryl_count | collect | meryl_union
@@ -486,14 +495,20 @@ workflow {
   peak_ch = merylDB_ch | meryl_peak | map { n -> n.get(0) } | splitText() { it.trim() }
   // Step 1: Check quality of assembly with Merqury and length dist. with bbstat   
   merylDB_ch | combine(asm_ch) | MerquryQV_01
-  asm_ch | bbstat_01    
-  if(!params.steptwo) {
-    // Step 2: Arrow Polish with PacBio reads
-    asm_arrow_ch = ARROW_02(asm_ch, pac_ch)
-    // Step 3: Check quality of new assembly with Merqury 
-    merylDB_ch | combine(asm_arrow_ch) | MerquryQV_03
-    asm_arrow_ch | bbstat_03
-  
+  asm_ch | bbstat_01
+
+  if(!params.steptwo) { // TODO: redo this more elegantly later 
+
+    if (!params.falcon_unzip) {
+      // Step 2: Arrow Polish with PacBio reads
+      asm_arrow_ch = ARROW_02(asm_ch, pac_ch)
+      // Step 3: Check quality of new assembly with Merqury 
+      merylDB_ch | combine(asm_arrow_ch) | MerquryQV_03
+      asm_arrow_ch | bbstat_03
+    } else {
+      asm_arrow_ch = asm_ch
+    }
+    
     // purge_dup would go here  
     // (1) split merged into primary, alt, and mito again
     // (2) purge primary, hap merged with alt, purge hap_alt
@@ -502,19 +517,17 @@ workflow {
     asm_arrow_ch | SPLIT_FILE_03 | PURGE_DUPS_03b
   } else {
     asm_arrow_ch = asm_ch
-  }
-  if(params.steptwo){ // TODO: redo this more elegantly later
-    
-    // if the primary assembly came from falcon unzip, skip the 2nd arrow polish
-    if(!params.falcon_unzip) {
-       // Step 4: Arrow Polish with PacBio reads
-       asm_arrow2_ch = ARROW_04(asm_arrow_ch, pac_ch, peak_ch, merylDB_ch)
-       // Step 5: Check quality of new assembly with Merqury 
-       merylDB_ch | combine(asm_arrow2_ch) | MerquryQV_05
-       asm_arrow2_ch | bbstat_05
-     } else {
-       asm_arrow2_ch = asm_arrow_ch
-     }
+
+    //====== if the primary assembly came from falcon unzip, skip the 2nd arrow polish (nope... leave markers here if we need to revert)
+    //if(!params.falcon_unzip) {
+    // Step 4: Arrow Polish with PacBio reads
+    asm_arrow2_ch = ARROW_04(asm_arrow_ch, pac_ch, peak_ch, merylDB_ch)
+    // Step 5: Check quality of new assembly with Merqury 
+    merylDB_ch | combine(asm_arrow2_ch) | MerquryQV_05
+    asm_arrow2_ch | bbstat_05
+     //} else {
+      // asm_arrow2_ch = asm_arrow_ch
+     //}
 
     // Step 6: FreeBayes Polish with Illumina reads
     asm_freebayes_ch = FREEBAYES_06(asm_arrow2_ch, ill_ch, peak_ch, merylDB_ch)
@@ -525,6 +538,8 @@ workflow {
     asm_freebayes2_ch = FREEBAYES_08(asm_freebayes_ch, ill_ch, peak_ch, merylDB_ch)
     merylDB_ch | combine(asm_freebayes2_ch) | MerquryQV_09
     asm_freebayes2_ch | bbstat_09
+
+    asm_freebayes2_ch | SPLIT_FILE_09b
 
     // split prim, hap, and mito here
   }
