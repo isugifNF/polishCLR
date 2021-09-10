@@ -1,7 +1,9 @@
 #! /usr/bin/env bash
+# === Inputs
 # genome_fasta=genome assembly file (cns_p_ctg.fasta)
 # haplo_fasta=haplotype genome (cns_h_ctg.fasta)
 # pacbio_reads=*subreads.fasta
+# === Outputs
 
 PROC=\$((`nproc`))
 
@@ -57,10 +59,10 @@ ${get_seqs_app} -e h_dups.bed h_${haplo_fasta} -p haps
 ## Instead of the above bbstats, kick off assemblystats nextflow. BUSCO is the most useful stat here.
 
 ## rename to play nicely with nextflow shortname 
-mv primary.hap.fa primary_hap.fa
+mv primary.hap.fa primary_hap.fas
 mv primary.purged.fa primary_purged.fa
 #ln -s ${primary_assembly} p_genome.fa
 #ln -s ../Falcon/4-polish/cns-output/cns_h_ctg.fasta cns_h_ctg.fa
 mv haps.hap.fa haps_hap.fa
 mv haps.purged.fa haps_purged.fa
-mv  h_${haplo_fasta}  h_genome.fa
+mv h_${haplo_fasta}  h_genome.fa

@@ -1,5 +1,12 @@
 #! /usr/local/bin bash
 
+# === Inputs
+# genome_fasta = primary_assembly_merged.fasta
+# === Outputs
+# p_${genome_fasta}     # primary assembly
+# a_${genome_fasta}     # alternative assembly
+# m_${genome_fasta}     # mitochondrial assembly
+
 ${samtools_app} faidx ${genome_fasta}
 grep ">pri_" ${genome_fasta} | cut -f1 > pri.list
 ${samtools_app} faidx -r pri.list ${genome_fasta} > p_${genome_fasta}

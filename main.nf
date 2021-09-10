@@ -10,18 +10,24 @@ def helpMessage() {
    nextflow run main.nf --primary_assembly "*fasta" --illumina_reads "*{1,2}.fastq.bz2" --pacbio_reads "*_subreads.bam" -resume
 
    Mandatory arguments:
-   --primary_assembly             genome assembly fasta file to polish
    --illumina_reads               paired end illumina reads, to be used for Merqury QV scores, and freebayes polish primary assembly
    --pacbio_reads                 pacbio reads in bam format, to be used to arrow polish primary assembly
-   --species                      if a string is given, rename the final assembly by species name [default:false]
-
-   Optional modifiers
    --mito_assembly                if mitocondrial assembly file is provided, will be concatinated to the primary assembly before polishing [default: false]
+
+   Either FALCON (or FALCON Unzip) assembly:
+   --primary_assembly             genome assembly fasta file to polish
    --alt_assembly                 if alternate/haplotig assembly file is provided, will be concatinated to the primary assembly before polishing [default: false]
+   --falcon_unzip                 if primary assembly has already undergone falcon unzip [default: false]. If true, will Arrow polish once instead of twice.
+   
+   Or TrioCanu assembly
+   --paternal_assembly            paternal genome assembly fasta file to polish
+   --maternal_assembly            maternal genome assembly fasta file to polish
+
+   Optional modifiers   
+   --species                      if a string is given, rename the final assembly by species name [default:false]
    --k                            kmer to use in MerquryQV scoring [default:21]
    --same_specimen                if illumina and pacbio reads are from the same specimin [default: true].
-   --falcon_unzip                 if primary assembly has already undergone falcon unzip [default: false]. If true, will Arrow polish once instead of twice.
-
+   
    Optional configuration arguments
    --parallel_app                 Link to parallel executable [default: 'parallel']
    --bzcat_app                    Link to bzcat executable [default: 'bzcat']
@@ -47,7 +53,7 @@ def helpMessage() {
 }
 
 // Show help message
-if (params.help || !params.primary_assembly || !params.illumina_reads || !params.pacbio_reads ) {
+if (params.help || !params.primary_assembly || !params.paternal_assembly || !params.illumina_reads || !params.pacbio_reads ) {
   helpMessage()
   exit 0
 }
@@ -69,24 +75,13 @@ process bz_to_gz {
 }
 
 // concat genome and mito together
-process addMito { // pass in alt_assembly
-    publishDir "${params.outdir}/00_Preprocess", mode: 'copy'
-    input: tuple path(asm_file), path(mito_file), path(alt_file)
-    output: path("${asm_file.simpleName}_mito.fasta")
-    script:
-    """
-    #! /usr/bin/env bash
-    cat ${asm_file} | sed 's/>/>pri_/g' > ${asm_file.simpleName}_mito.fasta
-    echo "" >> ${asm_file.simpleName}_mito.fasta
-    cat ${mito_file} | sed 's/>/>mit_/g' >> ${asm_file.simpleName}_mito.fasta
-    echo "" >> ${asm_file.simpleName}_mito.fasta
-    cat ${alt_file} | sed 's/>/>alt_/g' >> ${asm_file.simpleName}_mito.fasta
-    cat ${asm_file.simpleName}_mito.fasta | grep -v "^\$" > temp.txt
-    mv temp.txt ${asm_file.simpleName}_mito.fasta
-    """
+process MERGE_FILE_00 {
+  publishDir "${params.outdir}/00_Preprocess", mode: 'copy'
+  input: tuple path(primary_assembly), path(alternate_assembly),path(mito_assembly)
+  output: tuple path("${primary_assembly.simpleName}_merged")
+  script:
+  template 'merge_file.sh'
 }
-
-// sed 's/>/>alt_/g'  // for alt assembly
 
 // create meryl database for merqury qv and merfin
 process meryl_count {
@@ -209,6 +204,21 @@ process bbstat_03 {
     template 'bbstats.sh'
 }
 
+process SPLIT_FILE_03 {
+  input: path(genome_fasta)
+  output: tuple path("p_${genome_fasta}"), path("a_${genome_fasta}"), path("m_${genome_fasta}")
+  script:
+  template 'split_file.sh'
+}
+
+process PURGE_DUPS_03b {
+  publishDir "${params.outdir}/03b_PurgeDups", mode:'copy'
+  input: tuple path(genome_fasta), path(haplotig_fasta), path(pacbio_reads)
+  output: tuple path("primary_hap.fa"), path("primary_purged.fa") path("haps_hap.fa"), path("haps_purged.fa"), path("h_${haplo_fasta}") //, path("*.stats")
+  script:
+  template 'purge_dups.sh'
+}
+
 // 2nd Arrow run with merfin
 process meryl_genome {
     publishDir "${params.outdir}/04_ArrowPolish/merfin", mode: 'symlink'
@@ -298,7 +308,6 @@ process bbstat_05 {
     script:
     template 'bbstats.sh'
 }
-
 
 // 1st FreeBayes Polish
 process align_shortreads {
@@ -427,82 +436,57 @@ process bbstat_09 {
     template 'bbstats.sh'
 }
 
-process SPLIT_FILE {
-  input: path(assembly_fasta)
-  output: tuple path("p_assembly.fasta"), path("h_assembly.fasta"), path("m_assembly.fasta")
-  script:
-  template 'split_file.sh'
-}
-
-process PURGE_DUPS { //TODO: split this into purge_dups, and bbstat
-  publishDir "${params.outdir}/00_PurgeDups", mode:'copy'
-  input: tuple path(genome_fasta), path(haplotig_fasta), path(pacbio_reads)
-  output: tuple path("primary.fasta"), path("haplotig.fasta"), path("*.stats")
-  script:
-  template 'purge_dups.sh'
-}
-
-process MERGE_FILE {
-  input: tuple path(primary_assembly), path(alternate_assembly),path(mito_assembly)
-  output: tuple path("merged_${primary_assembly}")
-  script:
-  template 'merge_file.sh'
-}
-
 workflow {
-    // Setup input channels, starting assembly (asm), Illumina reads (ill), and pacbio reads (pac)
-    if( params.mito_assembly ){
-      mito_ch = channel.fromPath(params.mito_assembly, checkIfExists:true)
-      alt_ch = channel.fromPath(params.alt_assembly, checkIfExists:true)
-      asm_ch = channel.fromPath(params.primary_assembly, checkIfExists:true) | combine(mito_ch) | combine(alt_ch) | addMito
-    } else {
-      asm_ch = channel.fromPath(params.primary_assembly, checkIfExists:true)
-    }
-    // TODO: figure out how to incorporate alt_assembly, mito_assembly, (add prefixes, will need to split by prefix at the end)
-    // alt_ch = channel.fromPath(params.alt_assembly, checkIfExists:true)
-    // okay, mito will have to be incorporated after firs
-    ill_ch = channel.fromFilePairs(params.illumina_reads, checkIfExists:true)
-    pac_ch = channel.fromPath(params.pacbio_reads, checkIfExists:true)
-    k_ch   = channel.of(params.k) // Either passed in or autodetect (there's a script for this)
+  // === Setup input channels
+  // FALCON or FALCON-Unzip assembly
+  if( params.alt_assembly ){
+    mito_ch = channel.fromPath(params.mito_assembly, checkIfExists:true)
+    alt_ch = channel.fromPath(params.alt_assembly, checkIfExists:true)
+    pri_ch = channel.fromPath(params.primary_assembly, checkIfExists:true) 
+    
+    asm_ch = pri_ch | combine(alt_ch) | combine(mito_ch) | MERGE_FILE_00
+  } else if ( params.primary_assembly ) {
+    asm_ch = channel.fromPath(params.primary_assembly, checkIfExists:true)
+  }
 
-    // Step 0: Preprocess illumina files from bz2 to gz files
-    // Instead of a flag, auto detect, however it must be in the pattern, * will fail
-    if(params.illumina_reads =~ /bz2$/){
-      pill_ch = ill_ch | bz_to_gz | map { n -> n.get(1) } | flatten
-    }else{
-      pill_ch = ill_ch | map { n -> n.get(1) } | flatten
-    }
-
-    // Create meryl database and compute peak
-    merylDB_ch = k_ch | combine(pill_ch) | meryl_count | collect | meryl_union 
-    peak_ch = merylDB_ch | meryl_peak | map { n -> n.get(0) } | splitText() { it.trim() }
-
-    // Step 1: Check quality of assembly with Merqury and length dist. with bbstat   
-    merylDB_ch | combine(asm_ch) | MerquryQV_01
-    asm_ch | bbstat_01    
-
-    if(!params.steptwo) {
+  // TrioCanu assembly
+  if( params.paternal_assembly ) {
+    mito_ch = channel.fromPath(params.mito_assembly, checkIfExists:true)
+    pat_ch = channel.fromPath(params.paternal_assembly, checkIfExists:true) | combine(mito_ch) | MERGE_FILE_P
+    mat_ch = channel.fromPath(params.maternal_assembly, checkIfExists:true) | combine(mito_ch) | MERGE_FILE_M
+  }
+  
+  k_ch   = channel.of(params.k) // Either passed in or autodetect (there's a script for this)
+  pac_ch = channel.fromPath(params.pacbio_reads, checkIfExists:true)
+  // Step 0: Preprocess illumina files from bz2 to gz files. Instead of a flag, auto detect, however it must be in the pattern, * will fail
+  if(params.illumina_reads =~ /bz2$/){
+    ill_ch = channel.fromFilePairs(params.illumina_reads, checkIfExists:true) | bz_to_gz | map { n -> n.get(1) } | flatten
+  }else{
+    ill_ch = channel.fromFilePairs(params.illumina_reads, checkIfExists:true) | map { n -> n.get(1) } | flatten
+  }
+  // Create meryl database and compute peak
+  merylDB_ch = k_ch | combine(ill_ch) | meryl_count | collect | meryl_union 
+  peak_ch = merylDB_ch | meryl_peak | map { n -> n.get(0) } | splitText() { it.trim() }
+  // Step 1: Check quality of assembly with Merqury and length dist. with bbstat   
+  merylDB_ch | combine(asm_ch) | MerquryQV_01
+  asm_ch | bbstat_01    
+  if(!params.steptwo) {
     // Step 2: Arrow Polish with PacBio reads
     asm_arrow_ch = ARROW_02(asm_ch, pac_ch)
-
     // Step 3: Check quality of new assembly with Merqury 
     merylDB_ch | combine(asm_arrow_ch) | MerquryQV_03
     asm_arrow_ch | bbstat_03
-    
+  
     // purge_dup would go here  
     // (1) split merged into primary, alt, and mito again
     // (2) purge primary, hap merged with alt, purge hap_alt
     // (3) purged primary -> scaffolding pipeline? (might just need a part1, part2 pipeline)
     // (4) merge scaffolded prime, purged alt, and mito
-    asm_arrow_ch | SPLIT_FILE | PURGE_DUPS | MERGE_FILE | BBSTAT 
-
-    } else {
-      asm_arrow_ch = asm_ch
-    }
-
-    
- 
-    if(params.steptwo){ // TODO: redo this more elegantly later
+    asm_arrow_ch | SPLIT_FILE_03 | PURGE_DUPS_03b
+  } else {
+    asm_arrow_ch = asm_ch
+  }
+  if(params.steptwo){ // TODO: redo this more elegantly later
     
     // if the primary assembly came from falcon unzip, skip the 2nd arrow polish
     if(!params.falcon_unzip) {
@@ -516,17 +500,17 @@ workflow {
      }
 
     // Step 6: FreeBayes Polish with Illumina reads
-    asm_freebayes_ch = FREEBAYES_06(asm_arrow2_ch, pill_ch, peak_ch, merylDB_ch)
+    asm_freebayes_ch = FREEBAYES_06(asm_arrow2_ch, ill_ch, peak_ch, merylDB_ch)
     merylDB_ch | combine(asm_freebayes_ch) | MerquryQV_07
     asm_freebayes_ch | bbstat_07
  
     // Step 8: FreeBayes Polish with Illumina reads
-    asm_freebayes2_ch = FREEBAYES_08(asm_freebayes_ch, pill_ch, peak_ch, merylDB_ch)
+    asm_freebayes2_ch = FREEBAYES_08(asm_freebayes_ch, ill_ch, peak_ch, merylDB_ch)
     merylDB_ch | combine(asm_freebayes2_ch) | MerquryQV_09
     asm_freebayes2_ch | bbstat_09
 
     // split prim, hap, and mito here
-    }
+  }
 }
 
 def isuGIFHeader() {
