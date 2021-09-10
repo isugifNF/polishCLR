@@ -448,9 +448,11 @@ workflow {
   if( params.alt_assembly ){
     mito_ch = channel.fromPath(params.mito_assembly, checkIfExists:true)
     alt_ch = channel.fromPath(params.alt_assembly, checkIfExists:true)
-    pri_ch = channel.fromPath(params.primary_assembly, checkIfExists:true) 
+    pri_ch = channel.fromPath(params.primary_assembly, checkIfExists:true) |
+      map { n -> n.copyTo("${params.outdir}/00_Preprocess/${params.species}.fasta")} 
     
     asm_ch = pri_ch | combine(alt_ch) | combine(mito_ch) | MERGE_FILE_00
+
   } else if ( params.primary_assembly ) {
     asm_ch = channel.fromPath(params.primary_assembly, checkIfExists:true)
   }
@@ -458,8 +460,13 @@ workflow {
   // Or load TrioCanu assembly
   if( params.paternal_assembly ) {
     mito_ch = channel.fromPath(params.mito_assembly, checkIfExists:true)
-    pat_ch = channel.fromPath(params.paternal_assembly, checkIfExists:true) | combine(mito_ch) | MERGE_FILE_P
-    mat_ch = channel.fromPath(params.maternal_assembly, checkIfExists:true) | combine(mito_ch) | MERGE_FILE_M
+    pat_ch = channel.fromPath(params.paternal_assembly, checkIfExists:true) | 
+      map { n -> n.copyTo("${params.outdir}/00_Preprocess/${params.species}_pat.fasta")}
+    mat_ch = channel.fromPath(params.maternal_assembly, checkIfExists:true) |
+      map { n -> n.copyTo("${params.outdir}/00_Preprocess/${params.species}_mat.fasta")}
+
+    // should result in Paternal and Material assemblies being polished separately
+    asm_ch = pat_ch | concat(mat_ch) | combine(mito_ch) | MERGE_FILE_TRIO
   }
   
   k_ch   = channel.of(params.k) // Either passed in or autodetect (there's a script for this)
