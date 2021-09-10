@@ -27,6 +27,7 @@ def helpMessage() {
    --species                      if a string is given, rename the final assembly by species name [default:false]
    --k                            kmer to use in MerquryQV scoring [default:21]
    --same_specimen                if illumina and pacbio reads are from the same specimin [default: true].
+   --meryldb                      path to a prebuilt meryl database, built from the illumina reads. If not provided, tehen build.
    
    Optional configuration arguments
    --parallel_app                 Link to parallel executable [default: 'parallel']
@@ -470,7 +471,11 @@ workflow {
     ill_ch = channel.fromFilePairs(params.illumina_reads, checkIfExists:true) | map { n -> n.get(1) } | flatten
   }
   // Create meryl database and compute peak
-  merylDB_ch = k_ch | combine(ill_ch) | meryl_count | collect | meryl_union 
+  if( params.merylDB ) {
+    merylDB_ch = channel.fromPath(params.merylDB, checkIfExists:true)
+  } else {
+    merylDB_ch = k_ch | combine(ill_ch) | meryl_count | collect | meryl_union
+  }
   peak_ch = merylDB_ch | meryl_peak | map { n -> n.get(0) } | splitText() { it.trim() }
   // Step 1: Check quality of assembly with Merqury and length dist. with bbstat   
   merylDB_ch | combine(asm_ch) | MerquryQV_01
