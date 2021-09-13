@@ -227,7 +227,7 @@ process SPLIT_FILE_03 {
 
 process PURGE_DUPS_03b {
   publishDir "${params.outdir}/03b_PurgeDups", mode:'copy'
-  input: tuple path(genome_fasta), path(haplotig_fasta), path(pacbio_reads)
+  input: tuple path(primary_assembly), path(haplo_fasta), path(pacbio_reads)
   output: tuple path("primary_hap.fa"), path("primary_purged.fa"), path("haps_hap.fa"), path("haps_purged.fa"), path("h_${haplo_fasta}") //, path("*.stats")
   script:
   template 'purge_dups.sh'
@@ -522,7 +522,7 @@ workflow {
     // (2) purge primary, hap merged with alt, purge hap_alt
     // (3) purged primary -> scaffolding pipeline? (might just need a part1, part2 pipeline)
     // (4) merge scaffolded prime, purged alt, and mito
-    asm_arrow_ch | SPLIT_FILE_03 | PURGE_DUPS_03b
+    asm_arrow_ch | SPLIT_FILE_03 | map {n -> [n.get(0), n.get(1)]| combine(pac_ch) | PURGE_DUPS_03b
   } else {
     asm_arrow_ch = asm_ch
 
