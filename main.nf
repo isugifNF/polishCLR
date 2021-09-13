@@ -522,7 +522,10 @@ workflow {
     // (2) purge primary, hap merged with alt, purge hap_alt
     // (3) purged primary -> scaffolding pipeline? (might just need a part1, part2 pipeline)
     // (4) merge scaffolded prime, purged alt, and mito
-    asm_arrow_ch | SPLIT_FILE_03 | map {n -> [n.get(0), n.get(1)]| combine(pac_ch) | PURGE_DUPS_03b
+    asm_arrow_ch | SPLIT_FILE_03 |
+      map {n -> [n.get(0), n.get(1)] } |
+      combine(pac_ch) |
+      PURGE_DUPS_03b
   } else {
     asm_arrow_ch = asm_ch
 
