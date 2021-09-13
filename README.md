@@ -60,8 +60,8 @@ Usage:
  --queueSize                    Maximum number of jobs to be queued [default: 50]
  --account                      Some HPCs require you supply an account name for tracking usage.  You can supply that here.
  --help                         This usage statement.
-```
-  
+  ```
+
 </details>
 
 ## Install dependencies

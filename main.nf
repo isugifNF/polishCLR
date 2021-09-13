@@ -450,6 +450,14 @@ process bbstat_09 {
   template 'bbstats.sh'
 }
 
+process SPLIT_FILE_09b {
+  publishDir "${params.outdir}/", mode:'copy'
+  input: path(genome_fasta)
+  output: tuple path("p_${genome_fasta}"), path("a_${genome_fasta}"), path("m_${genome_fasta}")
+  script:
+  template 'split_file.sh'
+}
+
 workflow {
   // === Setup input channels
   // Option 1: read in FALCON assembly
@@ -540,8 +548,7 @@ workflow {
     asm_freebayes2_ch | bbstat_09
 
     asm_freebayes2_ch | SPLIT_FILE_09b
-
-    // split prim, hap, and mito here
+    // either incorporate split pat/mat into split_file.sh or create a decision point here
   }
 }
 
