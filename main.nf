@@ -495,8 +495,8 @@ workflow {
     ill_ch = channel.fromFilePairs(params.illumina_reads, checkIfExists:true) | map { n -> n.get(1) } | flatten
   }
   // Create meryl database and compute peak
-  if( params.merylDB ) {  // If prebuilt, will save time
-    merylDB_ch = channel.fromPath(params.merylDB, checkIfExists:true)
+  if( params.meryldb ) {  // If prebuilt, will save time
+    merylDB_ch = channel.fromPath(params.meryldb, checkIfExists:true)
   } else {
     merylDB_ch = k_ch | combine(ill_ch) | meryl_count | collect | meryl_union
   }
