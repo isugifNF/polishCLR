@@ -1,4 +1,4 @@
-#! /usr/local/bin bash
+#! /usr/bin/env bash
 
 # === Inputs
 # genome_fasta = primary_assembly_merged.fasta
