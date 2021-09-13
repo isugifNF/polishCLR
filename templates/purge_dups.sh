@@ -6,6 +6,9 @@
 # === Outputs
 
 module load minimap2
+module load python
+#module load purge_dups # not sure how module differs from most recent git
+export PATH="/project/ag100pest/software/purge_dups/bin/:$PATH"
 
 PROC=\$((`nproc`))
 
