@@ -9,8 +9,11 @@ PROC=\$((`nproc`))
 
 ${samtools_app} faidx ${primary_assembly}
 
-${minimap2_app} -xmap-pb -t \${PROC}  ${primary_assembly} ${pacbio_reads} | \
+${pbmm2_app} -xmap-pb -t \${PROC}  ${primary_assembly} ${pacbio_reads} | \
   ${gzip_app} -c -  > p_mapping.paf.gz
+
+#${minimap2_app} -xmap-pb -t \${PROC}  ${primary_assembly} ${pacbio_reads} | \
+#  ${gzip_app} -c -  > p_mapping.paf.gz
 
 ${pbcstat_app} p_mapping.paf.gz
 ${hist_plot_py} PB.stat primary_hist
@@ -19,7 +22,8 @@ ${calcuts_app} PB.stat > p_cutoffs 2> p_calcuts.log
 
 ${split_fa_app} ${primary_assembly} > ${primary_assembly}.split
 
-${minimap2_app} -xasm5 -DP -t \${PROC} ${primary_assembly}.split ${primary_assembly}.split | gzip -c - > ${primary_assembly}.split.self.paf.gz
+${pbmm2_app} -xasm5 -DP -t \${PROC} ${primary_assembly}.split ${primary_assembly}.split | gzip -c - > ${primary_assembly}.split.self.paf.gz
+#${minimap2_app} -xasm5 -DP -t \${PROC} ${primary_assembly}.split ${primary_assembly}.split | gzip -c - > ${primary_assembly}.split.self.paf.gz
 
 ${purge_dups_app} -2 -T p_cufoffs -c PB.base.cov ${primary_assembly}.split.self.paf.gz > p_dups.bed 2> p_purge_dups.log
 
@@ -33,8 +37,10 @@ cat primary.hap.fa  ${haplo_fasta} >  h_${haplo_fasta}
 
 ${samtools_app} faidx h_${haplo_fasta}
 
-${minimap2_app} -xmap-pb -t \${PROC}  h_${haplo_fasta} ${pacbio_reads} |\
+${pbmm2_app} -xmap-pb -t \${PROC}  h_${haplo_fasta} ${pacbio_reads} |\
   ${gzip_app} -c -  > h_mapping.paf.gz
+#${minimap2_app} -xmap-pb -t \${PROC}  h_${haplo_fasta} ${pacbio_reads} |\
+#  ${gzip_app} -c -  > h_mapping.paf.gz
 
 ${pbcstat_app} h_mapping.paf.gz
 
@@ -42,8 +48,10 @@ ${calcuts_app} PB.stat > h_cutoffs 2> h_calcuts.log
 
 ${split_fa_app} h_${haplo_fasta} > h_${haplo_fasta}.split
 
-${minimap2_app} -xasm5 -DP -t \${PROC} h_${haplo_fasta}.split h_${haplo_fasta}.split |\
+${pbmm2_app} -xasm5 -DP -t \${PROC} h_${haplo_fasta}.split h_${haplo_fasta}.split |\
   ${gzip_app} -c - > h_${haplo_fasta}.split.self.paf.gz
+#${minimap2_app} -xasm5 -DP -t \${PROC} h_${haplo_fasta}.split h_${haplo_fasta}.split |\
+#  ${gzip_app} -c - > h_${haplo_fasta}.split.self.paf.gz
 
 ${purge_dups_app} -2 -T h_cufoffs -c PB.base.cov h_${haplo_fasta}.split.self.paf.gz > h_dups.bed 2> h_purge_dups.log
 
