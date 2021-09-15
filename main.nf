@@ -2,6 +2,9 @@
 
 nextflow.enable.dsl=2
 
+// Temporary solution till mapping to path
+busco_container = 'ezlabgva/busco:v5.1.2_cv1'
+
 def helpMessage() {
   log.info isuGIFHeader()
   log.info """
@@ -228,10 +231,51 @@ process SPLIT_FILE_03 {
 process PURGE_DUPS_03b {
   publishDir "${params.outdir}/03b_PurgeDups", mode:'copy'
   input: tuple path(primary_assembly), path(haplo_fasta), path(pacbio_reads)
-  output: tuple path("primary_hap.fa"), path("primary_purged.fa"), path("haps_hap.fa"), path("haps_purged.fa"), path("h_${haplo_fasta}") //, path("*.stats")
+  output: tuple path("primary_hap.fa"), path("primary_purged.fa"), path("haps_hap.fa"), path("haps_purged.fa")//, path("h_${haplo_fasta}") //, path("*.stats")
   script:
   template 'purge_dups.sh'
 }
+
+// this setup is required because BUSCO runs Augustus that requires writing to the config/species folder.  
+// So this folder must be bound outside of the container and therefore needs to be copied outside the container first.
+// Leaving in container code temporarily
+process BUSCO_setup {
+  publishDir "${params.outdir}/03c_BUSCO", mode: 'copy'
+  container = "$busco_container"
+
+  output:tuple path("config"), path("Busco_version.txt")
+
+  script:
+  """
+  #! /usr/bin/env bash
+  cp -r /augustus/config .
+  echo "$busco_container" > Busco_version.txt
+  """
+}
+
+process BUSCO {
+  publishDir "${params.outdir}/03c_BUSCO", mode: 'copy'
+  container = "$busco_container"
+  scratch false
+
+  input: tuple path(genomeFile), path(config)
+  output: tuple  path("${genomeFile.simpleName}/*")
+  
+  script:
+  """
+  #! /usr/bin/env bash
+  PROC=\$((`nproc`))
+  cat ${genomeFile} | tr '|' '_' > ${genomeFile.simpleName}_fixheaders.fna
+  ${busco_app} \
+    -o ${genomeFile.simpleName} \
+    -i ${genomeFile.simpleName}_fixheaders.fna \
+    ${params.options} \
+    -m ${params.mode} \
+    -c \${PROC} \
+    -f
+  """
+} 
+
 
 // 2nd Arrow run with merfin
 process meryl_genome {
@@ -526,19 +570,19 @@ workflow {
       map {n -> [n.get(0), n.get(1)] } |
       combine(pac_ch) |
       PURGE_DUPS_03b
+
+    /* BUSCO check will go here */
+    // pd_ch = PURGE_DUPS_03b | flatMap 
+    // BUSCO_setup | combine(pd_ch) |BUSCO
+    
   } else {
     asm_arrow_ch = asm_ch
 
-    //====== if the primary assembly came from falcon unzip, skip the 2nd arrow polish (nope... leave markers here if we need to revert)
-    //if(!params.falcon_unzip) {
     // Step 4: Arrow Polish with PacBio reads
     asm_arrow2_ch = ARROW_04(asm_arrow_ch, pac_ch, peak_ch, merylDB_ch)
     // Step 5: Check quality of new assembly with Merqury 
     merylDB_ch | combine(asm_arrow2_ch) | MerquryQV_05
     asm_arrow2_ch | bbstat_05
-     //} else {
-      // asm_arrow2_ch = asm_arrow_ch
-     //}
 
     // Step 6: FreeBayes Polish with Illumina reads
     asm_freebayes_ch = FREEBAYES_06(asm_arrow2_ch, ill_ch, peak_ch, merylDB_ch)
