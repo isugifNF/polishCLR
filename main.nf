@@ -572,9 +572,8 @@ workflow {
       PURGE_DUPS_03b
 
     /* BUSCO check will go here */
-    // pd_ch = PURGE_DUPS_03b | flatMap 
-    // BUSCO_setup | combine(pd_ch) |BUSCO
-    
+    busco_config_ch = BUSCO_setup() | map {n -> n.get(0)}
+    PURGE_DUPS_03b | flatMap | combine(busco_config_ch) | BUSCO
   } else {
     asm_arrow_ch = asm_ch
 
