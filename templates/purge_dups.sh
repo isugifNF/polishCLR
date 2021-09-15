@@ -6,7 +6,7 @@
 # === Outputs
 
 module load minimap2
-module load python
+module load python_3
 #module load purge_dups # not sure how module differs from most recent git
 export PATH="/project/ag100pest/software/purge_dups/bin/:$PATH"
 
@@ -54,20 +54,19 @@ ${purge_dups_app} -2 -T h_cufoffs -c PB.base.cov h_${haplo_fasta}.split.self.paf
 
 ${get_seqs_app} -e h_dups.bed h_${haplo_fasta} -p haps
 
-#echo "Purged alternate, running bbtools stats.sh on each assembly"
-#module load bbtools
+### TODO pull this out as a separate process in nextflow
+echo "Purged alternate, running bbtools stats.sh on each assembly"
+module load bbtools
+## On Atlas
 #export PATH="/project/ag100pest/software/bbmap/:$PATH"
-#stats.sh -Xmx2048m primary.purged.fa > primary.purged.fa.stats
-#stats.sh -Xmx2048m primary.hap.fa > primary.hap.fa.stats
-#stats.sh -Xmx2048m haps.purged.fa > haps.purged.fa.stats
-#stats.sh -Xmx2048m haps.hap.fa > haps.hap.fa.stats
-## Instead of the above bbstats, kick off assemblystats nextflow. BUSCO is the most useful stat here.
+stats.sh -Xmx2048m primary.purged.fa > primary_purged.fa.stats
+stats.sh -Xmx2048m primary.hap.fa > primary_hap.fa.stats
+stats.sh -Xmx2048m haps.purged.fa > haps_purged.fa.stats
+stats.sh -Xmx2048m haps.hap.fa > haps_hap.fa.stats
 
 ## rename to play nicely with nextflow shortname 
-mv primary.hap.fa primary_hap.fas
+mv primary.hap.fa primary_hap.fa
 mv primary.purged.fa primary_purged.fa
-#ln -s ${primary_assembly} p_genome.fa
-#ln -s ../Falcon/4-polish/cns-output/cns_h_ctg.fasta cns_h_ctg.fa
 mv haps.hap.fa haps_hap.fa
 mv haps.purged.fa haps_purged.fa
-mv h_${haplo_fasta}  h_genome.fa
+#mv h_${haplo_fasta} h_genome.fa
