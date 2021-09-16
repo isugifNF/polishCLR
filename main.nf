@@ -269,7 +269,7 @@ process BUSCO {
   ${busco_app} \
     -o ${genomeFile.simpleName} \
     -i ${genomeFile.simpleName}_fixheaders.fna \
-    ${busco_lineage} \
+    -l ${busco_lineage} \
     -m genome \
     -c \${PROC} \
     -f
