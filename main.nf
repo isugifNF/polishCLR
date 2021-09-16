@@ -17,11 +17,8 @@ include { FREEBAYES as FREEBAYES_06; FREEBAYES as FREEBAYES_08 } from './modules
 include {bz_to_gz; MERGE_FILE as MERGE_FILE_00; MERGE_FILE_TRIO; SPLIT_FILE as SPLIT_FILE_03; SPLIT_FILE as SPLIT_FILE_09b} from './modules/helper_functions.nf'
 // Other
 include { PURGE_DUPS as PURGE_DUPS_03b} from './modules/purge_dups.nf'
-include { BUSCO_setup; BUSCO } from './modules/busco.nf'
+include { BUSCO } from './modules/busco.nf'
 
-
-// Temporary solution till mapping to path
-busco_container = 'ezlabgva/busco:v5.1.2_cv1'
 
 def helpMessage() {
   log.info isuGIFHeader()
@@ -162,8 +159,7 @@ workflow {
       PURGE_DUPS_03b
 
     /* BUSCO check will go here */
-    busco_config_ch = BUSCO_setup() | map {n -> n.get(0)}
-    PURGE_DUPS_03b.out | flatMap | combine(busco_config_ch) | BUSCO
+    PURGE_DUPS_03b.out | flatMap | BUSCO
   } else {
     asm_arrow_ch = asm_ch
 
