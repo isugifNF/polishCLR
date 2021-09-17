@@ -39,10 +39,10 @@ ${get_seqs_app} -e dups_JUNK_OVLP.bed ${primary_assembly} -p primary
 ### TODO pull this out as a separate process in nextflow
 echo "Purged alternate, running bbtools stats.sh on each assembly"
 module load bbtools
-stats.sh -Xmx2048m primary.purged.fa > primary_purged.fa.stats
-stats.sh -Xmx2048m primary.hap.fa > primary_hap.fa.stats
+stats.sh -Xmx2048m primary.purged.fa > ${primary_assembly.simpleName}_primary_purged.fa.stats
+stats.sh -Xmx2048m primary.hap.fa > ${primary_assembly.simpleName}_primary_hap.fa.stats
 
 ## rename to play nicely with nextflow shortname 
-mv primary.hap.fa primary_hap.fa
-mv primary.purged.fa primary_purged.fa
+mv primary.hap.fa ${primary_assembly.simpleName}_primary_hap.fa
+mv primary.purged.fa ${primary_assembly.simpleName}_primary_purged.fa
 

@@ -15,9 +15,11 @@ include { ARROW as ARROW_02; ARROW as ARROW_02b; ARROW_MERFIN as ARROW_04; ARROW
 include { FREEBAYES as FREEBAYES_06; FREEBAYES as FREEBAYES_06b; FREEBAYES as FREEBAYES_08; FREEBAYES as FREEBAYES_08b } from './modules/freebayes.nf'
 // Preprocess and helper functions
 include {bz_to_gz; MERGE_FILE as MERGE_FILE_00; MERGE_FILE_TRIO; SPLIT_FILE as SPLIT_FILE_03; SPLIT_FILE as SPLIT_FILE_09b} from './modules/helper_functions.nf'
+include {SPLIT_FILE_03p; SPLIT_FILE_03m} from './modules/helper_functions.nf'
+include {SPLIT_FILE_03p as SPLIT_FILE_09p; SPLIT_FILE_03m as SPLIT_FILE_09m} from './modules/helper_functions.nf'
 // Other
-include { PURGE_DUPS as PURGE_DUPS_03b} from './modules/purge_dups.nf'
-include { BUSCO } from './modules/busco.nf'
+include { PURGE_DUPS as PURGE_DUPS_03b; PURGE_DUPS_TRIO as PURGE_DUPS_TRIOp; PURGE_DUPS_TRIO as PURGE_DUPS_TRIOm } from './modules/purge_dups.nf'
+include { BUSCO; BUSCO as BUSCO_mat } from './modules/busco.nf'
 
 
 def helpMessage() {
@@ -176,20 +178,30 @@ workflow {
       BUSCO
     }else if(params.paternal_assembly) {
       // Paternal version goes here
-      tmp_ch = asm_arrow_ch.first() | SPLIT_FILE_03 |
-        map {n -> [n.get(0), n.get(1)] }
+      tmp_ch = asm_arrow_ch.first() | SPLIT_FILE_03p |
+        map {n -> n.get(0) }
       channel.of("03b_Purge_Dups_pat") |
         combine(tmp_ch) |
         combine(pac_ch) |
-        PURGE_DUPS_03b       // <= swap this for PURGE_DUPS_TRIO
+        PURGE_DUPS_TRIOp       // <= swap this for PURGE_DUPS_TRIO
   
       /* BUSCO check will go here */
-      PURGE_DUPS_03b.out | map {n -> [n.get(0), n.get(1)] } | flatMap | 
+      PURGE_DUPS_TRIOp.out | map {n -> [n.get(0)] } | flatMap | 
       combine(channel.of("03c_BUSCO_pat")) | map {n -> [n.get(1), n.get(0)]} |
       BUSCO
 
       // Maternal version 
-      tmpm_ch = asm_arrow_ch.last()  // repeat here
+      tmpm_ch = asm_arrow_ch.last() | SPLIT_FILE_03m |
+        map {n -> n.get(0) }
+      channel.of("03b_Purge_Dups_mat") |
+        combine(tmpm_ch) |
+        combine(pac_ch) |
+        PURGE_DUPS_TRIOm       // <= swap this for PURGE_DUPS_TRIO
+  
+      /* BUSCO check will go here */
+      PURGE_DUPS_TRIOm.out | map {n -> [n.get(0)] } | flatMap | 
+      combine(channel.of("03c_BUSCO_mat")) | map {n -> [n.get(1), n.get(0)]} |
+      BUSCO_mat
     }
   } else {
     asm_arrow_ch = asm_ch
@@ -230,8 +242,13 @@ workflow {
     channel.of("09_QV") | combine(merylDB_ch) | combine(asm_freebayes2_ch) | MerquryQV_09
     channel.of("09_QV") | combine(asm_freebayes2_ch) | bbstat_09
 
-//    asm_freebayes2_ch | SPLIT_FILE_09b
-    // either incorporate split pat/mat into split_file.sh or create a decision point here
+    if(params.primary_assembly){
+      asm_freebayes2_ch | SPLIT_FILE_09b
+    } else if (params.paternal_assembly) {
+      asm_freebayes2_ch.first() | SPLIT_FILE_09p
+      asm_freebayes2_ch.last() | SPLIT_FILE_09m
+    }
+
   }
 }
 
