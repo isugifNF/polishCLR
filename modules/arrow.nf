@@ -36,7 +36,7 @@ process gcc_Arrow {
 
 process merge_consensus {
   publishDir "${params.outdir}/${outdir}", mode: 'copy'
-  input: tuple ${outdir}, path(windows_fasta)
+  input: tuple val(outdir), path(windows_fasta)
   output: path("${outdir}_consensus.fasta")
   script:
   template 'merge_consensus.sh'
