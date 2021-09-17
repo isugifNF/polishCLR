@@ -2,12 +2,20 @@
 
 nextflow.enable.dsl=2
 
+include { create_windows; combineVCF; meryl_genome; merfin_polish; vcf_to_fasta } from './helper_functions.nf'
+
 process align_shortreads {
   publishDir "${params.outdir}/${outdir}/bam", mode: 'symlink'
   input: tuple val(outdir), path(assembly_fasta), path(illumina_one), path(illumina_two)
   output: tuple val("$outdir"), path("*.bam"), path("*.bai")
   script:
   template 'align_shortreads.sh'
+
+  stub:
+  """
+  touch ${illumina_one.simpleName}_aln.bam
+  touch ${illumina_one.simpleName}_aln.bam.bai
+  """
 }
 
 process freebayes {
@@ -16,38 +24,11 @@ process freebayes {
   output: tuple val("$outdir"), path("*.vcf")
   script:
   template 'freebayes.sh'
-}
 
-process combineVCF {
-  publishDir "${params.outdir}/${outdir}", mode: 'symlink'
-  input: tuple val(outdir), path(vcfs)
-  output: tuple val("${outdir}"), path("${i}_consensus.vcf")
-  script:
-  template 'combineVCF.sh'
-}
-
-process meryl_genome_fb {
-  publishDir "${params.outdir}/${outdir}/merfin", mode: 'symlink'
-  input: tuple val(outdir), val(k), path(illumina_read)
-  output: path("*.meryl")
-  script:
-  template 'meryl_count.sh'
-}
-
-process merfin_polish {
-  publishDir "${params.outdir}/${outdir}/merfin", mode: 'symlink'
-  input: tuple val(outdir), path(vcf), path(genome_fasta), path(genome_meryl), val(peak), path(meryldb)
-  output: tuple val("$outdir"), path("*merfin.polish.vcf")
-  script:
-  template 'merfin_polish.sh'
-}
-
-process vcf_to_fasta {
-  publishDir "${params.outdir}/${outdir}", mode: 'symlink'
-  input: tuple val(outdir), path(vcf), path(genome_fasta)
-  output: path("${outdir}_consensus.fasta")
-  script:
-  template 'vcf_to_fasta.sh'
+  stub:
+  """
+  touch ${illumina_bam.simpleName}_${window.replace(':','_').replace('|','_')}.vcf
+  """
 }
 
 workflow FREEBAYES {
@@ -61,7 +42,7 @@ workflow FREEBAYES {
     win_ch = outdir_ch | combine(asm_ch) | create_windows | 
       map { n -> n.get(1) } | splitText() {it.trim() }
     fai_ch = create_windows.out | map { n -> n.get(0) }
-    asm_meryl = outdir_ch | combine(channel.from(params.k)) | collect | combine(asm_ch) | meryl_genome_fb
+    asm_meryl = outdir_ch | combine(channel.from(params.k)) | collect | combine(asm_ch) | meryl_genome
 
     new_asm_ch = outdir_ch | combine(asm_ch) | combine(ill_ch.collect()) | align_shortreads |
       combine(asm_ch) | combine(fai_ch) | combine(win_ch) |

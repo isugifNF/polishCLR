@@ -143,8 +143,8 @@ workflow {
       // Step 2: Arrow Polish with PacBio reads
       asm_arrow_ch = ARROW_02(channel.of("02_ArrowPolish"), asm_ch, pac_ch)
       // Step 3: Check quality of new assembly with Merqury 
-      merylDB_ch | combine(asm_arrow_ch) | MerquryQV_03
-      asm_arrow_ch | bbstat_03
+      channel.of("03_QV") | combine(merylDB_ch) | combine(asm_arrow_ch) | MerquryQV_03
+      channel.of("03_QV") | combine(asm_arrow_ch) | bbstat_03
     } else {
       asm_arrow_ch = asm_ch
     }

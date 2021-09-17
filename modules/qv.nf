@@ -9,6 +9,11 @@ process meryl_count {
   output: path("*.meryl")
   script:
   template 'meryl_count.sh'
+
+  stub:
+  """
+  touch ${illumina_read.simpleName}.meryl
+  """
 }
 
 process meryl_union {
@@ -17,6 +22,11 @@ process meryl_union {
   output: path("illumina.meryl")
   script:
   template 'meryl_union.sh'
+
+  stub:
+  """
+  touch illumina.meryl
+  """
 }
 
 // TODO: combine the above in a mk_meryldb workflow
@@ -28,6 +38,11 @@ process meryl_peak {
   output: tuple path("peak.txt"), path("illumina.hist")
   script:
   template 'meryl_peak.sh'
+
+  stub:
+  """
+  touch peak.txt illumina.hist
+  """
 }
 
 // 01 Merqury QV value
@@ -39,6 +54,12 @@ process MerquryQV {
   output: path("*")
   script:
   template 'merquryqv.sh'
+
+  stub:
+  """
+  mkdir MerquryQV
+  touch merqury.qv
+  """
 }
 
 // 01 bbstat: Length distribtions of initial assembly
@@ -48,4 +69,9 @@ process bbstat {
   output: path("*")
   script:
   template 'bbstats.sh'
+
+  stub:
+  """
+  mkdir bbstat
+  """
 }

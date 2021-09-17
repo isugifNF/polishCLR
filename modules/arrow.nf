@@ -2,13 +2,7 @@
 
 nextflow.enable.dsl=2
 
-process create_windows {
-  publishDir "${params.outdir}/${outdir}", mode: 'symlink'
-  input: tuple val(outdir), path(assembly_fasta)
-  output: tuple path("*.fai"), path("win.txt")
-  script:
-  template 'create_windows.sh'
-}
+include { create_windows; combineVCF; meryl_genome; merfin_polish; vcf_to_fasta } from './helper_functions.nf'
 
 process pbmm2_index {
   publishDir "${params.outdir}/${outdir}", mode: 'symlink'
@@ -16,6 +10,12 @@ process pbmm2_index {
   output: tuple val("$outdir"), path("$assembly_fasta"), path("*.mmi")
   script:
   template 'pbmm2_index.sh'
+
+  stub:
+  """
+  touch ${assembly_fasta}
+  touch ${assembly_fasta}.mmi
+  """
 }
 
 process pbmm2_align {
@@ -24,6 +24,12 @@ process pbmm2_align {
   output: tuple val("$outdir"), path("*.bam"), path("*.bai")
   script:
   template 'pbmm2_align.sh'
+
+  stub:
+  """
+  touch ${pacbio_read.simpleName}_aln.bam
+  touch ${pacbio_read.simpleName}_aln.bai
+  """
 }
 
 process gcc_Arrow {
@@ -32,14 +38,25 @@ process gcc_Arrow {
   output: tuple val("$outdir"), path("*.fasta"), path("*.vcf")
   script:
   template 'gcc_arrow.sh'
+
+  stub:
+  """
+  touch ${window.replace(':','_').replace('|','_')}.vcf
+  touch ${window.replace(':','_').replace('|','_')}.fasta
+  """
 }
 
 process merge_consensus {
   publishDir "${params.outdir}/${outdir}", mode: 'copy'
-  input: tuple ${outdir}, path(windows_fasta)
+  input: tuple val(outdir), path(windows_fasta)
   output: path("${outdir}_consensus.fasta")
   script:
   template 'merge_consensus.sh'
+
+  stub:
+  """
+  touch ${outdir}_consensus.fasta
+  """
 }
 
 workflow ARROW {
@@ -62,21 +79,6 @@ workflow ARROW {
 }
 
 // 2nd Arrow run with merfin
-process meryl_genome {
-  publishDir "${params.outdir}/${outdir}/merfin", mode: 'symlink'
-  input: tuple val(outdir), val(k), path(illumina_read)
-  output: path("*.meryl")
-  script:
-  template 'meryl_count.sh'
-}
-
-process combineVCF_arrow {
-  publishDir "${params.outdir}/${outdir}", mode: 'symlink'
-  input: tuple val(outdir), path(vcfs)
-  output: tuple val("$outdir"), path("${i}_consensus.vcf")
-  script:
-  template 'combineVCF.sh'
-}
 
 process reshape_arrow {
   publishDir "${params.outdir}/${outdir}/merfin", mode: 'symlink'
@@ -84,22 +86,11 @@ process reshape_arrow {
   output: tuple val("${outdir}"), path("*.reshaped.vcf.gz")
   script:
   template 'reshape_arrow.sh'
-}
 
-process merfin_polish_arrow {
-  publishDir "${params.outdir}/${outdir}/merfin", mode: 'symlink'
-  input: tuple val(outdir), path(vcf), path(genome_fasta), path(genome_meryl), val(peak), path(meryldb)
-  output: tuple val("$outdir"), path("*merfin.polish.vcf")
-  script:
-  template 'merfin_polish.sh'
-}
-
-process vcf_to_fasta_arrow {
-  publishDir "${params.outdir}/${outdir}", mode: 'symlink'
-  input: tuple val(outdir), path(vcf), path(genome_fasta)
-  output: path("${outdir}_consensus.fasta")
-  script:
-  template 'vcf_to_fasta.sh'
+  stub:
+  """
+  touch ${vcf.baseName}.reshaped.vcf.gz
+  """
 }
 
 workflow ARROW_MERFIN {
@@ -124,8 +115,8 @@ workflow ARROW_MERFIN {
 
       /* prepare and run merfin polish */
       newasm_ch = arrow_run_ch | map { n -> [ n.get(0), n.get(2) ] } | groupTuple |
-        combineVCF_arrow | reshape_arrow | combine(asm_ch) | combine(asm_meryl) | combine(peak_ch) |
-        combine(merylDB_ch) | merfin_polish_arrow | combine(asm_ch) | vcf_to_fasta_arrow
+        combineVCF | reshape_arrow | combine(asm_ch) | combine(asm_meryl) | combine(peak_ch) |
+        combine(merylDB_ch) | merfin_polish | combine(asm_ch) | vcf_to_fasta
     } else {
       newasm_ch = arrow_run_ch | map { n -> [ n.get(0), n.get(1) ] } | groupTuple |
         merge_consensus

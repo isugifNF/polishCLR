@@ -24,7 +24,6 @@ process BUSCO {
   script:
   """
   #! /usr/bin/env bash
-  MERQURY=' '
   PROC=\$((`nproc`))
   cat ${genomeFile} | tr '|' '_' > ${genomeFile.simpleName}_fixheaders.fna
   ${busco_app} \
@@ -34,5 +33,11 @@ process BUSCO {
     -m genome \
     -c \${PROC} \
     -f
+  """
+
+  stub:
+  """
+  mkdir ${genomeFile.simpleName}
+  touch ${genomeFile.simpleName}/hey.txt
   """
 }

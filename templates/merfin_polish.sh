@@ -6,4 +6,4 @@ ${merfin_app} -polish \
   -readmers ${meryldb} \
   -peak ${peak} \
   -vcf ${vcf} \
-  -output ${i}_merfin
+  -output ${outdir}_merfin

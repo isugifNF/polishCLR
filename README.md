@@ -281,3 +281,93 @@ final_polished_assembly	1068195	567027516	40.4678	8.97877e-05
 -->
 
 Final Polished Assembly QV = 45.0425
+
+
+## Step 1 of 2 - up through purge_dups
+
+Scaffolding is currently done by hand. The below is run on a test dataset of 3 contigs.
+
+```
+nextflow run main.nf \
+	 -stub-run \
+	 -profile local \
+	 --primary_assembly "data/pri.fasta" \
+	 --alt_assembly "data/alt.fasta" \
+	 --mito_assembly "data/mit.fasta" \
+	 --illumina_reads "data/readname_{R1,R2}.fastq.bz" \
+	 --pacbio_reads "data/*subreads.fasta" \
+
+N E X T F L O W  ~  version 21.04.3
+Launching `main.nf` [maniac_shaw] - revision: 9ecda2d9fa
+executor >  local (20)
+[2f/e9c546] process > MERGE_FILE_00 (1)            [100%] 1 of 1 ✔
+[7e/8d20c1] process > meryl_count (2)              [100%] 2 of 2 ✔
+[f8/f7518b] process > meryl_union                  [100%] 1 of 1 ✔
+[d1/bb5d6f] process > meryl_peak                   [100%] 1 of 1 ✔
+[4b/2ef1da] process > MerquryQV_01 (1)             [100%] 1 of 1 ✔
+[e7/bfcd3c] process > bbstat_01 (1)                [100%] 1 of 1 ✔
+[51/4c4bb1] process > ARROW_02:create_windows (1)  [100%] 1 of 1 ✔
+[85/faffdc] process > ARROW_02:pbmm2_index (1)     [100%] 1 of 1 ✔
+[68/1b1a26] process > ARROW_02:pbmm2_align (1)     [100%] 1 of 1 ✔
+[be/335f98] process > ARROW_02:gcc_Arrow (3)       [100%] 3 of 3 ✔
+[73/9f2ac1] process > ARROW_02:merge_consensus (1) [100%] 1 of 1 ✔
+[ee/3537b9] process > MerquryQV_03 (1)             [100%] 1 of 1 ✔
+[51/5a3fbc] process > bbstat_03 (1)                [100%] 1 of 1 ✔
+[b4/341804] process > SPLIT_FILE_03 (1)            [100%] 1 of 1 ✔
+[25/9c7486] process > PURGE_DUPS_03b (1)           [100%] 1 of 1 ✔
+[d5/3537a4] process > BUSCO (1)                    [100%] 2 of 2 ✔
+```
+
+## Step 2 of 2 - after manual scaffolding
+
+```
+nextflow run main.nf \
+	 -stub-run \
+	 -profile local \
+	 --primary_assembly "data/pri.fasta" \
+	 --alt_assembly "data/alt.fasta" \
+	 --mito_assembly "data/mit.fasta" \
+	 --illumina_reads "data/readname_{R1,R2}.fastq.bz" \
+	 --pacbio_reads "data/*subreads.fasta" \
+    	 --steptwo true
+N E X T F L O W  ~  version 21.04.3
+Launching `main.nf` [clever_lamport] - revision: 9ecda2d9fa
+executor >  local (16)
+[7c/e736a6] process > MERGE_FILE_00 (1)             [100%] 1 of 1 ✔
+[e6/7afe67] process > meryl_count (1)               [100%] 2 of 2 ✔
+[fc/157c89] process > meryl_union                   [100%] 1 of 1 ✔
+[6e/a2d253] process > meryl_peak                    [100%] 1 of 1 ✔
+[fa/513d36] process > MerquryQV_01 (1)              [100%] 1 of 1 ✔
+[e9/830511] process > bbstat_01 (1)                 [100%] 1 of 1 ✔
+[b7/e27a84] process > ARROW_04:create_windows (1)   [100%] 1 of 1 ✔
+[b0/e2a177] process > ARROW_04:pbmm2_index (1)      [100%] 1 of 1 ✔
+[92/3376f7] process > ARROW_04:pbmm2_align (1)      [100%] 1 of 1 ✔
+[70/6417af] process > ARROW_04:gcc_Arrow (1)        [100%] 3 of 3 ✔
+[57/902ac1] process > ARROW_04:meryl_genome (1)     [100%] 1 of 1 ✔
+[10/39142b] process > ARROW_04:combineVCF (1)       [100%] 1 of 1 ✔
+[f4/c66f9f] process > ARROW_04:reshape_arrow (1)    [100%] 1 of 1 ✔
+[-        ] process > ARROW_04:merfin_polish        -
+[-        ] process > ARROW_04:vcf_to_fasta         -
+[-        ] process > MerquryQV_05                  -
+[-        ] process > bbstat_05                     -
+[-        ] process > FREEBAYES_06:create_windows   -
+[-        ] process > FREEBAYES_06:meryl_genome     -
+[-        ] process > FREEBAYES_06:align_shortreads -
+[-        ] process > FREEBAYES_06:freebayes        -
+[-        ] process > FREEBAYES_06:combineVCF       -
+[-        ] process > FREEBAYES_06:merfin_polish    -
+[-        ] process > FREEBAYES_06:vcf_to_fasta     -
+[-        ] process > MerquryQV_07                  -
+[-        ] process > bbstat_07                     -
+[-        ] process > FREEBAYES_08:create_windows   -
+[-        ] process > FREEBAYES_08:meryl_genome     -
+[-        ] process > FREEBAYES_08:align_shortreads -
+[-        ] process > FREEBAYES_08:freebayes        -
+[-        ] process > FREEBAYES_08:combineVCF       -
+[-        ] process > FREEBAYES_08:merfin_polish    -
+[-        ] process > FREEBAYES_08:vcf_to_fasta     -
+[-        ] process > MerquryQV_09                  -
+[-        ] process > bbstat_09                     -
+[-        ] process > SPLIT_FILE_09b                -
+
+```

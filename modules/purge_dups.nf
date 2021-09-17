@@ -8,4 +8,9 @@ process PURGE_DUPS {
   output: tuple path("primary_purged.fa"), path("haps_purged.fa"), path("primary_hap.fa"), path("haps_hap.fa") //, path("h_${haplo_fasta}") //, path("*.stats")
   script:
   template 'purge_dups.sh'
+
+  stub:
+  """
+  touch primary_purged.fa haps_purged.fa primary_hap.fa haps_hap.fa
+  """
 }

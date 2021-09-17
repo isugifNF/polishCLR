@@ -20,7 +20,7 @@ ${bcftools_app} view -h \${output}.temp.reshaped.vcf | sed 's/\tINFO/\tINFO\tFOR
 rm \${output}.temp.reshaped.vcf 
 ${bcftools_app} view -H \${output}.temp.reshaped.combined.vcf | awk -F"\t" -v OFS="\t" '{gsub(/DP=/,".\tGT:DP\t1/1:",\$8);print \$0}' >> \${output}.reshaped.vcf
 # https://github.com/arangrhie/merfin/wiki/Best-practices-for-Merfin#preparing-input-vcf
-bcftools view -Oz -i '(GT="AA" || GT="Aa")' \${output}.reshaped.vcf > out.vcf.gz
+${bcftools_app} view -Oz -i '(GT="AA" || GT="Aa")' \${output}.reshaped.vcf > out.vcf.gz
 ${bcftools_app} view out.vcf.gz -Oz > \${output}.reshaped.vcf.gz
 rm \${output}.reshaped.vcf 
 rm \${output}.temp.reshaped.combined.vcf
