@@ -114,13 +114,13 @@ process merfin_polish {
 }
 
 process vcf_to_fasta {
-  publishDir "${params.outdir}/${outdir}", mode: 'symlink'
+  publishDir "${params.outdir}/${outdir}", mode: 'copy'
   input: tuple val(outdir), path(vcf), path(genome_fasta)
   output: path("${outdir}_consensus.fasta")
   script:
   template 'vcf_to_fasta.sh'
 
-  stub
+  stub:
   """
   touch ${outdir}_consensus.fasta
   """
