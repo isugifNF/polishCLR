@@ -30,12 +30,10 @@ process meryl_peak {
   template 'meryl_peak.sh'
 }
 
-// Note: start using the pattern input: tuple val(outdir), rest of input files
-
 // 01 Merqury QV value
 process MerquryQV {
   publishDir "${params.outdir}/${outdir}/MerquryQV", mode: 'copy'
-  publishDir "${params.outdir}/${outdir}", mode: 'copy', pattern "merqury.qv"
+  publishDir "${params.outdir}/${outdir}", mode: 'copy', pattern: "merqury.qv"
 
   input: tuple val(outdir), path(illumina_db), path(assembly_fasta)
   output: path("*")

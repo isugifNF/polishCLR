@@ -132,9 +132,10 @@ workflow {
     merylDB_ch = k_ch | combine(ill_ch) | meryl_count | collect | meryl_union
   }
   peak_ch = merylDB_ch | meryl_peak | map { n -> n.get(0) } | splitText() { it.trim() }
+
   // Step 1: Check quality of assembly with Merqury and length dist. with bbstat   
   channel.of("01_QV") | combine(merylDB_ch) | combine(asm_ch) | MerquryQV_01
-  channel.of("01_QV") | combine(asm_ch) | bbstat_01
+  channel.of("01_QV") | combine(asm_ch) | bbstat_01 
 
   if(!params.steptwo) { // TODO: redo this more elegantly later 
 
