@@ -283,9 +283,12 @@ final_polished_assembly	1068195	567027516	40.4678	8.97877e-05
 Final Polished Assembly QV = 45.0425
 
 
+
 ## Step 1 of 2 - up through purge_dups
 
 Scaffolding is currently done by hand. The below is run on a test dataset of 3 contigs.
+
+**Falcon Assembly**
 
 ```
 nextflow run main.nf \
@@ -295,8 +298,12 @@ nextflow run main.nf \
 	 --alt_assembly "data/alt.fasta" \
 	 --mito_assembly "data/mit.fasta" \
 	 --illumina_reads "data/readname_{R1,R2}.fastq.bz" \
-	 --pacbio_reads "data/*subreads.fasta" \
+	 --pacbio_reads "data/*subreads.fasta"
+```
 
+<details><summary>Falcon Step 1 Output</summary>
+
+```
 N E X T F L O W  ~  version 21.04.3
 Launching `main.nf` [maniac_shaw] - revision: 9ecda2d9fa
 executor >  local (20)
@@ -318,7 +325,55 @@ executor >  local (20)
 [d5/3537a4] process > BUSCO (1)                    [100%] 2 of 2 ✔
 ```
 
+</details>
+
+**TrioCanu Assembly**
+
+```
+nextflow run main.nf \
+	 -stub-run \
+	 -profile local \
+	 --paternal_assembly "data/pri.fasta" \
+	 --maternal_assembly "data/alt.fasta" \
+	 --mito_assembly "data/mit.fasta" \
+	 --illumina_reads "data/readname_{R1,R2}.fastq.bz" \
+	 --pacbio_reads "data/*subreads.fasta"
+```
+
+<details><summary>TrioCanu Step 1 Output</summary>
+
+```
+N E X T F L O W  ~  version 21.04.3
+Launching `main.nf` [trusting_aryabhata] - revision: 83e4cab92d
+executor >  local (32)
+[b1/e15184] process > MERGE_FILE_TRIO (2)           [100%] 2 of 2 ✔
+[4d/51d94c] process > meryl_count (2)               [100%] 2 of 2 ✔
+[86/59a008] process > meryl_union                   [100%] 1 of 1 ✔
+[3d/b9dcd7] process > meryl_peak                    [100%] 1 of 1 ✔
+[cc/ea5661] process > MerquryQV_01 (2)              [100%] 2 of 2 ✔
+[1b/c894b7] process > bbstat_01 (2)                 [100%] 2 of 2 ✔
+[1a/cf6dbc] process > ARROW_02:create_windows (1)   [100%] 1 of 1 ✔
+[46/904476] process > ARROW_02:pbmm2_index (1)      [100%] 1 of 1 ✔
+[7d/26b136] process > ARROW_02:pbmm2_align (1)      [100%] 1 of 1 ✔
+[c5/a9844e] process > ARROW_02:gcc_Arrow (3)        [100%] 3 of 3 ✔
+[53/133fe3] process > ARROW_02:merge_consensus (1)  [100%] 1 of 1 ✔
+[bd/0c8708] process > ARROW_02b:create_windows (1)  [100%] 1 of 1 ✔
+[a8/be2f1a] process > ARROW_02b:pbmm2_index (1)     [100%] 1 of 1 ✔
+[67/07aa9b] process > ARROW_02b:pbmm2_align (1)     [100%] 1 of 1 ✔
+[65/a8dceb] process > ARROW_02b:gcc_Arrow (2)       [100%] 3 of 3 ✔
+[87/45efe7] process > ARROW_02b:merge_consensus (1) [100%] 1 of 1 ✔
+[46/21363c] process > MerquryQV_03 (2)              [100%] 2 of 2 ✔
+[fc/986049] process > bbstat_03 (2)                 [100%] 2 of 2 ✔
+[a6/ec6d74] process > SPLIT_FILE_03                 [100%] 1 of 1 ✔
+[8a/fce779] process > PURGE_DUPS_03b (1)            [100%] 1 of 1 ✔
+[e6/edf2fb] process > BUSCO (2)                     [100%] 2 of 2 ✔
+```
+
+</details>
+
 ## Step 2 of 2 - after manual scaffolding
+
+**Falcon Assembly**
 
 ```
 nextflow run main.nf \
@@ -329,45 +384,133 @@ nextflow run main.nf \
 	 --mito_assembly "data/mit.fasta" \
 	 --illumina_reads "data/readname_{R1,R2}.fastq.bz" \
 	 --pacbio_reads "data/*subreads.fasta" \
-    	 --steptwo true
-N E X T F L O W  ~  version 21.04.3
-Launching `main.nf` [clever_lamport] - revision: 9ecda2d9fa
-executor >  local (16)
-[7c/e736a6] process > MERGE_FILE_00 (1)             [100%] 1 of 1 ✔
-[e6/7afe67] process > meryl_count (1)               [100%] 2 of 2 ✔
-[fc/157c89] process > meryl_union                   [100%] 1 of 1 ✔
-[6e/a2d253] process > meryl_peak                    [100%] 1 of 1 ✔
-[fa/513d36] process > MerquryQV_01 (1)              [100%] 1 of 1 ✔
-[e9/830511] process > bbstat_01 (1)                 [100%] 1 of 1 ✔
-[b7/e27a84] process > ARROW_04:create_windows (1)   [100%] 1 of 1 ✔
-[b0/e2a177] process > ARROW_04:pbmm2_index (1)      [100%] 1 of 1 ✔
-[92/3376f7] process > ARROW_04:pbmm2_align (1)      [100%] 1 of 1 ✔
-[70/6417af] process > ARROW_04:gcc_Arrow (1)        [100%] 3 of 3 ✔
-[57/902ac1] process > ARROW_04:meryl_genome (1)     [100%] 1 of 1 ✔
-[10/39142b] process > ARROW_04:combineVCF (1)       [100%] 1 of 1 ✔
-[f4/c66f9f] process > ARROW_04:reshape_arrow (1)    [100%] 1 of 1 ✔
-[-        ] process > ARROW_04:merfin_polish        -
-[-        ] process > ARROW_04:vcf_to_fasta         -
-[-        ] process > MerquryQV_05                  -
-[-        ] process > bbstat_05                     -
-[-        ] process > FREEBAYES_06:create_windows   -
-[-        ] process > FREEBAYES_06:meryl_genome     -
-[-        ] process > FREEBAYES_06:align_shortreads -
-[-        ] process > FREEBAYES_06:freebayes        -
-[-        ] process > FREEBAYES_06:combineVCF       -
-[-        ] process > FREEBAYES_06:merfin_polish    -
-[-        ] process > FREEBAYES_06:vcf_to_fasta     -
-[-        ] process > MerquryQV_07                  -
-[-        ] process > bbstat_07                     -
-[-        ] process > FREEBAYES_08:create_windows   -
-[-        ] process > FREEBAYES_08:meryl_genome     -
-[-        ] process > FREEBAYES_08:align_shortreads -
-[-        ] process > FREEBAYES_08:freebayes        -
-[-        ] process > FREEBAYES_08:combineVCF       -
-[-        ] process > FREEBAYES_08:merfin_polish    -
-[-        ] process > FREEBAYES_08:vcf_to_fasta     -
-[-        ] process > MerquryQV_09                  -
-[-        ] process > bbstat_09                     -
-[-        ] process > SPLIT_FILE_09b                -
+    --steptwo true
+```
+
+<details><summary>Falcon Step 2 Output</summary>
 
 ```
+N E X T F L O W  ~  version 21.04.3
+Launching `main.nf` [drunk_mahavira] - revision: 83e4cab92d
+executor >  local (42)
+[35/21418a] process > MERGE_FILE_00 (1)                 [100%] 1 of 1 ✔
+[5c/15c0db] process > meryl_count (2)                   [100%] 2 of 2 ✔
+[ec/8bab40] process > meryl_union                       [100%] 1 of 1 ✔
+[59/92b20a] process > meryl_peak                        [100%] 1 of 1 ✔
+[01/4da290] process > MerquryQV_01 (1)                  [100%] 1 of 1 ✔
+[d4/7be197] process > bbstat_01 (1)                     [100%] 1 of 1 ✔
+[8f/af71c1] process > ARROW_04:create_windows (1)       [100%] 1 of 1 ✔
+[cb/857322] process > ARROW_04:pbmm2_index (1)          [100%] 1 of 1 ✔
+[cc/2fb33d] process > ARROW_04:pbmm2_align (1)          [100%] 1 of 1 ✔
+[67/268c14] process > ARROW_04:gcc_Arrow (2)            [100%] 3 of 3 ✔
+[3e/5f220e] process > ARROW_04:meryl_genome (1)         [100%] 1 of 1 ✔
+[45/50808f] process > ARROW_04:combineVCF (1)           [100%] 1 of 1 ✔
+[fd/f24b0b] process > ARROW_04:reshape_arrow (1)        [100%] 1 of 1 ✔
+[f5/93e399] process > ARROW_04:merfin_polish (1)        [100%] 1 of 1 ✔
+[da/7013df] process > ARROW_04:vcf_to_fasta (1)         [100%] 1 of 1 ✔
+[22/eab69f] process > MerquryQV_05 (1)                  [100%] 1 of 1 ✔
+[30/9ac1ea] process > bbstat_05 (1)                     [100%] 1 of 1 ✔
+[7a/53bbeb] process > FREEBAYES_06:create_windows (1)   [100%] 1 of 1 ✔
+[a4/37ca37] process > FREEBAYES_06:meryl_genome (1)     [100%] 1 of 1 ✔
+[b0/cd56d5] process > FREEBAYES_06:align_shortreads (1) [100%] 1 of 1 ✔
+[cd/7422bf] process > FREEBAYES_06:freebayes (1)        [100%] 3 of 3 ✔
+[71/5bf97e] process > FREEBAYES_06:combineVCF (1)       [100%] 1 of 1 ✔
+[53/8cfc46] process > FREEBAYES_06:merfin_polish (1)    [100%] 1 of 1 ✔
+[c7/b351dc] process > FREEBAYES_06:vcf_to_fasta (1)     [100%] 1 of 1 ✔
+[33/8957b4] process > MerquryQV_07 (1)                  [100%] 1 of 1 ✔
+[fc/09ea6b] process > bbstat_07 (1)                     [100%] 1 of 1 ✔
+[8c/cb42ae] process > FREEBAYES_08:create_windows (1)   [100%] 1 of 1 ✔
+[59/f39f2d] process > FREEBAYES_08:meryl_genome (1)     [100%] 1 of 1 ✔
+[8b/dd442c] process > FREEBAYES_08:align_shortreads (1) [100%] 1 of 1 ✔
+[df/2eceb1] process > FREEBAYES_08:freebayes (2)        [100%] 3 of 3 ✔
+[4e/45366b] process > FREEBAYES_08:combineVCF (1)       [100%] 1 of 1 ✔
+[f2/d24bc2] process > FREEBAYES_08:merfin_polish (1)    [100%] 1 of 1 ✔
+[46/e83799] process > FREEBAYES_08:vcf_to_fasta (1)     [100%] 1 of 1 ✔
+[3c/56fe4a] process > MerquryQV_09 (1)                  [100%] 1 of 1 ✔
+[7c/8dc881] process > bbstat_09 (1)                     [100%] 1 of 1 ✔
+```
+
+</details>
+
+**TrioCanu Assembly**
+
+```
+nextflow run main.nf \
+	 -stub-run \
+	 -profile local \
+ 	 --paternal_assembly "data/pri.fasta" \
+	 --maternal_assembly "data/alt.fasta" \
+	 --mito_assembly "data/mit.fasta" \
+	 --illumina_reads "data/readname_{R1,R2}.fastq.bz" \
+	 --pacbio_reads "data/*subreads.fasta" \
+	 --outdir "TrioCanu_Polish" \
+	 --steptwo true
+```
+
+<details><summary>TrioCanu Step 2 Output</summary>
+
+```
+N E X T F L O W  ~  version 21.04.3
+Launching `main.nf` [determined_kirch] - revision: 83e4cab92d
+executor >  local (80)
+[07/a54e60] process > MERGE_FILE_TRIO (2)                [100%] 2 of 2 ✔
+[88/8b4d41] process > meryl_count (2)                    [100%] 2 of 2 ✔
+[69/02c729] process > meryl_union                        [100%] 1 of 1 ✔
+[5a/1e9cd2] process > meryl_peak                         [100%] 1 of 1 ✔
+[26/45002f] process > MerquryQV_01 (1)                   [100%] 2 of 2 ✔
+[33/e1256a] process > bbstat_01 (2)                      [100%] 2 of 2 ✔
+[3e/b599fd] process > ARROW_04:create_windows (1)        [100%] 1 of 1 ✔
+[1d/f3d66b] process > ARROW_04:pbmm2_index (1)           [100%] 1 of 1 ✔
+[e1/adb0fa] process > ARROW_04:pbmm2_align (1)           [100%] 1 of 1 ✔
+[8b/3bd78b] process > ARROW_04:gcc_Arrow (1)             [100%] 3 of 3 ✔
+[33/2fa02f] process > ARROW_04:meryl_genome (1)          [100%] 1 of 1 ✔
+[c7/3e6344] process > ARROW_04:combineVCF (1)            [100%] 1 of 1 ✔
+[77/14dfad] process > ARROW_04:reshape_arrow (1)         [100%] 1 of 1 ✔
+[cd/22b195] process > ARROW_04:merfin_polish (1)         [100%] 1 of 1 ✔
+[e1/971fc0] process > ARROW_04:vcf_to_fasta (1)          [100%] 1 of 1 ✔
+[72/51b00a] process > ARROW_04b:create_windows (1)       [100%] 1 of 1 ✔
+[fa/53a59c] process > ARROW_04b:pbmm2_index (1)          [100%] 1 of 1 ✔
+[5f/83f2cc] process > ARROW_04b:pbmm2_align (1)          [100%] 1 of 1 ✔
+[0b/f2e3ac] process > ARROW_04b:gcc_Arrow (3)            [100%] 3 of 3 ✔
+[00/1c3709] process > ARROW_04b:meryl_genome (1)         [100%] 1 of 1 ✔
+[a1/afdf90] process > ARROW_04b:combineVCF (1)           [100%] 1 of 1 ✔
+[52/7a4b58] process > ARROW_04b:reshape_arrow (1)        [100%] 1 of 1 ✔
+[06/63c924] process > ARROW_04b:merfin_polish (1)        [100%] 1 of 1 ✔
+[ec/f3167f] process > ARROW_04b:vcf_to_fasta (1)         [100%] 1 of 1 ✔
+[5c/223653] process > MerquryQV_05 (2)                   [100%] 2 of 2 ✔
+[82/7c302c] process > bbstat_05 (2)                      [100%] 2 of 2 ✔
+[22/835f44] process > FREEBAYES_06:create_windows (1)    [100%] 1 of 1 ✔
+[3d/5b9f17] process > FREEBAYES_06:meryl_genome (1)      [100%] 1 of 1 ✔
+[df/3e734f] process > FREEBAYES_06:align_shortreads (1)  [100%] 1 of 1 ✔
+[f9/5015ad] process > FREEBAYES_06:freebayes (1)         [100%] 3 of 3 ✔
+[4a/f5883f] process > FREEBAYES_06:combineVCF (1)        [100%] 1 of 1 ✔
+[69/89ae64] process > FREEBAYES_06:merfin_polish (1)     [100%] 1 of 1 ✔
+[a4/e9d796] process > FREEBAYES_06:vcf_to_fasta (1)      [100%] 1 of 1 ✔
+[4d/a37023] process > FREEBAYES_06b:create_windows (1)   [100%] 1 of 1 ✔
+[24/6960bb] process > FREEBAYES_06b:meryl_genome (1)     [100%] 1 of 1 ✔
+[6e/dc6e5f] process > FREEBAYES_06b:align_shortreads (1) [100%] 1 of 1 ✔
+[d6/ddb417] process > FREEBAYES_06b:freebayes (3)        [100%] 3 of 3 ✔
+[42/42f745] process > FREEBAYES_06b:combineVCF (1)       [100%] 1 of 1 ✔
+[cb/c258a1] process > FREEBAYES_06b:merfin_polish (1)    [100%] 1 of 1 ✔
+[0e/f45e80] process > FREEBAYES_06b:vcf_to_fasta (1)     [100%] 1 of 1 ✔
+[4c/1384dd] process > MerquryQV_07 (2)                   [100%] 2 of 2 ✔
+[9e/2d0fa1] process > bbstat_07 (2)                      [100%] 2 of 2 ✔
+[8d/032e6a] process > FREEBAYES_08:create_windows (1)    [100%] 1 of 1 ✔
+[13/ebdc65] process > FREEBAYES_08:meryl_genome (1)      [100%] 1 of 1 ✔
+[12/f18e84] process > FREEBAYES_08:align_shortreads (1)  [100%] 1 of 1 ✔
+[de/82f667] process > FREEBAYES_08:freebayes (3)         [100%] 3 of 3 ✔
+[60/20b228] process > FREEBAYES_08:combineVCF (1)        [100%] 1 of 1 ✔
+[f3/887628] process > FREEBAYES_08:merfin_polish (1)     [100%] 1 of 1 ✔
+[b3/cc4b72] process > FREEBAYES_08:vcf_to_fasta (1)      [100%] 1 of 1 ✔
+[09/122bc8] process > FREEBAYES_08b:create_windows (1)   [100%] 1 of 1 ✔
+[81/3b5081] process > FREEBAYES_08b:meryl_genome (1)     [100%] 1 of 1 ✔
+[31/4f322a] process > FREEBAYES_08b:align_shortreads (1) [100%] 1 of 1 ✔
+[11/872458] process > FREEBAYES_08b:freebayes (3)        [100%] 3 of 3 ✔
+[1a/4eed86] process > FREEBAYES_08b:combineVCF (1)       [100%] 1 of 1 ✔
+[e8/dba261] process > FREEBAYES_08b:merfin_polish (1)    [100%] 1 of 1 ✔
+[ed/3c67f5] process > FREEBAYES_08b:vcf_to_fasta (1)     [100%] 1 of 1 ✔
+[f0/5e8ecf] process > MerquryQV_09 (2)                   [100%] 2 of 2 ✔
+[44/80c3c2] process > bbstat_09 (2)                      [100%] 2 of 2 ✔
+```
+
+</details>
