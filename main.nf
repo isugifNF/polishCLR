@@ -32,11 +32,11 @@ def helpMessage() {
    Mandatory arguments:
    --illumina_reads               paired end illumina reads, to be used for Merqury QV scores, and freebayes polish primary assembly
    --pacbio_reads                 pacbio reads in bam format, to be used to arrow polish primary assembly
-   --mito_assembly                mitocondrial assembly will be concatinated to the assemblies before polishing [default: false]
+   --mitochondrial_assembly       mitocondrial assembly will be concatinated to the assemblies before polishing [default: false]
 
    Either FALCON (or FALCON Unzip) assembly:
    --primary_assembly             genome assembly fasta file to polish
-   --alt_assembly                 if alternate/haplotig assembly file is provided, will be concatinated to the primary assembly before polishing [default: false]
+   --alternate_assembly           if alternate/haplotig assembly file is provided, will be concatinated to the primary assembly before polishing [default: false]
    --falcon_unzip                 if primary assembly has already undergone falcon unzip [default: false]. If true, will Arrow polish once instead of twice.
    
    Or TrioCanu assembly
@@ -94,9 +94,9 @@ if ( params.profile ) {
 workflow {
   // === Setup input channels
   // Option 1: read in FALCON assembly
-  if( params.alt_assembly ){ // FALCON or FALCON-Unzip
-    mito_ch = channel.fromPath(params.mito_assembly, checkIfExists:true)
-    alt_ch = channel.fromPath(params.alt_assembly, checkIfExists:true)
+  if( params.alternate_assembly ){ // FALCON or FALCON-Unzip
+    mito_ch = channel.fromPath(params.mitochondrial_assembly, checkIfExists:true)
+    alt_ch = channel.fromPath(params.alternate_assembly, checkIfExists:true)
     pri_ch = channel.fromPath(params.primary_assembly, checkIfExists:true) |
       map { n -> n.copyTo("${params.outdir}/00_Preprocess/${params.species}_pri.fasta")} 
     
@@ -109,7 +109,7 @@ workflow {
 
   // Option 2: read in TrioCanu assembly
   if( params.paternal_assembly ) {
-    mito_ch = channel.fromPath(params.mito_assembly, checkIfExists:true)
+    mito_ch = channel.fromPath(params.mitochondrial_assembly, checkIfExists:true)
     pat_ch = channel.fromPath(params.paternal_assembly, checkIfExists:true) | 
       map { n -> n.copyTo("${params.outdir}/00_Preprocess/${params.species}_pat.fasta")}
     mat_ch = channel.fromPath(params.maternal_assembly, checkIfExists:true) |
