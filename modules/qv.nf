@@ -19,6 +19,8 @@ process meryl_union {
   template 'meryl_union.sh'
 }
 
+// TODO: combine the above in a mk_meryldb workflow
+
 // calculate illumina peak for merfin
 process meryl_peak {
   publishDir "${params.outdir}/00_Preprocess", mode: 'symlink'
@@ -28,11 +30,14 @@ process meryl_peak {
   template 'meryl_peak.sh'
 }
 
+// Note: start using the pattern input: tuple val(outdir), rest of input files
+
 // 01 Merqury QV value
 process MerquryQV {
-  publishDir "${params.outdir}/01_QV/MerquryQV", mode: 'copy'
-  publishDir "${params.outdir}/01_QV", mode: 'copy', pattern: "merqury.qv"
-  input: tuple path(illumina_db), path(assembly_fasta)
+  publishDir "${params.outdir}/${outdir}/MerquryQV", mode: 'copy'
+  publishDir "${params.outdir}/${outdir}", mode: 'copy', pattern "merqury.qv"
+
+  input: tuple val(outdir), path(illumina_db), path(assembly_fasta)
   output: path("*")
   script:
   template 'merquryqv.sh'
@@ -40,8 +45,8 @@ process MerquryQV {
 
 // 01 bbstat: Length distribtions of initial assembly
 process bbstat {
-  publishDir "${params.outdir}/01_QV/bbstat", mode: 'copy'
-  input:  path(assembly_fasta)
+  publishDir "${params.outdir}/${outdir}/bbstat", mode: 'copy'
+  input: tuple val(outdir), path(assembly_fasta)
   output: path("*")
   script:
   template 'bbstats.sh'

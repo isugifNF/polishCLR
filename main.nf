@@ -133,14 +133,14 @@ workflow {
   }
   peak_ch = merylDB_ch | meryl_peak | map { n -> n.get(0) } | splitText() { it.trim() }
   // Step 1: Check quality of assembly with Merqury and length dist. with bbstat   
-  merylDB_ch | combine(asm_ch) | MerquryQV_01
-  asm_ch | bbstat_01
+  channel.of("01_QV") | combine(merylDB_ch) | combine(asm_ch) | MerquryQV_01
+  channel.of("01_QV") | combine(asm_ch) | bbstat_01
 
   if(!params.steptwo) { // TODO: redo this more elegantly later 
 
     if (!params.falcon_unzip) {
       // Step 2: Arrow Polish with PacBio reads
-      asm_arrow_ch = ARROW_02(asm_ch, pac_ch)
+      asm_arrow_ch = ARROW_02(channel.of("02_ArrowPolish"), asm_ch, pac_ch)
       // Step 3: Check quality of new assembly with Merqury 
       merylDB_ch | combine(asm_arrow_ch) | MerquryQV_03
       asm_arrow_ch | bbstat_03
@@ -153,31 +153,35 @@ workflow {
     // (2) purge primary, hap merged with alt, purge hap_alt
     // (3) purged primary -> scaffolding pipeline? (might just need a part1, part2 pipeline)
     // (4) merge scaffolded prime, purged alt, and mito
-    asm_arrow_ch | SPLIT_FILE_03 |
-      map {n -> [n.get(0), n.get(1)] } |
+    tmp_ch = asm_arrow_ch | SPLIT_FILE_03 |
+      map {n -> [n.get(0), n.get(1)] }
+    channel.of("03b_Purge_Dups") |
+      combine(tmp_ch) |
       combine(pac_ch) |
       PURGE_DUPS_03b
 
     /* BUSCO check will go here */
-    PURGE_DUPS_03b.out | map {n -> [n.get(0), n.get(1)] } | flatMap | BUSCO
+    PURGE_DUPS_03b.out | map {n -> [n.get(0), n.get(1)] } | flatMap | 
+    combine(channel.of("03c_BUSCO")) | map {n -> [n.get(1), n.get(0)]} |
+    BUSCO
   } else {
     asm_arrow_ch = asm_ch
 
     // Step 4: Arrow Polish with PacBio reads
-    asm_arrow2_ch = ARROW_04(asm_arrow_ch, pac_ch, peak_ch, merylDB_ch)
+    asm_arrow2_ch = ARROW_04(channel.of("04_ArrowPolish"), asm_arrow_ch, pac_ch, peak_ch, merylDB_ch)
     // Step 5: Check quality of new assembly with Merqury 
-    merylDB_ch | combine(asm_arrow2_ch) | MerquryQV_05
-    asm_arrow2_ch | bbstat_05
+    channel.of("05_QV") | combine(merylDB_ch) | combine(asm_arrow2_ch) | MerquryQV_05
+    channel.of("05_QV") | combine(asm_arrow2_ch) | bbstat_05
 
     // Step 6: FreeBayes Polish with Illumina reads
-    asm_freebayes_ch = FREEBAYES_06(asm_arrow2_ch, ill_ch, peak_ch, merylDB_ch)
-    merylDB_ch | combine(asm_freebayes_ch) | MerquryQV_07
-    asm_freebayes_ch | bbstat_07
+    asm_freebayes_ch = FREEBAYES_06(channel.of("06_FreeBayesPolish"), asm_arrow2_ch, ill_ch, peak_ch, merylDB_ch)
+    channel.of("07_QV") | combine(merylDB_ch) | combine(asm_freebayes_ch) | MerquryQV_07
+    channel.of("07_QV") | combine(asm_freebayes_ch) | bbstat_07
  
     // Step 8: FreeBayes Polish with Illumina reads
-    asm_freebayes2_ch = FREEBAYES_08(asm_freebayes_ch, ill_ch, peak_ch, merylDB_ch)
-    merylDB_ch | combine(asm_freebayes2_ch) | MerquryQV_09
-    asm_freebayes2_ch | bbstat_09
+    asm_freebayes2_ch = FREEBAYES_08(channel.of("08_FreeBayesPolish"), asm_freebayes_ch, ill_ch, peak_ch, merylDB_ch)
+    channel.of("09_QV") | combine(merylDB_ch) | combine(asm_freebayes2_ch) | MerquryQV_09
+    channel.of("09_QV") | combine(asm_freebayes2_ch) | bbstat_09
 
     asm_freebayes2_ch | SPLIT_FILE_09b
     // either incorporate split pat/mat into split_file.sh or create a decision point here

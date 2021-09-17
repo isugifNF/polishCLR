@@ -15,10 +15,10 @@ nextflow.enable.dsl=2
 // }
 
 process BUSCO {
-  publishDir "${params.outdir}/03c_BUSCO", mode: 'copy'
+  publishDir "${params.outdir}/${outdir}", mode: 'copy'
   scratch false
 
-  input: path(genomeFile)
+  input: tuple val(outdir), path(genomeFile)
   output: path("${genomeFile.simpleName}/*")
   
   script:
