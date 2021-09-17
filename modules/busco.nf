@@ -2,8 +2,6 @@
 
 nextflow.enable.dsl=2
 
-MERQURY='' // define to fix clash with other conda
-
 // process BUSCO_setup {
 //   publishDir "${params.outdir}/03c_BUSCO", mode: 'copy'
 //   output:tuple path("config"), path("Busco_version.txt")
@@ -26,6 +24,7 @@ process BUSCO {
   script:
   """
   #! /usr/bin/env bash
+  MERQURY=' '
   PROC=\$((`nproc`))
   cat ${genomeFile} | tr '|' '_' > ${genomeFile.simpleName}_fixheaders.fna
   ${busco_app} \

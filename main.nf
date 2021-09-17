@@ -159,7 +159,7 @@ workflow {
       PURGE_DUPS_03b
 
     /* BUSCO check will go here */
-    PURGE_DUPS_03b.out | flatMap | BUSCO
+    PURGE_DUPS_03b.out | map {n -> [n.get(0), n.get(1)] } | flatMap | BUSCO
   } else {
     asm_arrow_ch = asm_ch
 
