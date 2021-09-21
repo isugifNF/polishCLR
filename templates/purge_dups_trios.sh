@@ -1,7 +1,7 @@
 #! /usr/bin/env bash
 # === Inputs
-# genome_fasta=genome assembly file from mom or dad
-# pacbio_reads=*subreads.fasta from mom or dad respectively
+# genome_fasta=genome assembly file from maternal or paternal haplotyopes
+# pacbio_reads=*subreads.fasta from F1
 # === Outputs
 # primary_hist
 # fastas
@@ -17,32 +17,32 @@ PROC=\$((`nproc`))
 ${samtools_app} faidx ${primary_assembly}
 
 ${minimap2_app} -xmap-pb -t \${PROC}  ${primary_assembly} ${pacbio_reads} | \
-  ${gzip_app} -c -  > p_mapping.paf.gz
+  ${gzip_app} -c -  > ${primary_assembly.shortName}_mapping.paf.gz
 
-${pbcstat_app} p_mapping.paf.gz
-${hist_plot_py} PB.stat primary_hist
+${pbcstat_app} ${primary_assembly.shortName}_mapping.paf.gz
+${hist_plot_py} PB.stat ${primary_assembly.shortName}_hist
 
 ${calcuts_app} PB.stat > p_cutoffs 2> p_calcuts.log 
 
-${split_fa_app} ${primary_assembly} > ${primary_assembly}.split
+${split_fa_app} ${primary_assembly} > ${primary_assembly.shortName}.split
 
-${minimap2_app} -xasm5 -DP -t \${PROC} ${primary_assembly}.split ${primary_assembly}.split | gzip -c - > ${primary_assembly}.split.self.paf.gz
+${minimap2_app} -xasm5 -DP -t \${PROC} ${primary_assembly.shortName}.split ${primary_assembly.shortName}.split | gzip -c - > ${primary_assembly.shortName}.split.self.paf.gz
 
-${purge_dups_app} -2 -T p_cufoffs -c PB.base.cov ${primary_assembly}.split.self.paf.gz > p_dups.bed 2> p_purge_dups.log
+${purge_dups_app} -2 -T p_cufoffs -c PB.base.cov ${primary_assembly.shortName}.split.self.paf.gz > ${primary_assembly.shortName}_dups.bed 2> ${primary_assembly.shortName}_purge_dups.log
 
 ## In trio assemblies there shouldn't be haplotigs, so remove these from the bed file output by purge_dups.bed
-grep 'JUNK\|OVLP' p_dups.bed > dups_JUNK_OVLP.bed
+grep 'JUNK\|OVLP' ${primary_assembly.shortName}_dups.bed > ${primary_assembly.shortName}_dups_JUNK_OVLP.bed
 
 ## -e flag to only remove haplotypic regions at the ends of contigs
-${get_seqs_app} -e dups_JUNK_OVLP.bed ${primary_assembly} -p primary
+${get_seqs_app} -e dups_JUNK_OVLP.bed ${primary_assembly} -p ${primary_assembly.shortName}
 
 ### TODO pull this out as a separate process in nextflow
 echo "Purged alternate, running bbtools stats.sh on each assembly"
 module load bbtools
-stats.sh -Xmx2048m primary.purged.fa > primary_purged.fa.stats
-stats.sh -Xmx2048m primary.hap.fa > primary_hap.fa.stats
+stats.sh -Xmx2048m ${primary_assembly.shortName}.purged.fa > ${primary_assembly.shortName}_purged.fa.stats
+stats.sh -Xmx2048m ${primary_assembly.shortName}.hap.fa > ${primary_assembly.shortName}_hap.fa.stats
 
 ## rename to play nicely with nextflow shortname 
-mv primary.hap.fa primary_hap.fa
-mv primary.purged.fa primary_purged.fa
+mv ${primary_assembly.shortName}.hap.fa ${primary_assembly.shortName}_hap.fa
+mv ${primary_assembly.shortName}.purged.fa ${primary_assembly.shortName}_purged.fa
 
