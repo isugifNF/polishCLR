@@ -27,8 +27,8 @@ process pbmm2_align {
 
   stub:
   """
-  touch ${pacbio_read.simpleName}_aln.bam
-  touch ${pacbio_read.simpleName}_aln.bai
+  touch ${assembly_fasta.simpleName}_${pacbio_read.simpleName}_aln.bam
+  touch ${assembly_fasta.simpleName}_${pacbio_read.simpleName}_aln.bam.bai
   """
 }
 
@@ -41,8 +41,8 @@ process gcc_Arrow {
 
   stub:
   """
-  touch ${window.replace(':','_').replace('|','_')}.vcf
-  touch ${window.replace(':','_').replace('|','_')}.fasta
+  touch ${assembly_fasta.simpleName}_${window.replace(':','_').replace('|','_')}.vcf
+  touch ${assembly_fasta.simpleName}_${window.replace(':','_').replace('|','_')}.fasta
   """
 }
 
@@ -102,20 +102,20 @@ workflow ARROW_MERFIN {
     merylDB_ch
     
   main:
+
     win_ch = outdir_ch | combine(asm_ch) | create_windows | 
-      map { n -> n.get(1) } | splitText() {it.trim() }
-    fai_ch = create_windows.out | map { n -> n.get(0) }
+      map { n -> n.get(1) } | splitText() {it.trim() } 
+    fai_ch = create_windows.out | map { n -> n.get(0) } 
 
     arrow_run_ch = outdir_ch | combine(asm_ch) | pbmm2_index | combine(pac_ch) | pbmm2_align |
       combine(asm_ch) | combine(fai_ch) | combine(win_ch) | gcc_Arrow 
-
     if (params.same_specimen) {
       /* create a genome meryl db */
-      asm_meryl = outdir_ch | combine(channel.of(params.k)) | combine(asm_ch) | meryl_genome
+      asm_meryl = outdir_ch | combine(channel.of(params.k)) | combine(asm_ch) | meryl_genome 
 
       /* prepare and run merfin polish */
       newasm_ch = arrow_run_ch | map { n -> [ n.get(0), n.get(2) ] } | groupTuple |
-        combineVCF | reshape_arrow | combine(asm_ch) | combine(asm_meryl) | combine(peak_ch) |
+        combineVCF | reshape_arrow | combine(asm_ch) |  combine(asm_meryl) |combine(peak_ch) |
         combine(merylDB_ch) | merfin_polish | combine(asm_ch) | vcf_to_fasta
     } else {
       newasm_ch = arrow_run_ch | map { n -> [ n.get(0), n.get(1) ] } | groupTuple |

@@ -45,6 +45,30 @@ process MERGE_FILE_TRIO {
   """
 }
 
+process SPLIT_FILE_03p {
+  input: path(genome_fasta)
+  output: tuple path("pat_${genome_fasta}"), path("mit_${genome_fasta}")
+  script:
+  template 'split_file_pat.sh'
+
+  stub:
+  """
+  touch pat_${genome_fasta} mit_${genome_fasta}
+  """
+}
+
+process SPLIT_FILE_03m {
+  input: path(genome_fasta)
+  output: tuple path("mat_${genome_fasta}"), path("mit_${genome_fasta}")
+  script:
+  template 'split_file_mat.sh'
+
+  stub:
+  """
+  touch mat_${genome_fasta} mit_${genome_fasta}
+  """
+}
+
 process SPLIT_FILE {
   input: path(genome_fasta)
   output: tuple path("p_${genome_fasta}"), path("a_${genome_fasta}"), path("m_${genome_fasta}")
@@ -56,6 +80,7 @@ process SPLIT_FILE {
   touch p_${genome_fasta} a_${genome_fasta} m_${genome_fasta}
   """
 }
+
 
 // Used by both arrow and freebayes
 process create_windows {
@@ -114,13 +139,13 @@ process merfin_polish {
 }
 
 process vcf_to_fasta {
-  publishDir "${params.outdir}/${outdir}", mode: 'symlink'
+  publishDir "${params.outdir}/${outdir}", mode: 'copy'
   input: tuple val(outdir), path(vcf), path(genome_fasta)
   output: path("${outdir}_consensus.fasta")
   script:
   template 'vcf_to_fasta.sh'
 
-  stub
+  stub:
   """
   touch ${outdir}_consensus.fasta
   """
