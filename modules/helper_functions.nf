@@ -81,6 +81,22 @@ process SPLIT_FILE {
   """
 }
 
+process RENAME_FILE {
+  publishDir "${params.outdir}/00_Preprocess/", mode:'copy'
+  
+  input: tuple path(filename), val(newname)
+  output: path("$newname")
+  script:
+  """
+  mv ${filename} ${newname}
+  """
+
+  stub:
+  """
+  touch ${newname}
+  """
+}
+
 
 // Used by both arrow and freebayes
 process create_windows {

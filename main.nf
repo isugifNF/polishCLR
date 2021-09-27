@@ -21,6 +21,8 @@ include {SPLIT_FILE_03p as SPLIT_FILE_09p; SPLIT_FILE_03m as SPLIT_FILE_09m} fro
 include { PURGE_DUPS as PURGE_DUPS_03b; PURGE_DUPS_TRIO as PURGE_DUPS_TRIOp; PURGE_DUPS_TRIO as PURGE_DUPS_TRIOm } from './modules/purge_dups.nf'
 include { BUSCO; BUSCO as BUSCO_mat } from './modules/busco.nf'
 
+include {RENAME_FILE as RENAME_PRIMARY; RENAME_FILE as RENAME_PAT; RENAME_FILE as RENAME_MAT} from './modules/helper_functions.nf'
+
 
 def helpMessage() {
   log.info isuGIFHeader()
@@ -98,22 +100,20 @@ workflow {
     mito_ch = channel.fromPath(params.mitochondrial_assembly, checkIfExists:true)
     alt_ch = channel.fromPath(params.alternate_assembly, checkIfExists:true)
     pri_ch = channel.fromPath(params.primary_assembly, checkIfExists:true) |
-      map { n -> n.copyTo("${params.outdir}/00_Preprocess/${params.species}_pri.fasta")} 
-    
+      combine(channel.of("${params.species}_pri.fasta")) | RENAME_PRIMARY
+
     asm_ch = pri_ch | combine(alt_ch) | combine(mito_ch) | MERGE_FILE_00
 
   } else if ( params.primary_assembly ) {
     asm_ch = channel.fromPath(params.primary_assembly, checkIfExists:true) |
-      map { n -> n.copyTo("${params.outdir}/00_Preprocess/${params.species}_pri.fasta")} 
-  }
+      combine(channel.of("${params.species}_pri.fasta")) | RENAME_PRIMARY
 
-  // Option 2: read in TrioCanu assembly
-  if( params.paternal_assembly ) {
+  } else if ( params.paternal_assembly ) {  // Option 2: read in TrioCanu assembly
     mito_ch = channel.fromPath(params.mitochondrial_assembly, checkIfExists:true)
     pat_ch = channel.fromPath(params.paternal_assembly, checkIfExists:true) | 
-      map { n -> n.copyTo("${params.outdir}/00_Preprocess/${params.species}_pat.fasta")}
+      combine(channel.of("${params.species}_pat.fasta")) | RENAME_PAT
     mat_ch = channel.fromPath(params.maternal_assembly, checkIfExists:true) |
-      map { n -> n.copyTo("${params.outdir}/00_Preprocess/${params.species}_mat.fasta")}
+      combine(channel.of("${params.species}_mat.fasta")) | RENAME_MAT
 
     // should result in Paternal and Material assemblies being polished separately
     asm_ch = pat_ch | concat(mat_ch) | combine(mito_ch) | MERGE_FILE_TRIO
