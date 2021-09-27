@@ -22,7 +22,7 @@ include { PURGE_DUPS as PURGE_DUPS_03b; PURGE_DUPS_TRIO as PURGE_DUPS_TRIOp; PUR
 include { BUSCO; BUSCO as BUSCO_mat } from './modules/busco.nf'
 
 include {RENAME_FILE as RENAME_PRIMARY; RENAME_FILE as RENAME_PAT; RENAME_FILE as RENAME_MAT} from './modules/helper_functions.nf'
-
+include {MERGE_FILE_FCANU as MERGE_FCANU} from './modules/helper_functions.nf'
 
 def helpMessage() {
   log.info isuGIFHeader()
@@ -96,7 +96,7 @@ if ( params.profile ) {
 workflow {
   // === Setup input channels
   // Option 1: read in FALCON assembly
-  if( params.alternate_assembly ){ // FALCON or FALCON-Unzip
+  if( params.alternate_assembly ){ // Option 1: FALCON or FALCON-Unzip
     mito_ch = channel.fromPath(params.mitochondrial_assembly, checkIfExists:true)
     alt_ch = channel.fromPath(params.alternate_assembly, checkIfExists:true)
     pri_ch = channel.fromPath(params.primary_assembly, checkIfExists:true) |
@@ -104,10 +104,17 @@ workflow {
 
     asm_ch = pri_ch | combine(alt_ch) | combine(mito_ch) | MERGE_FILE_00
 
-  } else if ( params.primary_assembly ) {
-    asm_ch = channel.fromPath(params.primary_assembly, checkIfExists:true) |
-      combine(channel.of("${params.species}_pri.fasta")) | RENAME_PRIMARY
+  } else if ( params.primary_assembly ) { // Option 1b: Canu, same as Falcon but without alternative assembly
+    if( params.mitocondrial_assembly ) {  // merge mito if available
+      mito_ch = channel.fromPath(params.mitochondrial_assembly, checkIfExists:true)
+      pri_ch = channel.fromPath(params.primary_assembly, checkIfExists:true) |
+        combine(channel.of("${params.species}_pri.fasta")) | RENAME_PRIMARY
 
+      asm_ch = pri_ch | combine(mito_ch) | MERGE_FCANU
+    } else { // mito not available, may still have issues with split_file
+      asm_ch = channel.fromPath(params.primary_assembly, checkIfExists:true) |
+        combine(channel.of("${params.species}_pri.fasta")) | RENAME_PRIMARY
+    }
   } else if ( params.paternal_assembly ) {  // Option 2: read in TrioCanu assembly
     mito_ch = channel.fromPath(params.mitochondrial_assembly, checkIfExists:true)
     pat_ch = channel.fromPath(params.paternal_assembly, checkIfExists:true) | 

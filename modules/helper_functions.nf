@@ -45,6 +45,21 @@ process MERGE_FILE_TRIO {
   """
 }
 
+// concat genome and mito together
+process MERGE_FILE_FCANU {
+  publishDir "${params.outdir}/00_Preprocess", mode: 'copy'
+  input: tuple path(primary_assembly), path(mito_assembly)
+  output: path("${primary_assembly.simpleName}_merged.fasta")
+  script:
+  template 'merge_file_fcanu.sh'
+
+  stub:
+  """
+  touch ${primary_assembly.simpleName}_merged.fasta
+  """
+
+}
+
 process SPLIT_FILE_03p {
   input: path(genome_fasta)
   output: tuple path("pat_${genome_fasta}"), path("mit_${genome_fasta}")
