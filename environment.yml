@@ -19,3 +19,4 @@ dependencies:
   - jellyfish
   - bbtools
   - purge_dups
+  - bamtools
