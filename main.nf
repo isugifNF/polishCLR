@@ -174,7 +174,7 @@ workflow {
     pacfasta_ch = pac_ch | bam_to_fasta
 
     if(params.primary_assembly){
-      tmp_ch = channel_of("02_ArrowPolish") | combine(asm_arrow_ch) | SPLIT_FILE_03 |
+      tmp_ch = channel.of("02_ArrowPolish") | combine(asm_arrow_ch) | SPLIT_FILE_03 |
         map {n -> [n.get(0), n.get(1)] }
       channel.of("03b_Purge_Dups") |
         combine(tmp_ch) |
