@@ -5,17 +5,24 @@
 # pacbio_reads=*subreads.fasta
 # === Outputs
 
-module load minimap2
 module load python_3
-#module load purge_dups # not sure how module differs from most recent git
-export PATH="/project/ag100pest/software/purge_dups/bin/:$PATH"
+
+## These should all be included in the environment.yml
+# module load minimap2
+# module load samtools
+# module load bamtools 
+# module load purge_dups # not sure how module differs from most recent git
+
+## Not sure if we need this still - testing
+# export PATH="/project/ag100pest/software/purge_dups/bin/:$PATH"
 
 PROC=\$((`nproc`))
 
 ${samtools_app} faidx ${primary_assembly}
 
-${minimap2_app} -xmap-pb -t \${PROC}  ${primary_assembly} ${pacbio_reads} | \
-  ${gzip_app} -c -  > p_mapping.paf.gz
+for x in `${pacbio_reads} |  sed 's/\.bam//g'`; do
+       ${minimap2_app} -xmap-pb $primary_assembly ${x}.fasta | $gzip_app -c - > p_mapping.paf.gz
+done
 
 ${pbcstat_app} p_mapping.paf.gz
 ${hist_plot_py} PB.stat primary_hist
@@ -38,10 +45,13 @@ cat primary.hap.fa  ${haplo_fasta} >  h_${haplo_fasta}
 
 ${samtools_app} faidx h_${haplo_fasta}
 
-${minimap2_app} -xmap-pb -t \${PROC}  h_${haplo_fasta} ${pacbio_reads} |\
-  ${gzip_app} -c -  > h_mapping.paf.gz
+for x in `${pacbio_reads} |  sed 's/\.bam//g'`; do
+       ${minimap2_app} -xmap-pb h_${haplo_fasta} ${x}.fasta | $gzip_app -c - > h_mapping.paf.gz
+done
 
 ${pbcstat_app} h_mapping.paf.gz
+
+${hist_plot_py} PB.stat h_hist
 
 ${calcuts_app} PB.stat > h_cutoffs 2> h_calcuts.log
 
@@ -54,9 +64,8 @@ ${purge_dups_app} -2 -T h_cufoffs -c PB.base.cov h_${haplo_fasta}.split.self.paf
 
 ${get_seqs_app} -e h_dups.bed h_${haplo_fasta} -p haps
 
-### TODO pull this out as a separate process in nextflow
 echo "Purged alternate, running bbtools stats.sh on each assembly"
-module load bbtools
+
 ## On Atlas
 #export PATH="/project/ag100pest/software/bbmap/:$PATH"
 stats.sh -Xmx2048m primary.purged.fa > primary_purged.fa.stats
@@ -65,8 +74,5 @@ stats.sh -Xmx2048m haps.purged.fa > haps_purged.fa.stats
 stats.sh -Xmx2048m haps.hap.fa > haps_hap.fa.stats
 
 ## rename to play nicely with nextflow shortname 
-mv primary.hap.fa primary_hap.fa
 mv primary.purged.fa primary_purged.fa
-mv haps.hap.fa haps_hap.fa
 mv haps.purged.fa haps_purged.fa
-#mv h_${haplo_fasta} h_genome.fa
