@@ -105,7 +105,7 @@ workflow {
     asm_ch = pri_ch | combine(alt_ch) | combine(mito_ch) | MERGE_FILE_00
 
   } else if ( params.primary_assembly ) { // Option 1b: Canu, same as Falcon but without alternative assembly
-    if( params.mitocondrial_assembly ) {  // merge mito if available
+    if( params.mitochondrial_assembly ) {  // merge mito if available
       mito_ch = channel.fromPath(params.mitochondrial_assembly, checkIfExists:true)
       pri_ch = channel.fromPath(params.primary_assembly, checkIfExists:true) |
         combine(channel.of("${params.species}_pri.fasta")) | RENAME_PRIMARY
