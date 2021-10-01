@@ -85,7 +85,9 @@ process SPLIT_FILE_03m {
 }
 
 process SPLIT_FILE {
-  input: path(genome_fasta)
+  publishDir "${params.outdir}/${outdir}", mode:'copy'
+
+  input:tuple val(outdir), path(genome_fasta)
   output: tuple path("p_${genome_fasta}"), path("a_${genome_fasta}"), path("m_${genome_fasta}")
   script:
   template 'split_file.sh'
@@ -180,4 +182,21 @@ process vcf_to_fasta {
   """
   touch ${outdir}_consensus.fasta
   """
+}
+
+process bam_to_fasta {
+  publishDir "${params.outdir}/00_Preprocess", mode: 'copy'
+  input: path(bam)
+  output: path("${bam.simpleName}.fasta")
+  script:
+  """
+  #! /usr/bin/env bash
+  ${samtools_app} fasta ${bam} > ${bam.simpleName}.fasta
+  """
+
+  stub:
+  """
+  touch ${bam.simpleName}.fasta
+  """
+
 }

@@ -26,7 +26,9 @@ process BUSCO {
   #! /usr/bin/env bash
   PROC=\$((`nproc`))
   cat ${genomeFile} | tr '|' '_' > ${genomeFile.simpleName}_fixheaders.fna
-  ${busco_app} \
+
+  
+${busco_app} \
     -o ${genomeFile.simpleName} \
     -i ${genomeFile.simpleName}_fixheaders.fna \
     -l ${busco_lineage} \

@@ -22,7 +22,7 @@ include { PURGE_DUPS as PURGE_DUPS_03b; PURGE_DUPS_TRIO as PURGE_DUPS_TRIOp; PUR
 include { BUSCO; BUSCO as BUSCO_mat } from './modules/busco.nf'
 
 include {RENAME_FILE as RENAME_PRIMARY; RENAME_FILE as RENAME_PAT; RENAME_FILE as RENAME_MAT} from './modules/helper_functions.nf'
-include {MERGE_FILE_FCANU as MERGE_FCANU} from './modules/helper_functions.nf'
+include {MERGE_FILE_FCANU as MERGE_FCANU; bam_to_fasta } from './modules/helper_functions.nf'
 
 def helpMessage() {
   log.info isuGIFHeader()
@@ -171,12 +171,14 @@ workflow {
     // (3) purged primary -> scaffolding pipeline? (might just need a part1, part2 pipeline)
     // (4) merge scaffolded prime, purged alt, and mito
 
+    pacfasta_ch = pac_ch | bam_to_fasta
+
     if(params.primary_assembly){
-      tmp_ch = asm_arrow_ch | SPLIT_FILE_03 |
+      tmp_ch = channel_of("02_ArrowPolish") | combine(asm_arrow_ch) | SPLIT_FILE_03 |
         map {n -> [n.get(0), n.get(1)] }
       channel.of("03b_Purge_Dups") |
         combine(tmp_ch) |
-        combine(pac_ch) |
+        combine(pacfasta_ch) |
         PURGE_DUPS_03b
   
       /* BUSCO check will go here */
@@ -250,12 +252,11 @@ workflow {
     channel.of("09_QV") | combine(asm_freebayes2_ch) | bbstat_09
 
     if(params.primary_assembly){
-      asm_freebayes2_ch | SPLIT_FILE_09b
+      channel.of("08_FreeBayesPolish") | combine(asm_freebayes2_ch) | SPLIT_FILE_09b
     } else if (params.paternal_assembly) {
       asm_freebayes2_ch.first() | SPLIT_FILE_09p
       asm_freebayes2_ch.last() | SPLIT_FILE_09m
     }
-
   }
 }
 
