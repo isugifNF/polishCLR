@@ -21,10 +21,10 @@ PROC=\$((`nproc`))
 ${samtools_app} faidx ${primary_assembly}
 
 for x in `${pacbio_reads} |  sed 's/\.bam//g'`; do
-       ${minimap2_app} -xmap-pb $primary_assembly ${x}.fasta | $gzip_app -c - > p_mapping.paf.gz
+       ${minimap2_app} -xmap-pb $primary_assembly ${x}.fasta | $gzip_app -c - > ${x}_p_mapping.paf.gz
 done
 
-${pbcstat_app} p_mapping.paf.gz
+${pbcstat_app} *_p_mapping.paf.gz
 ${hist_plot_py} PB.stat primary_hist
 
 ${calcuts_app} PB.stat > p_cutoffs 2> p_calcuts.log 
@@ -46,10 +46,10 @@ cat primary.hap.fa  ${haplo_fasta} >  h_${haplo_fasta}
 ${samtools_app} faidx h_${haplo_fasta}
 
 for x in `${pacbio_reads} |  sed 's/\.bam//g'`; do
-       ${minimap2_app} -xmap-pb h_${haplo_fasta} ${x}.fasta | $gzip_app -c - > h_mapping.paf.gz
+       ${minimap2_app} -xmap-pb h_${haplo_fasta} ${x}.fasta | $gzip_app -c - > ${x}_h_mapping.paf.gz
 done
 
-${pbcstat_app} h_mapping.paf.gz
+${pbcstat_app} *_h_mapping.paf.gz
 
 ${hist_plot_py} PB.stat h_hist
 
