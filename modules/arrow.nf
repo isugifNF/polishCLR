@@ -33,7 +33,7 @@ process pbmm2_align {
 }
 
 process gcc_Arrow {
-  errorStrategy 'retry'  // What is the maximum retry
+  errorStrategy { task.attempt < 4 ? 'retry' : 'terminate' }
 
   publishDir "${params.outdir}/${outdir}/gccruns", mode: 'symlink'
   input: tuple val(outdir), path(pacbio_bam), path(pacbio_bai),  path(assembly_fasta), path(assembly_fai), val(window)
