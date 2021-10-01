@@ -16,10 +16,12 @@ PROC=\$((`nproc`))
 
 ${samtools_app} faidx ${primary_assembly}
 
-${minimap2_app} -xmap-pb -t \${PROC}  ${primary_assembly} ${pacbio_reads} | \
-  ${gzip_app} -c -  > ${primary_assembly.shortName}_mapping.paf.gz
+for x in `${pacbio_reads} |  sed 's/\.bam//g'`; do
+	${minimap2_app} -xmap-pb -t \${PROC}  ${primary_assembly} ${pacbio_reads} | \
+  	${gzip_app} -c -  > ${x}_${primary_assembly.shortName}_mapping.paf.gz
+done
 
-${pbcstat_app} ${primary_assembly.shortName}_mapping.paf.gz
+${pbcstat_app} *_${primary_assembly.shortName}_mapping.paf.gz
 ${hist_plot_py} PB.stat ${primary_assembly.shortName}_hist
 
 ${calcuts_app} PB.stat > p_cutoffs 2> p_calcuts.log 
@@ -36,8 +38,6 @@ grep 'JUNK\|OVLP' ${primary_assembly.shortName}_dups.bed > ${primary_assembly.sh
 ## -e flag to only remove haplotypic regions at the ends of contigs
 ${get_seqs_app} -e dups_JUNK_OVLP.bed ${primary_assembly} -p ${primary_assembly.shortName}
 
-### TODO pull this out as a separate process in nextflow
-echo "Purged alternate, running bbtools stats.sh on each assembly"
 module load bbtools
 stats.sh -Xmx2048m ${primary_assembly.shortName}.purged.fa > ${primary_assembly.shortName}_purged.fa.stats
 stats.sh -Xmx2048m ${primary_assembly.shortName}.hap.fa > ${primary_assembly.shortName}_hap.fa.stats
