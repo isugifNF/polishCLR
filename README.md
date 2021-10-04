@@ -11,7 +11,7 @@ cd polishCLR
 
   ```
   nextflow run main.nf --help
-  
+
   N E X T F L O W  ~  version 21.04.3
   Launching `main.nf` [amazing_torvalds] - revision: bfeb7f0055
   ----------------------------------------------------
@@ -38,7 +38,7 @@ cd polishCLR
    --primary_assembly             genome assembly fasta file to polish
    --alternate_assembly           if alternate/haplotig assembly file is provided, will be concatinated to the primary assembly before polishing [default: false]
    --falcon_unzip                 if primary assembly has already undergone falcon unzip [default: false]. If true, will Arrow polish once instead of twice.
-   
+
    Or TrioCanu assembly
    --paternal_assembly            paternal genome assembly fasta file to polish
    --maternal_assembly            maternal genome assembly fasta file to polish
@@ -48,7 +48,7 @@ cd polishCLR
    --k                            kmer to use in MerquryQV scoring [default:21]
    --same_specimen                if illumina and pacbio reads are from the same specimin [default: true].
    --meryldb                      path to a prebuilt meryl database, built from the illumina reads. If not provided, tehen build.
-   
+
    Optional configuration arguments
    --parallel_app                 Link to parallel executable [default: 'parallel']
    --bzcat_app                    Link to bzcat executable [default: 'bzcat']
@@ -83,7 +83,7 @@ conda env create -f environment.yml -p ${PWD}/env/polishCLR_env
 ```
 
 <details><summary>Install `merfin` if not already in a module</summary>
-  
+
 https://github.com/arangrhie/merfin
 
 ```
@@ -95,11 +95,11 @@ cd merfin/src
 make -j 8
 ./merfin --version
 ```
-  
+
 </details>
 
 <details><summary>Install `genomescope2.0` if not already in a module</summary>
- 
+
 https://github.com/tbenavi1/genomescope2.0
 
 ```
@@ -112,7 +112,7 @@ Rscript install.R
 emacs genomescope.R   # add the lib path to each library 'library(XXXXX, lib.loc = local_lib_path)'
 Rscript genomescope.R --help
 ```
-  
+
 </details>
 
 ## Basic Run
@@ -195,59 +195,6 @@ Succeeded   : 1'954
 Cached      : 10
 ```
 
-<!--
-```
-executor >  slurm (967)
-[45/e5018c] process > bz_to_gz (1)                 [100%] 1 of 1, cached: 1 ✔
-[a7/a5b5a1] process > meryl_count (2)              [100%] 2 of 2, cached: 2 ✔
-[c2/81d8d5] process > meryl_union                  [100%] 1 of 1, cached: 1 ✔
-[d3/984a04] process > MerquryQV_01 (1)             [100%] 1 of 1, cached: 1 ✔ // QV score of 31.1459
-[40/aa96c3] process > bbstat_01 (1)                [100%] 1 of 1, cached: 1 ✔
-[03/9b95b5] process > ARROW_02:create_windows (1)  [100%] 1 of 1, cached: 1 ✔
-[62/7a60a8] process > ARROW_02:pbmm2_index (1)     [100%] 1 of 1, cached: 1 ✔
-[5c/5f0217] process > ARROW_02:pbmm2_align (1)     [100%] 1 of 1 ✔
-[1c/3b58a6] process > ARROW_02:gcc_Arrow (95)      [100%] 480 of 480 ✔
-[67/97354d] process > ARROW_02:merge_consensus (1) [100%] 1 of 1 ✔
-[e7/b6a605] process > MerquryQV_03 (1)             [100%] 1 of 1 ✔  // QV score of 38.7086
-[41/b87aea] process > bbstat_03 (1)                [100%] 1 of 1 ✔
-[b2/2dc1e1] process > ARROW_04:create_windows (1)  [100%] 1 of 1 ✔
-[eb/f11dc2] process > ARROW_04:pbmm2_index (1)     [100%] 1 of 1 ✔
-[eb/9c76e8] process > ARROW_04:pbmm2_align (1)     [100%] 1 of 1 ✔
-[ea/6f9cb5] process > ARROW_04:gcc_Arrow (134)     [100%] 480 of 480 ✔ 
-[cf/53361f] process > ARROW_04:meryl_peak (1)      [100%] 1 of 1, cached: 1 ✔
-[20/5f153d] process > ARROW_04:meryl_genome (1)    [100%] 1 of 1, cached: 1 ✔
-[3e/7bef6a] process > ARROW_04:combineVCF_arrow (1)[100%] 1 of 1, cached: 1 ✔
-[36/40b176] process > ARROW_04:reshape_arrow (1)   [100%] 1 of 1, cached: 1 ✔
-[55/aca211] process > ARROW_04:merfin_polish_arro..[100%] 1 of 1 ✔
-[d3/919202] process > ARROW_04:vcf_to_fasta_arrow..[100%] 1 of 1 ✔
-[de/5a06a8] process > MerquryQV_05 (1)             [100%] 1 of 1 ✔   // Wow, QV score of 41.1038, use 2nd arrow polish and pass to FreeBayes
-[a7/abfafd] process > bbstat_05 (1)                [100%] 1 of 1 ✔
-[8a/17ed90] process > FREEBAYES_06:create_windows..[100%] 1 of 1, cached: 1 ✔
-[4d/e8cd59] process > FREEBAYES_06:meryl_genome_f..[100%] 1 of 1, cached: 1 ✔
-[20/1cbb5c] process > FREEBAYES_06:align_shortrea..[100%] 1 of 1, cached: 1 ✔
-[74/6a11c5] process > FREEBAYES_06:freebayes (475) [100%] 480 of 480, cache...
-[72/fb44a3] process > FREEBAYES_06:combineVCF (1)  [100%] 1 of 1, cached: 1 ✔
-[5c/05ecb1] process > FREEBAYES_06:merfin_polish (1[100%] 1 of 1, cached: 1 ✔
-[38/f8c31b] process > FREEBAYES_06:vcf_to_fasta (1)[100%] 1 of 1 ✔
-[a3/c96d68] process > MerquryQV_07 (1)             [100%] 1 of 1 ✔  // QV without merfin 42.7133, QV with merfin 45.0122
-[69/48a675] process > bbstat_07 (1)                [100%] 1 of 1 ✔
-[60/91de55] process > FREEBAYES_08:create_windows..[100%] 1 of 1 ✔
-[ee/927c53] process > FREEBAYES_08:meryl_genome_f..[100%] 1 of 1 ✔
-[b1/a1dfef] process > FREEBAYES_08:align_shortrea... [100%] 1 of 1 ✔
-[2f/ae39b7] process > FREEBAYES_08:freebayes (303)   [100%] 480 of 480 ✔
-[12/a14839] process > FREEBAYES_08:combineVCF (1)    [100%] 1 of 1 ✔
-[c0/8a3aeb] process > FREEBAYES_08:merfin_polish (1) [100%] 1 of 1 ✔
-[40/0f9772] process > FREEBAYES_08:vcf_to_fasta (1)  [100%] 1 of 1 ✔
-[9b/e157d4] process > MerquryQV_09 (1)               [100%] 1 of 1 ✔ // QV 45.0425
-[d6/476547] process > bbstat_09 (1)                  [100%] 1 of 1 ✔
-Completed at: 16-Aug-2021 23:26:44
-Duration    : 3h 43m 34s
-CPU hours   : 96.5 (93.9% cached)
-Succeeded   : 491
-Cached      : 1'468
-```
--->
-
 [timeline.html](https://isugifnf.github.io/polishCLR/timeline_ceres.html) | [report.html](https://isugifnf.github.io/polishCLR/report_ceres.html)
 
 Output Directory
@@ -275,26 +222,7 @@ PolishCLR_Results/
   |_ timeline.html         # <= runtime for each step
 ```
 
-<!--
-Merqury QV (quality value increases each polish, except 2nd arrow polish (investigate why)
-
-```
-=== original primary assembly
-all_p_ctg    9064957 566335230	31.1459	0.000768078
-=== Arrow polish
-consensus 1601270	567139658	38.7086	0.000134629
-=== Arrow polish
-consensus 1638131	567090651	38.6093	0.000137745
-=== Freebayes polish
-consensus_01  1089557	567025929	40.3817	9.15852e-05
-=== Freebayes polish
-final_polished_assembly	1068195	567027516	40.4678	8.97877e-05
-```
--->
-
 Final Polished Assembly QV = 45.0425
-
-
 
 ## Step 1 of 2 - up through purge_dups
 
