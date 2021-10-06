@@ -5,7 +5,7 @@ nextflow.enable.dsl=2
 process PURGE_DUPS {
   publishDir "${params.outdir}/$outdir", mode:'copy'
   input: tuple val(outdir), path(primary_assembly), path(haplo_fasta), path(pacbio_reads)
-  output: tuple path("primary_purged.fa"), path("haps_purged.fa"), path("primary_hap.fa"), path("haps_hap.fa") //, path("h_${haplo_fasta}") //, path("*.stats")
+  output: tuple path("primary_purged.fa"), path("haps_purged.fa"), path("primary_hap.fa"), path("*.stats"), path("*.png"), path("*.log") //, path("h_${haplo_fasta}") 
   script:
   template 'purge_dups.sh'
 
