@@ -8,20 +8,14 @@
 module load python_3
 
 ## These should all be included in the environment.yml
-# module load minimap2
-# module load samtools
-# module load bamtools 
-# module load purge_dups # not sure how module differs from most recent git
-
-## Not sure if we need this still - testing
 # export PATH="/project/ag100pest/software/purge_dups/bin/:$PATH"
 
 PROC=\$((`nproc`))
 
 ${samtools_app} faidx ${primary_assembly}
 
-for x in `${pacbio_reads} |  sed 's/\.bam//g'`; do
-       ${minimap2_app} -xmap-pb $primary_assembly ${x}.fasta | $gzip_app -c - > ${x}_p_mapping.paf.gz
+for x in ${pacbio_reads.simpleName} ; do
+       ${minimap2_app} -xmap-pb $primary_assembly \${x}.fasta | $gzip_app -c - > \${x}_p_mapping.paf.gz
 done
 
 ${pbcstat_app} *_p_mapping.paf.gz
@@ -45,8 +39,8 @@ cat primary.hap.fa  ${haplo_fasta} >  h_${haplo_fasta}
 
 ${samtools_app} faidx h_${haplo_fasta}
 
-for x in `${pacbio_reads} |  sed 's/\.bam//g'`; do
-       ${minimap2_app} -xmap-pb h_${haplo_fasta} ${x}.fasta | $gzip_app -c - > ${x}_h_mapping.paf.gz
+for x in ${pacbio_reads.simpleName} ; do
+       ${minimap2_app} -xmap-pb $primary_assembly \${x}.fasta | $gzip_app -c - > \${x}_h_mapping.paf.gz
 done
 
 ${pbcstat_app} *_h_mapping.paf.gz
@@ -73,6 +67,6 @@ stats.sh -Xmx2048m primary.hap.fa > primary_hap.fa.stats
 stats.sh -Xmx2048m haps.purged.fa > haps_purged.fa.stats
 stats.sh -Xmx2048m haps.hap.fa > haps_hap.fa.stats
 
-## rename to play nicely with nextflow shortname 
+## rename to play nicely with nextflow simplename 
 mv primary.purged.fa primary_purged.fa
 mv haps.purged.fa haps_purged.fa

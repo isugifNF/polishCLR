@@ -20,7 +20,7 @@ process PURGE_DUPS_TRIO {
   input: tuple val(outdir), path(primary_assembly), path(pacbio_reads)
   output: tuple path("${primary_assembly.simpleName}_primary_purged.fa"), path("${primary_assembly.simpleName}_primary_hap.fa")
   script:
-  template 'purge_dups_trio.sh'
+  template 'purge_dups_trios.sh'
 
   stub:
   """

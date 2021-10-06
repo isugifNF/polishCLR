@@ -16,9 +16,8 @@ PROC=\$((`nproc`))
 
 ${samtools_app} faidx ${primary_assembly}
 
-for x in `${pacbio_reads} |  sed 's/\.bam//g'`; do
-	${minimap2_app} -xmap-pb -t \${PROC}  ${primary_assembly} ${pacbio_reads} | \
-  	${gzip_app} -c -  > ${x}_${primary_assembly.shortName}_mapping.paf.gz
+for x in ${pacbio_reads.simpleName} ; do
+       ${minimap2_app} -xmap-pb $primary_assembly \${x}.fasta | $gzip_app -c - > \${x}_p_mapping.paf.gz
 done
 
 ${pbcstat_app} *_${primary_assembly.shortName}_mapping.paf.gz
