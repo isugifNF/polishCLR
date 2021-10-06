@@ -128,7 +128,7 @@ workflow {
   
   k_ch   = channel.of(params.k) // Either passed in or autodetect (there's a script for this)
   pac_ch = channel.fromPath(params.pacbio_reads, checkIfExists:true)
-  pacall_ch = pac_ch | collect
+  pacall_ch = pac_ch | collect | map {n -> [n]}
   // Step 0: Preprocess illumina files from bz2 to gz files. Instead of a flag, auto detect, however it must be in the pattern, * will fail
   if(params.illumina_reads =~ /bz2$/){
     ill_ch = channel.fromFilePairs(params.illumina_reads, checkIfExists:true) | bz_to_gz | map { n -> n.get(1) } | flatten
@@ -172,7 +172,7 @@ workflow {
     // (3) purged primary -> scaffolding pipeline? (might just need a part1, part2 pipeline)
     // (4) merge scaffolded prime, purged alt, and mito
 
-    pacfasta_ch = pac_ch | bam_to_fasta | collect
+    pacfasta_ch = pac_ch | bam_to_fasta | collect | map {n -> [n]}
 
     if(params.primary_assembly){
       tmp_ch = channel.of("02_ArrowPolish") | combine(asm_arrow_ch) | SPLIT_FILE_03 |
