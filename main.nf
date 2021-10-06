@@ -128,6 +128,7 @@ workflow {
   
   k_ch   = channel.of(params.k) // Either passed in or autodetect (there's a script for this)
   pac_ch = channel.fromPath(params.pacbio_reads, checkIfExists:true)
+  pacall_ch = pac_ch | collect
   // Step 0: Preprocess illumina files from bz2 to gz files. Instead of a flag, auto detect, however it must be in the pattern, * will fail
   if(params.illumina_reads =~ /bz2$/){
     ill_ch = channel.fromFilePairs(params.illumina_reads, checkIfExists:true) | bz_to_gz | map { n -> n.get(1) } | flatten
@@ -151,10 +152,10 @@ workflow {
     if (!params.falcon_unzip) {
       // Step 2: Arrow Polish with PacBio reads
       if(params.primary_assembly){
-        asm_arrow_ch = ARROW_02(channel.of("02_ArrowPolish"), asm_ch, pac_ch)
+        asm_arrow_ch = ARROW_02(channel.of("02_ArrowPolish"), asm_ch, pacall_ch)
       }else if (params.paternal_assembly) {
-        asm_arrowp_ch = ARROW_02(channel.of("02_ArrowPolish_pat"), asm_ch.first(), pac_ch)
-        asm_arrowm_ch = ARROW_02b(channel.of("02_ArrowPolish_mat"), asm_ch.last(), pac_ch)
+        asm_arrowp_ch = ARROW_02(channel.of("02_ArrowPolish_pat"), asm_ch.first(), pacall_ch)
+        asm_arrowm_ch = ARROW_02b(channel.of("02_ArrowPolish_mat"), asm_ch.last(), pacall_ch)
         asm_arrow_ch = asm_arrowp_ch | concat(asm_arrowm_ch)
       }
       
@@ -171,7 +172,7 @@ workflow {
     // (3) purged primary -> scaffolding pipeline? (might just need a part1, part2 pipeline)
     // (4) merge scaffolded prime, purged alt, and mito
 
-    pacfasta_ch = pac_ch | bam_to_fasta
+    pacfasta_ch = pac_ch | bam_to_fasta | collect
 
     if(params.primary_assembly){
       tmp_ch = channel.of("02_ArrowPolish") | combine(asm_arrow_ch) | SPLIT_FILE_03 |
@@ -191,7 +192,7 @@ workflow {
         map {n -> n.get(0) }
       channel.of("03b_Purge_Dups_pat") |
         combine(tmp_ch) |
-        combine(pac_ch) |
+        combine(pacfasta_ch) |
         PURGE_DUPS_TRIOp       // <= swap this for PURGE_DUPS_TRIO
   
       /* BUSCO check will go here */
@@ -204,7 +205,7 @@ workflow {
         map {n -> n.get(0) }
       channel.of("03b_Purge_Dups_mat") |
         combine(tmpm_ch) |
-        combine(pac_ch) |
+        combine(pacfasta_ch) |
         PURGE_DUPS_TRIOm       // <= swap this for PURGE_DUPS_TRIO
   
       /* BUSCO check will go here */
@@ -217,10 +218,10 @@ workflow {
 
     // Step 4: Arrow Polish with PacBio reads
     if(params.primary_assembly){
-      asm_arrow2_ch = ARROW_04(channel.of("04_ArrowPolish"), asm_arrow_ch, pac_ch, peak_ch, merylDB_ch)
+      asm_arrow2_ch = ARROW_04(channel.of("04_ArrowPolish"), asm_arrow_ch, pacall_ch, peak_ch, merylDB_ch)
     } else if (params.paternal_assembly) {
-      asm_arrow2p_ch = ARROW_04(channel.of("04_ArrowPolish_pat"), asm_arrow_ch.first() , pac_ch, peak_ch, merylDB_ch)
-      asm_arrow2m_ch = ARROW_04b(channel.of("04_ArrowPolish_mat"), asm_arrow_ch.last(), pac_ch, peak_ch, merylDB_ch)
+      asm_arrow2p_ch = ARROW_04(channel.of("04_ArrowPolish_pat"), asm_arrow_ch.first() , pacall_ch, peak_ch, merylDB_ch)
+      asm_arrow2m_ch = ARROW_04b(channel.of("04_ArrowPolish_mat"), asm_arrow_ch.last(), pacall_ch, peak_ch, merylDB_ch)
       asm_arrow2_ch = asm_arrow2p_ch | concat(asm_arrow2m_ch)
     }
     // Step 5: Check quality of new assembly with Merqury 
