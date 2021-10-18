@@ -62,10 +62,10 @@ echo "Purged alternate, running bbtools stats.sh on each assembly"
 
 ## On Atlas
 #export PATH="/project/ag100pest/software/bbmap/:$PATH"
-stats.sh -Xmx2048m primary.purged.fa > primary_purged.fa.stats
-stats.sh -Xmx2048m primary.hap.fa > primary_hap.fa.stats
-stats.sh -Xmx2048m haps.purged.fa > haps_purged.fa.stats
-stats.sh -Xmx2048m haps.hap.fa > haps_hap.fa.stats
+stats.sh -Xmx2048m in=primary.purged.fa > primary_purged.fa.stats
+stats.sh -Xmx2048m in=primary.hap.fa > primary_hap.fa.stats
+stats.sh -Xmx2048m in=haps.purged.fa > haps_purged.fa.stats
+stats.sh -Xmx2048m in=haps.hap.fa > haps_hap.fa.stats
 
 ## rename to play nicely with nextflow simplename 
 mv primary.purged.fa primary_purged.fa
