@@ -19,6 +19,8 @@ process align_shortreads {
 }
 
 process freebayes {
+  errorStrategy { task.attempt < 4 ? 'retry' : 'terminate' }
+
   publishDir "${params.outdir}/${outdir}/vcf", mode: 'symlink'
   input: tuple val(outdir), path(illumina_bam), path(illumina_bai), path(assembly_fasta), path(assembly_fai), val(window)
   output: tuple val("$outdir"), path("*.vcf")
