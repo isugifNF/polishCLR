@@ -45,6 +45,9 @@ def helpMessage() {
    --paternal_assembly            paternal genome assembly fasta file to polish
    --maternal_assembly            maternal genome assembly fasta file to polish
 
+   Pick Step 1 (arrow, purgedups) or Step 2 (arrow, freebayes, freebayes)
+   --step                         Run step 1 or step 2 (default: 1)
+
    Optional modifiers   
    --species                      if a string is given, rename the final assembly by species name [default:false]
    --k                            kmer to use in MerquryQV scoring [default:21]
@@ -147,7 +150,7 @@ workflow {
   channel.of("01_QV") | combine(merylDB_ch) | combine(asm_ch) | MerquryQV_01
   channel.of("01_QV") | combine(asm_ch) | bbstat_01 
 
-  if(!params.steptwo) { // TODO: redo this more elegantly later 
+  if( params.step == 1 ) { // TODO: redo this more elegantly later 
 
     if (!params.falcon_unzip) {
       // Step 2: Arrow Polish with PacBio reads
@@ -165,12 +168,6 @@ workflow {
     } else {
       asm_arrow_ch = asm_ch
     }
-    
-    // purge_dup would go here  
-    // (1) split merged into primary, alt, and mito again
-    // (2) purge primary, hap merged with alt, purge hap_alt
-    // (3) purged primary -> scaffolding pipeline? (might just need a part1, part2 pipeline)
-    // (4) merge scaffolded prime, purged alt, and mito
 
     pacfasta_ch = pac_ch | bam_to_fasta | collect | map {n -> [n]}
 

@@ -12,6 +12,8 @@ process PURGE_DUPS {
   stub:
   """
   touch primary_purged.fa haps_purged.fa primary_hap.fa haps_hap.fa
+  touch primary_purged.stats haps_purged.stats primary_hap.stats haps_hap.stats
+  touch a.png a.log
   """
 }
 
