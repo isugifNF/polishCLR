@@ -48,8 +48,8 @@ process meryl_peak {
 
 // 01 Merqury QV value
 process MerquryQV {
-  publishDir "${params.outdir}/${outdir}/${assembly_fasta.simpleName}/MerquryQV", mode: 'copy'
-  publishDir "${params.outdir}/${outdir}/${assembly_fasta.simpleName}", mode: 'copy', pattern: "merqury.qv"
+  publishDir "${params.outdir}/${outdir}/MerquryQV", mode: 'copy'
+  publishDir "${params.outdir}/${outdir}/", mode: 'copy', pattern: "merqury.qv"
 
   input: tuple val(outdir), path(illumina_db), path(assembly_fasta)
   output: path("*")
@@ -58,13 +58,13 @@ process MerquryQV {
 
   stub:
   """
-  touch merqury.qv
+  touch merqury.qv other.png
   """
 }
 
 // 01 bbstat: Length distribtions of initial assembly
 process bbstat {
-  publishDir "${params.outdir}/${outdir}/${assembly_fasta.simpleName}/bbstat", mode: 'copy'
+  publishDir "${params.outdir}/${outdir}", mode: 'copy'
   input: tuple val(outdir), path(assembly_fasta)
   output: path("*")
   script:
