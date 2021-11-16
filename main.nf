@@ -155,10 +155,10 @@ workflow {
     if (!params.falcon_unzip) {
       // Step 2: Arrow Polish with PacBio reads
       if(params.primary_assembly){
-        asm_arrow_ch = ARROW_02(channel.of("02_ArrowPolish"), asm_ch, pacall_ch)
+        asm_arrow_ch = ARROW_02(channel.of("Step_1/02_ArrowPolish"), asm_ch, pacall_ch)
       }else if (params.paternal_assembly) {
-        asm_arrowp_ch = ARROW_02(channel.of("02_ArrowPolish_pat"), asm_ch.first(), pacall_ch)
-        asm_arrowm_ch = ARROW_02b(channel.of("P02_ArrowPolish_mat"), asm_ch.last(), pacall_ch)
+        asm_arrowp_ch = ARROW_02(channel.of("Step_1/02_ArrowPolish_pat"), asm_ch.first(), pacall_ch)
+        asm_arrowm_ch = ARROW_02b(channel.of("Step_1/02_ArrowPolish_mat"), asm_ch.last(), pacall_ch)
         asm_arrow_ch = asm_arrowp_ch | concat(asm_arrowm_ch)
       }
       
@@ -172,7 +172,7 @@ workflow {
     pacfasta_ch = pac_ch | bam_to_fasta | collect | map {n -> [n]}
 
     if(params.primary_assembly){
-      tmp_ch = channel.of("02_ArrowPolish") | combine(asm_arrow_ch) | SPLIT_FILE_03 |
+      tmp_ch = channel.of("Step_1/02_ArrowPolish") | combine(asm_arrow_ch) | SPLIT_FILE_03 |
         map {n -> [n.get(0), n.get(1)] }
       channel.of("Step_1/03b_Purge_Dups") |
         combine(tmp_ch) |
@@ -215,10 +215,10 @@ workflow {
 
     // Step 4: Arrow Polish with PacBio reads
     if(params.primary_assembly){
-      asm_arrow2_ch = ARROW_04(channel.of("04_ArrowPolish"), asm_arrow_ch, pacall_ch, peak_ch, merylDB_ch)
+      asm_arrow2_ch = ARROW_04(channel.of("Step_2/04_ArrowPolish"), asm_arrow_ch, pacall_ch, peak_ch, merylDB_ch)
     } else if (params.paternal_assembly) {
-      asm_arrow2p_ch = ARROW_04(channel.of("04_ArrowPolish_pat"), asm_arrow_ch.first() , pacall_ch, peak_ch, merylDB_ch)
-      asm_arrow2m_ch = ARROW_04b(channel.of("04_ArrowPolish_mat"), asm_arrow_ch.last(), pacall_ch, peak_ch, merylDB_ch)
+      asm_arrow2p_ch = ARROW_04(channel.of("Step_2/04_ArrowPolish_pat"), asm_arrow_ch.first() , pacall_ch, peak_ch, merylDB_ch)
+      asm_arrow2m_ch = ARROW_04b(channel.of("Step_2/04_ArrowPolish_mat"), asm_arrow_ch.last(), pacall_ch, peak_ch, merylDB_ch)
       asm_arrow2_ch = asm_arrow2p_ch | concat(asm_arrow2m_ch)
     }
     // Step 5: Check quality of new assembly with Merqury 
@@ -227,10 +227,10 @@ workflow {
 
     // Step 6: FreeBayes Polish with Illumina reads
     if(params.primary_assembly){
-      asm_freebayes_ch = FREEBAYES_06(channel.of("06_FreeBayesPolish"), asm_arrow2_ch, ill_ch, peak_ch, merylDB_ch)
+      asm_freebayes_ch = FREEBAYES_06(channel.of("Step_2/06_FreeBayesPolish"), asm_arrow2_ch, ill_ch, peak_ch, merylDB_ch)
     }else if(params.paternal_assembly){
-      asm_freebayesp_ch = FREEBAYES_06(channel.of("06_FreeBayesPolish_pat"), asm_arrow2_ch.first(), ill_ch, peak_ch, merylDB_ch)
-      asm_freebayesm_ch = FREEBAYES_06b(channel.of("06_FreeBayesPolish_mat"), asm_arrow2_ch.last(), ill_ch, peak_ch, merylDB_ch)
+      asm_freebayesp_ch = FREEBAYES_06(channel.of("Step_2/06_FreeBayesPolish_pat"), asm_arrow2_ch.first(), ill_ch, peak_ch, merylDB_ch)
+      asm_freebayesm_ch = FREEBAYES_06b(channel.of("Step_2/06_FreeBayesPolish_mat"), asm_arrow2_ch.last(), ill_ch, peak_ch, merylDB_ch)
       asm_freebayes_ch = asm_freebayesp_ch | concat(asm_freebayesm_ch )
     }
     
@@ -239,10 +239,10 @@ workflow {
  
     // Step 8: FreeBayes Polish with Illumina reads
     if(params.primary_assembly){
-      asm_freebayes2_ch = FREEBAYES_08(channel.of("08_FreeBayesPolish"), asm_freebayes_ch, ill_ch, peak_ch, merylDB_ch)
+      asm_freebayes2_ch = FREEBAYES_08(channel.of("Step_2/08_FreeBayesPolish"), asm_freebayes_ch, ill_ch, peak_ch, merylDB_ch)
     } else if (params.paternal_assembly) {
-      asm_freebayes2p_ch = FREEBAYES_08(channel.of("08_FreeBayesPolish_pat"), asm_freebayes_ch.first(), ill_ch, peak_ch, merylDB_ch)
-      asm_freebayes2m_ch = FREEBAYES_08b(channel.of("08_FreeBayesPolish_mat"), asm_freebayes_ch.last(), ill_ch, peak_ch, merylDB_ch)
+      asm_freebayes2p_ch = FREEBAYES_08(channel.of("Step_2/08_FreeBayesPolish_pat"), asm_freebayes_ch.first(), ill_ch, peak_ch, merylDB_ch)
+      asm_freebayes2m_ch = FREEBAYES_08b(channel.of("Step_2/08_FreeBayesPolish_mat"), asm_freebayes_ch.last(), ill_ch, peak_ch, merylDB_ch)
       asm_freebayes2_ch = asm_freebayes2p_ch | concat(asm_freebayes2m_ch)
     }
     
@@ -250,7 +250,7 @@ workflow {
     channel.of("Step_2/09_bbstat") | combine(asm_freebayes2_ch) | bbstat_09
 
     if(params.primary_assembly){
-      channel.of("08_FreeBayesPolish") | combine(asm_freebayes2_ch) | SPLIT_FILE_09b
+      channel.of("Step_2/08_FreeBayesPolish") | combine(asm_freebayes2_ch) | SPLIT_FILE_09b
     } else if (params.paternal_assembly) {
       asm_freebayes2_ch.first() | SPLIT_FILE_09p
       asm_freebayes2_ch.last() | SPLIT_FILE_09m

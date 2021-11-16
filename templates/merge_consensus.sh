@@ -1,2 +1,4 @@
 #! /usr/bin/env bash
-cat ${windows_fasta} > ${outdir}_consensus.fasta
+
+OUTNAME=`echo "$outdir" | sed 's:/:_:g'`
+cat ${windows_fasta} > \${OUTNAME}_consensus.fasta

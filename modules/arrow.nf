@@ -51,13 +51,14 @@ process gcc_Arrow {
 process merge_consensus {
   publishDir "${params.outdir}/${outdir}", mode: 'copy'
   input: tuple val(outdir), path(windows_fasta)
-  output: path("${outdir}_consensus.fasta")
+  output: path("*_consensus.fasta")
   script:
   template 'merge_consensus.sh'
 
   stub:
   """
-  touch ${outdir}_consensus.fasta
+  OUTNAME=`echo "$outdir" | sed 's:/:_:g'`
+  touch \${OUTNAME}_consensus.fasta
   """
 }
 

@@ -135,13 +135,14 @@ process create_windows {
 process combineVCF {
   publishDir "${params.outdir}/${outdir}", mode: 'symlink'
   input: tuple val(outdir), path(vcfs)
-  output: tuple val("$outdir"), path("${outdir}_consensus.vcf")
+  output: tuple val("$outdir"), path("*_consensus.vcf")
   script:
   template 'combineVCF.sh'
 
   stub:
   """
-  touch ${outdir}_consensus.vcf
+  OUTNAME=`echo $outdir | sed 's:/:_:g'`
+  touch \${OUTNAME}_consensus.vcf
   """
 }
 
@@ -167,20 +168,22 @@ process merfin_polish {
 
   stub:
   """
-  touch ${outdir}_merfin.polish.vcf
+  OUTNAME=`echo $outdir | sed 's:/:_:g'`
+  touch \${OUTNAME}_merfin.polish.vcf
   """
 }
 
 process vcf_to_fasta {
   publishDir "${params.outdir}/${outdir}", mode: 'copy'
   input: tuple val(outdir), path(vcf), path(genome_fasta)
-  output: path("${outdir}_consensus.fasta")
+  output: path("*_consensus.fasta")
   script:
   template 'vcf_to_fasta.sh'
 
   stub:
   """
-  touch ${outdir}_consensus.fasta
+  OUTNAME=`echo $outdir | sed 's:/:_:g'`
+  touch \${OUTNAME}_consensus.fasta
   """
 }
 
