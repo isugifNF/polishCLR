@@ -14,9 +14,9 @@ include { ARROW as ARROW_02; ARROW as ARROW_02b; ARROW_MERFIN as ARROW_04; ARROW
 // FreeBayes workflows
 include { FREEBAYES as FREEBAYES_05; FREEBAYES as FREEBAYES_05b; FREEBAYES as FREEBAYES_06; FREEBAYES as FREEBAYES_06b } from './modules/freebayes.nf'
 // Preprocess and helper functions
-include {bz_to_gz; MERGE_FILE as MERGE_FILE_00; MERGE_FILE_TRIO; SPLIT_FILE as SPLIT_FILE_02; SPLIT_FILE as SPLIT_FILE_09b} from './modules/helper_functions.nf'
-include {SPLIT_FILE_03p; SPLIT_FILE_03m} from './modules/helper_functions.nf'
-include {SPLIT_FILE_03p as SPLIT_FILE_09p; SPLIT_FILE_03m as SPLIT_FILE_09m} from './modules/helper_functions.nf'
+include {bz_to_gz; MERGE_FILE as MERGE_FILE_00; MERGE_FILE_TRIO; SPLIT_FILE as SPLIT_FILE_02; SPLIT_FILE as SPLIT_FILE_07} from './modules/helper_functions.nf'
+include {SPLIT_FILE_p as SPLIT_FILE_02p; SPLIT_FILE_m as SPLIT_FILE_02m} from './modules/helper_functions.nf'
+include {SPLIT_FILE_p as SPLIT_FILE_07p; SPLIT_FILE_m as SPLIT_FILE_07m} from './modules/helper_functions.nf'
 // Other
 include { PURGE_DUPS as PURGE_DUPS_02; PURGE_DUPS_TRIO as PURGE_DUPS_TRIOp; PURGE_DUPS_TRIO as PURGE_DUPS_TRIOm } from './modules/purge_dups.nf'
 include { BUSCO; BUSCO as BUSCO_mat } from './modules/busco.nf'
@@ -185,7 +185,7 @@ workflow {
       BUSCO
     }else if(params.paternal_assembly) {
       // Paternal version goes here
-      tmp_ch = asm_arrow_ch.first() | SPLIT_FILE_03p |
+      tmp_ch = asm_arrow_ch.first() | SPLIT_FILE_02p |
         map {n -> n.get(0) }
       channel.of("Step_1/02_Purge_Dups_pat") |
         combine(tmp_ch) |
@@ -198,7 +198,7 @@ workflow {
       BUSCO
 
       // Maternal version 
-      tmpm_ch = asm_arrow_ch.last() | SPLIT_FILE_03m |
+      tmpm_ch = asm_arrow_ch.last() | SPLIT_FILE_02m |
         map {n -> n.get(0) }
       channel.of("Step_1/02_Purge_Dups_mat") |
         combine(tmpm_ch) |
@@ -250,10 +250,10 @@ workflow {
     channel.of("Step_2/06_bbstat") | combine(asm_freebayes2_ch) | bbstat_06
 
     if(params.primary_assembly){
-      channel.of("Step_2/06_FreeBayesPolish") | combine(asm_freebayes2_ch) | SPLIT_FILE_09b
+      channel.of("Step_2/06_FreeBayesPolish") | combine(asm_freebayes2_ch) | SPLIT_FILE_07
     } else if (params.paternal_assembly) {
-      asm_freebayes2_ch.first() | SPLIT_FILE_09p
-      asm_freebayes2_ch.last() | SPLIT_FILE_09m
+      asm_freebayes2_ch.first() | SPLIT_FILE_07p
+      asm_freebayes2_ch.last() | SPLIT_FILE_07m
     }
   }
 }

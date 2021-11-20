@@ -16,7 +16,6 @@ dependencies:
   - samtools
   - bwa-mem2
   - pigz
-  - jellyfish
   - bbtools
   - purge_dups
   - bamtools

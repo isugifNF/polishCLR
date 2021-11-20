@@ -100,7 +100,7 @@ workflow ARROW {
     fai_ch = create_windows.out | map { n -> n.get(0) }
 
     newasm_ch = outdir_ch | combine(asm_ch) | pbmm2_index | combine(pac_ch) | pbmm2_align |
-      combine(asm_ch) | combine(fai_ch) | combine(win_ch) | gccp_arrow | 
+      combine(asm_ch) | combine(fai_ch) | combine(win_ch) | gcpp_arrow | 
       map { n -> [ n.get(0), n.get(1) ] } | groupTuple | 
       merge_consensus
   
@@ -138,7 +138,7 @@ workflow ARROW_MERFIN {
     fai_ch = create_windows.out | map { n -> n.get(0) } 
 
     arrow_run_ch = outdir_ch | combine(asm_ch) | pbmm2_index | combine(pac_ch) | pbmm2_align |
-      combine(asm_ch) | combine(fai_ch) | combine(win_ch) | gccp_arrow 
+      combine(asm_ch) | combine(fai_ch) | combine(win_ch) | gcpp_arrow 
     if (params.same_specimen) {
       /* create a genome meryl db */
       asm_meryl = outdir_ch | combine(channel.of(params.k)) | combine(asm_ch) | meryl_genome 

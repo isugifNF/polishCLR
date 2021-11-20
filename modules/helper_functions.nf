@@ -111,7 +111,8 @@ process MERGE_FILE_FCANU {
 
 }
 
-process SPLIT_FILE_03p {
+process SPLIT_FILE_p {
+  publishDir "${params.outdir}/${outdir}", mode:'copy'
   input: path(genome_fasta)
   output: tuple path("pat_${genome_fasta}"), path("mit_${genome_fasta}")
   script:
@@ -139,7 +140,8 @@ process SPLIT_FILE_03p {
   """
 }
 
-process SPLIT_FILE_03m {
+process SPLIT_FILE_m {
+  publishDir "${params.outdir}/${outdir}", mode:'copy'
   input: path(genome_fasta)
   output: tuple path("mat_${genome_fasta}"), path("mit_${genome_fasta}")
   script:
