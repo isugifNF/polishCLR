@@ -8,7 +8,12 @@ process bz_to_gz {
   input:tuple val(readname), path(illumina_reads)
   output: tuple val(readname), path("*.gz")
   script:
-  template 'bz_to_gz.sh'
+  """
+  #! /usr/bin/env bash
+  #! /usr/bin/env bash
+  PROC=\$(((`nproc`-1)/2+1))
+  ${parallel_app} -j 2 "${bzcat_app} {1} | ${pigz_app} -p \${PROC} > {1/.}.gz" ::: *.bz2
+  """
 
   stub:
   """
@@ -23,7 +28,24 @@ process MERGE_FILE {
   input: tuple path(primary_assembly), path(alternate_assembly), path(mito_assembly)
   output: path("${primary_assembly.simpleName}_merged.fasta")
   script:
-  template 'merge_file.sh'
+  """
+  #! /usr/bin/env bash
+
+  # === Inputs
+  # primary_assembly = p_ctg.fasta     # From FALCON or FALCON-Unzip 
+  # alternate_assembly = a_ctg.fasta
+  # mito_assembly = mt.fasta           # From vgpMito pipeline
+  
+  # === Outputs
+  # ${primary_assembly.simpleName}_merged.fasta
+  
+  cat ${primary_assembly} | sed 's/>/>pri_/g' > ${primary_assembly.simpleName}_temp.fasta
+  echo "" >> ${primary_assembly.simpleName}_temp.fasta
+  cat ${mito_assembly} | sed 's/>/>mit_/g' >> ${primary_assembly.simpleName}_temp.fasta
+  echo "" >> ${primary_assembly.simpleName}_temp.fasta
+  cat ${alternate_assembly} | sed 's/>/>alt_/g' >> ${primary_assembly.simpleName}_temp.fasta
+  cat ${primary_assembly.simpleName}_temp.fasta | grep -v "^\$" > ${primary_assembly.simpleName}_merged.fasta
+  """
 
   stub:
   """
@@ -37,7 +59,22 @@ process MERGE_FILE_TRIO {
   input: tuple path(primary_assembly), path(mito_assembly)
   output: path("${primary_assembly.simpleName}_merged.fasta")
   script:
-  template 'merge_file_trio.sh'
+  """
+  #! /usr/bin/env bash
+  
+  # === Inputs
+  # primary_assembly = p_ctg.fasta     # From Canu, maternal or paternal
+  # mito_assembly = mt.fasta           # From vgpMito pipeline
+  
+  # === Outputs
+  # ${primary_assembly.simpleName}_merged.fasta
+  
+  cat ${primary_assembly} | sed 's/>/>pri_/g' > ${primary_assembly.simpleName}_temp.fasta
+  echo "" >> ${primary_assembly.simpleName}_temp.fasta
+  cat ${mito_assembly} | sed 's/>/>mit_/g' >> ${primary_assembly.simpleName}_temp.fasta
+  echo "" >> ${primary_assembly.simpleName}_temp.fasta
+  cat ${primary_assembly.simpleName}_temp.fasta | grep -v "^\$" > ${primary_assembly.simpleName}_merged.fasta
+  """
 
   stub:
   """
@@ -51,7 +88,21 @@ process MERGE_FILE_FCANU {
   input: tuple path(primary_assembly), path(mito_assembly)
   output: path("${primary_assembly.simpleName}_merged.fasta")
   script:
-  template 'merge_file_fcanu.sh'
+  """
+  #! /usr/bin/env bash
+  
+  # === Inputs
+  # primary_assembly = p_ctg.fasta     # From CANU, similar to Falcon but without alternative assembly
+  # mito_assembly = mt.fasta           # From vgpMito pipeline
+  
+  # === Outputs
+  # ${primary_assembly.simpleName}_merged.fasta
+  
+  cat ${primary_assembly} | sed 's/>/>pri_/g' > ${primary_assembly.simpleName}_temp.fasta
+  echo "" >> ${primary_assembly.simpleName}_temp.fasta
+  cat ${mito_assembly} | sed 's/>/>mit_/g' >> ${primary_assembly.simpleName}_temp.fasta
+  cat ${primary_assembly.simpleName}_temp.fasta | grep -v "^\$" > ${primary_assembly.simpleName}_merged.fasta
+  """
 
   stub:
   """
@@ -64,7 +115,23 @@ process SPLIT_FILE_03p {
   input: path(genome_fasta)
   output: tuple path("pat_${genome_fasta}"), path("mit_${genome_fasta}")
   script:
-  template 'split_file_pat.sh'
+  """
+  #! /usr/bin/env bash
+  
+  # === Inputs
+  # genome_fasta = primary_assembly_merged.fasta
+  # === Outputs
+  # p_${genome_fasta}     # primary assembly
+  # a_${genome_fasta}     # alternative assembly
+  # m_${genome_fasta}     # mitochondrial assembly
+  
+  ${samtools_app} faidx ${genome_fasta}
+  grep ">pri_" ${genome_fasta} | cut -f1 | sed 's/>//g' > pri.list
+  ${samtools_app} faidx -r pri.list ${genome_fasta} > pat_${genome_fasta}
+  
+  grep ">mit_" ${genome_fasta} | cut -f1 | sed 's/>//g' > mit.list
+  ${samtools_app} faidx -r mit.list ${genome_fasta} > mit_${genome_fasta}
+  """
 
   stub:
   """
@@ -76,7 +143,23 @@ process SPLIT_FILE_03m {
   input: path(genome_fasta)
   output: tuple path("mat_${genome_fasta}"), path("mit_${genome_fasta}")
   script:
-  template 'split_file_mat.sh'
+  """
+  #! /usr/bin/env bash
+  
+  # === Inputs
+  # genome_fasta = primary_assembly_merged.fasta
+  # === Outputs
+  # p_${genome_fasta}     # primary assembly
+  # a_${genome_fasta}     # alternative assembly
+  # m_${genome_fasta}     # mitochondrial assembly
+  
+  ${samtools_app} faidx ${genome_fasta}
+  grep ">pri_" ${genome_fasta} | cut -f1 | sed 's/>//g' > pri.list
+  ${samtools_app} faidx -r pri.list ${genome_fasta} > mat_${genome_fasta}
+  
+  grep ">mit_" ${genome_fasta} | cut -f1 | sed 's/>//g' > mit.list
+  ${samtools_app} faidx -r mit.list ${genome_fasta} > mit_${genome_fasta}
+  """
 
   stub:
   """
@@ -90,6 +173,26 @@ process SPLIT_FILE {
   input:tuple val(outdir), path(genome_fasta)
   output: tuple path("p_${genome_fasta}"), path("a_${genome_fasta}"), path("m_${genome_fasta}")
   script:
+  """
+  #! /usr/bin/env bash
+  
+  # === Inputs
+  # genome_fasta = primary_assembly_merged.fasta
+  # === Outputs
+  # p_${genome_fasta}     # primary assembly
+  # a_${genome_fasta}     # alternative assembly
+  # m_${genome_fasta}     # mitochondrial assembly
+  
+  ${samtools_app} faidx ${genome_fasta}
+  grep ">pri_" ${genome_fasta} | cut -f1 | sed 's/>//g' > pri.list
+  ${samtools_app} faidx -r pri.list ${genome_fasta} > p_${genome_fasta}
+  
+  grep ">mit_" ${genome_fasta} | cut -f1 | sed 's/>//g' > mit.list
+  ${samtools_app} faidx -r mit.list ${genome_fasta} > m_${genome_fasta}
+  
+  grep ">alt_" ${genome_fasta} | cut -f1 | sed 's/>//g' > alt.list
+  ${samtools_app} faidx -r alt.list ${genome_fasta} > a_${genome_fasta}
+  """
   template 'split_file.sh'
 
   stub:
@@ -105,6 +208,7 @@ process RENAME_FILE {
   output: path("$newname")
   script:
   """
+  #! /usr/bin/env bash
   mv ${filename} ${newname}
   """
 
@@ -114,14 +218,17 @@ process RENAME_FILE {
   """
 }
 
-
 // Used by both arrow and freebayes
 process create_windows {
   publishDir "${params.outdir}/${outdir}", mode: 'symlink'
   input: tuple val(outdir), path(assembly_fasta)
   output: tuple path("*.fai"), path("win.txt")
   script:
-  template 'create_windows.sh'
+  """
+  #! /usr/bin/env bash
+  ${samtools_app} faidx ${assembly_fasta}
+  cat ${assembly_fasta}.fai | awk '{print \$1 ":0-" \$2}' > win.txt
+  """
 
   stub:
   """
@@ -137,7 +244,15 @@ process combineVCF {
   input: tuple val(outdir), path(vcfs)
   output: tuple val("$outdir"), path("*_consensus.vcf")
   script:
-  template 'combineVCF.sh'
+  """
+  #! /usr/bin/env bash
+  
+  OUTNAME=`echo $outdir | sed 's:/:_:g'`
+  
+  ${bcftools_app} view -Oz ${vcf} > ${vcf}.gz
+  ${bcftools_app} index ${vcf}.gz
+  ${bcftools_app} consensus ${vcf}.gz -f ${genome_fasta} -Hla > \${OUTNAME}_consensus.fasta
+  """
 
   stub:
   """
@@ -164,8 +279,20 @@ process merfin_polish {
   input: tuple val(outdir), path(vcf), path(genome_fasta), path(genome_meryl), val(peak), path(meryldb)
   output: tuple val("$outdir"), path("*merfin.polish.vcf")
   script:
-  template 'merfin_polish.sh'
-
+  """
+  #! /usr/bin/env bash
+  
+  OUTNAME=`echo $outdir | sed 's:/:_:g'`
+  
+  ${merfin_app} -polish \
+    -sequence ${genome_fasta} \
+    -seqmers ${genome_meryl} \
+    -readmers ${meryldb} \
+    -peak ${peak} \
+    -vcf ${vcf} \
+    -output \${OUTNAME}_merfin
+  """
+  
   stub:
   """
   OUTNAME=`echo $outdir | sed 's:/:_:g'`
@@ -178,7 +305,15 @@ process vcf_to_fasta {
   input: tuple val(outdir), path(vcf), path(genome_fasta)
   output: path("*_consensus.fasta")
   script:
-  template 'vcf_to_fasta.sh'
+  """
+  #! /usr/bin/env bash
+  
+  OUTNAME=`echo $outdir | sed 's:/:_:g'`
+  
+  ${bcftools_app} view -Oz ${vcf} > ${vcf}.gz
+  ${bcftools_app} index ${vcf}.gz
+  ${bcftools_app} consensus ${vcf}.gz -f ${genome_fasta} -Hla > \${OUTNAME}_consensus.fasta
+  """
 
   stub:
   """
