@@ -20,7 +20,7 @@ process pbmm2_index {
   touch ${assembly_fasta}.mmi
   """
 }
-xs
+
 process pbmm2_align {
   publishDir "${params.outdir}/${outdir}", mode: 'symlink'
   input:tuple val(outdir), path(assembly_fasta), path(assembly_mmi), path(pacbio_read)
@@ -37,7 +37,7 @@ process pbmm2_align {
 
   ${pbmm2_app} align -j \$PROC ${assembly_fasta} bam.fofn | \
     ${samtools_app} sort -T tmp -m 8G --threads \$PROC2 - > ${assembly_fasta.simpleName}_aln.bam
-    ${samtools_app} index -@ \${PROC} ${assembly_fasta.simpleName}_aln.bam
+  ${samtools_app} index -@ \${PROC} ${assembly_fasta.simpleName}_aln.bam
   """
 
   stub:

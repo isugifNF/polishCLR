@@ -8,7 +8,10 @@ process meryl_count {
   input: tuple val(k), path(illumina_read)
   output: path("*.meryl")
   script:
-  template 'meryl_count.sh'
+  """
+  #! /usr/bin/env bash
+  ${meryl_app} count k=${k} output ${illumina_read.simpleName}.meryl ${illumina_read}
+  """
 
   stub:
   """
@@ -21,7 +24,10 @@ process meryl_union {
   input: path(illumina_meryls)
   output: path("illumina.meryl")
   script:
-  template 'meryl_union.sh'
+  """
+  #! /usr/bin/env bash
+  ${meryl_app} union-sum output illumina.meryl ${illumina_meryls}
+  """
 
   stub:
   """
@@ -37,7 +43,13 @@ process meryl_peak {
   input: path(illumina_meryl)
   output: tuple path("peak.txt"), path("illumina.hist")
   script:
-  template 'meryl_peak.sh'
+  """
+  #! /usr/bin/env bash
+  
+  # Calculate histogram
+  ${meryl_app} histogram ${illumina_meryl} > illumina.hist
+  awk '\$1>5 {print}' illumina.hist | sort -k 2n | tail -n 1 | awk '{print \$1}' > peak.txt
+  """
 
   stub:
   """
@@ -84,7 +96,15 @@ process bbstat {
   input: tuple val(outdir), path(assembly_fasta)
   output: path("*")
   script:
-  template 'bbstats.sh'
+  """
+  #! /usr/bin/env bash
+  # Desc: Prints out length distibutions, GC, etc of each assembly, could be added to pipeline at the end
+  # module load bbtools
+
+  echo "Assmbly stats of $assembly_fasta  according to bbtools stats.sh"
+
+  stats.sh in=$assembly_fasta out=${assembly_fasta.simpleName}
+  """
 
   stub:
   """

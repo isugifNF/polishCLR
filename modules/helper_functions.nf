@@ -193,8 +193,7 @@ process SPLIT_FILE {
   grep ">alt_" ${genome_fasta} | cut -f1 | sed 's/>//g' > alt.list
   ${samtools_app} faidx -r alt.list ${genome_fasta} > a_${genome_fasta}
   """
-  template 'split_file.sh'
-
+  
   stub:
   """
   touch p_${genome_fasta} a_${genome_fasta} m_${genome_fasta}
@@ -266,7 +265,10 @@ process meryl_genome {
   input: tuple val(outdir), val(k), path(illumina_read)
   output: path("*.meryl")
   script:
-  template 'meryl_count.sh'
+  """
+  #! /usr/bin/env bash
+  ${meryl_app} count k=${k} output ${illumina_read.simpleName}.meryl ${illumina_read}
+  """
 
   stub:
   """
