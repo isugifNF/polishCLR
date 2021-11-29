@@ -58,15 +58,10 @@ ${purge_dups_app} -2 -T h_cufoffs -c PB.base.cov h_${haplo_fasta}.split.self.paf
 
 ${get_seqs_app} -e h_dups.bed h_${haplo_fasta} -p haps
 
-echo "Purged alternate, running bbtools stats.sh on each assembly"
-
-## On Atlas
-#export PATH="/project/ag100pest/software/bbmap/:$PATH"
-stats.sh -Xmx2048m in=primary.purged.fa > primary_purged.fa.stats
-stats.sh -Xmx2048m in=primary.hap.fa > primary_hap.fa.stats
-stats.sh -Xmx2048m in=haps.purged.fa > haps_purged.fa.stats
-stats.sh -Xmx2048m in=haps.hap.fa > haps_hap.fa.stats
-
+## TODO clean up this last bit here
+## run bbstats module on output
+## create and add kat module 
+## is this necessary?
 ## rename to play nicely with nextflow simplename 
 mv primary.purged.fa primary_purged.fa
 mv haps.purged.fa haps_purged.fa
