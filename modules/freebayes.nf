@@ -9,7 +9,16 @@ process align_shortreads {
   input: tuple val(outdir), path(assembly_fasta), path(illumina_one), path(illumina_two)
   output: tuple val("$outdir"), path("*.bam"), path("*.bai")
   script:
-  template 'align_shortreads.sh'
+  """
+  #! /usr/bin/env bash
+  PROC=\$(((`nproc`-1)*3/4+1))
+  PROC2=\$(((`nproc`-1)*1/4+1))
+  mkdir tmp
+  ${bwamem2_app} index ${assembly_fasta}
+  ${bwamem2_app} mem -SP -t \$PROC ${assembly_fasta} ${illumina_one} ${illumina_two} | \
+    ${samtools_app} sort -T tmp -m 8G --threads \$PROC2 - > ${illumina_one.simpleName}_aln.bam
+  ${samtools_app} index -@ \${PROC} ${illumina_one.simpleName}_aln.bam
+  """
 
   stub:
   """
@@ -25,7 +34,20 @@ process freebayes {
   input: tuple val(outdir), path(illumina_bam), path(illumina_bai), path(assembly_fasta), path(assembly_fai), val(window)
   output: tuple val("$outdir"), path("*.vcf")
   script:
-  template 'freebayes.sh'
+  """
+  #! /usr/bin/env bash
+  ${freebayes_app} \
+    --region "${window}" \
+    --min-mapping-quality 0 \
+    --min-coverage 3 \
+    --min-supporting-allele-qsum 0 \
+    --ploidy 2 \
+    --min-alternate-fraction 0.2 \
+    --max-complex-gap 0 \
+    --bam ${illumina_bam} \
+    --vcf ${illumina_bam.simpleName}_${window.replace(':','_').replace('|','_')}.vcf \
+    --fasta-reference ${assembly_fasta}
+  """
 
   stub:
   """
@@ -35,7 +57,7 @@ process freebayes {
 
 workflow FREEBAYES {
   take:
-    outdir_ch // 06 or 08_FreeBayesPolish
+    outdir_ch
     asm_ch
     ill_ch
     peak_ch

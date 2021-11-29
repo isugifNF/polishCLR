@@ -8,7 +8,10 @@ process meryl_count {
   input: tuple val(k), path(illumina_read)
   output: path("*.meryl")
   script:
-  template 'meryl_count.sh'
+  """
+  #! /usr/bin/env bash
+  ${meryl_app} count k=${k} output ${illumina_read.simpleName}.meryl ${illumina_read}
+  """
 
   stub:
   """
@@ -21,7 +24,10 @@ process meryl_union {
   input: path(illumina_meryls)
   output: path("illumina.meryl")
   script:
-  template 'meryl_union.sh'
+  """
+  #! /usr/bin/env bash
+  ${meryl_app} union-sum output illumina.meryl ${illumina_meryls}
+  """
 
   stub:
   """
@@ -37,7 +43,13 @@ process meryl_peak {
   input: path(illumina_meryl)
   output: tuple path("peak.txt"), path("illumina.hist")
   script:
-  template 'meryl_peak.sh'
+  """
+  #! /usr/bin/env bash
+  
+  # Calculate histogram
+  ${meryl_app} histogram ${illumina_meryl} > illumina.hist
+  awk '\$1>5 {print}' illumina.hist | sort -k 2n | tail -n 1 | awk '{print \$1}' > peak.txt
+  """
 
   stub:
   """
@@ -48,27 +60,51 @@ process meryl_peak {
 
 // 01 Merqury QV value
 process MerquryQV {
-  publishDir "${params.outdir}/${outdir}/${assembly_fasta.simpleName}/MerquryQV", mode: 'copy'
-  publishDir "${params.outdir}/${outdir}/${assembly_fasta.simpleName}", mode: 'copy', pattern: "merqury.qv"
+  publishDir "${params.outdir}/${outdir}/MerquryQV", mode: 'copy'
+  publishDir "${params.outdir}/${outdir}/", mode: 'copy', pattern: "merqury.qv"
 
   input: tuple val(outdir), path(illumina_db), path(assembly_fasta)
   output: path("*")
   script:
-  template 'merquryqv.sh'
+  """
+  #! /usr/bin/env bash
+
+  merqury_sh="$params.merqury_sh"
+
+  printf "======================================================= \n"
+  printf "uniq kmers in asm | kmers in both asm and reads | QV | Error rate \n"
+  printf "======================================================= \n"
+  \${merqury_sh} $illumina_db $assembly_fasta ${assembly_fasta.simpleName}
+  printf "======================================================= \n" > ${assembly_fasta.simpleName}_qv.txt
+  printf "uniq kmers in asm | kmers in both asm and reads | QV | Error rate \n" >> ${assembly_fasta.simpleName}_qv.txt
+  printf "======================================================= \n" >> ${assembly_fasta.simpleName}_qv.txt
+  cat  ${assembly_fasta.simpleName}.qv >> ${assembly_fasta.simpleName}_qv.txt
+
+  # == Get single QV value
+  cat ${assembly_fasta.simpleName}.qv | awk -F'\t' '{print \$4}' > merqury.qv
+  """
 
   stub:
   """
-  touch merqury.qv
+  touch merqury.qv other.png
   """
 }
 
 // 01 bbstat: Length distribtions of initial assembly
 process bbstat {
-  publishDir "${params.outdir}/${outdir}/${assembly_fasta.simpleName}/bbstat", mode: 'copy'
+  publishDir "${params.outdir}/${outdir}", mode: 'copy'
   input: tuple val(outdir), path(assembly_fasta)
   output: path("*")
   script:
-  template 'bbstats.sh'
+  """
+  #! /usr/bin/env bash
+  # Desc: Prints out length distibutions, GC, etc of each assembly, could be added to pipeline at the end
+  # module load bbtools
+
+  echo "Assmbly stats of $assembly_fasta  according to bbtools stats.sh"
+
+  stats.sh in=$assembly_fasta out=${assembly_fasta.simpleName}
+  """
 
   stub:
   """

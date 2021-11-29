@@ -6,19 +6,19 @@ nextflow.enable.dsl=2
 // create meryl database
 include { meryl_count; meryl_union; meryl_peak } from './modules/qv.nf'
 // QV checks
-include { MerquryQV as MerquryQV_01; MerquryQV as MerquryQV_03; MerquryQV as MerquryQV_05; MerquryQV as MerquryQV_07; MerquryQV as MerquryQV_09 } from './modules/qv.nf'
-include {bbstat as bbstat_01; bbstat as bbstat_03; bbstat as bbstat_05; bbstat as bbstat_07; bbstat as bbstat_09} from './modules/qv.nf'
+include { MerquryQV as MerquryQV_00; MerquryQV as MerquryQV_01; MerquryQV as MerquryQV_04; MerquryQV as MerquryQV_05; MerquryQV as MerquryQV_06 } from './modules/qv.nf'
+include {bbstat as bbstat_00; bbstat as bbstat_01; bbstat as bbstat_04; bbstat as bbstat_05; bbstat as bbstat_06} from './modules/qv.nf'
 
 // Arrow workflows
 include { ARROW as ARROW_02; ARROW as ARROW_02b; ARROW_MERFIN as ARROW_04; ARROW_MERFIN as ARROW_04b } from './modules/arrow.nf'
 // FreeBayes workflows
-include { FREEBAYES as FREEBAYES_06; FREEBAYES as FREEBAYES_06b; FREEBAYES as FREEBAYES_08; FREEBAYES as FREEBAYES_08b } from './modules/freebayes.nf'
+include { FREEBAYES as FREEBAYES_05; FREEBAYES as FREEBAYES_05b; FREEBAYES as FREEBAYES_06; FREEBAYES as FREEBAYES_06b } from './modules/freebayes.nf'
 // Preprocess and helper functions
-include {bz_to_gz; MERGE_FILE as MERGE_FILE_00; MERGE_FILE_TRIO; SPLIT_FILE as SPLIT_FILE_03; SPLIT_FILE as SPLIT_FILE_09b} from './modules/helper_functions.nf'
-include {SPLIT_FILE_03p; SPLIT_FILE_03m} from './modules/helper_functions.nf'
-include {SPLIT_FILE_03p as SPLIT_FILE_09p; SPLIT_FILE_03m as SPLIT_FILE_09m} from './modules/helper_functions.nf'
+include {bz_to_gz; MERGE_FILE as MERGE_FILE_00; MERGE_FILE_TRIO; SPLIT_FILE as SPLIT_FILE_02; SPLIT_FILE as SPLIT_FILE_07} from './modules/helper_functions.nf'
+include {SPLIT_FILE_p as SPLIT_FILE_02p; SPLIT_FILE_m as SPLIT_FILE_02m} from './modules/helper_functions.nf'
+include {SPLIT_FILE_p as SPLIT_FILE_07p; SPLIT_FILE_m as SPLIT_FILE_07m} from './modules/helper_functions.nf'
 // Other
-include { PURGE_DUPS as PURGE_DUPS_03b; PURGE_DUPS_TRIO as PURGE_DUPS_TRIOp; PURGE_DUPS_TRIO as PURGE_DUPS_TRIOm } from './modules/purge_dups.nf'
+include { PURGE_DUPS as PURGE_DUPS_02; PURGE_DUPS_TRIO as PURGE_DUPS_TRIOp; PURGE_DUPS_TRIO as PURGE_DUPS_TRIOm } from './modules/purge_dups.nf'
 include { BUSCO; BUSCO as BUSCO_mat } from './modules/busco.nf'
 
 include {RENAME_FILE as RENAME_PRIMARY; RENAME_FILE as RENAME_PAT; RENAME_FILE as RENAME_MAT} from './modules/helper_functions.nf'
@@ -44,6 +44,9 @@ def helpMessage() {
    Or TrioCanu assembly
    --paternal_assembly            paternal genome assembly fasta file to polish
    --maternal_assembly            maternal genome assembly fasta file to polish
+
+   Pick Step 1 (arrow, purgedups) or Step 2 (arrow, freebayes, freebayes)
+   --step                         Run step 1 or step 2 (default: 1)
 
    Optional modifiers   
    --species                      if a string is given, rename the final assembly by species name [default:false]
@@ -144,73 +147,67 @@ workflow {
   peak_ch = merylDB_ch | meryl_peak | map { n -> n.get(0) } | splitText() { it.trim() }
 
   // Step 1: Check quality of assembly with Merqury and length dist. with bbstat
-  channel.of("01_QV") | combine(merylDB_ch) | combine(asm_ch) | MerquryQV_01
-  channel.of("01_QV") | combine(asm_ch) | bbstat_01 
+  channel.of("00_Preprocess/00_QV") | combine(merylDB_ch) | combine(asm_ch) | MerquryQV_00
+  channel.of("00_Preprocess/00_bbstat") | combine(asm_ch) | bbstat_00
 
-  if(!params.steptwo) { // TODO: redo this more elegantly later 
+  if( params.step == 1 ) { // TODO: redo this more elegantly later 
 
     if (!params.falcon_unzip) {
       // Step 2: Arrow Polish with PacBio reads
       if(params.primary_assembly){
-        asm_arrow_ch = ARROW_02(channel.of("02_ArrowPolish"), asm_ch, pacall_ch)
+        asm_arrow_ch = ARROW_02(channel.of("Step_1/01_ArrowPolish"), asm_ch, pacall_ch)
       }else if (params.paternal_assembly) {
-        asm_arrowp_ch = ARROW_02(channel.of("02_ArrowPolish_pat"), asm_ch.first(), pacall_ch)
-        asm_arrowm_ch = ARROW_02b(channel.of("02_ArrowPolish_mat"), asm_ch.last(), pacall_ch)
+        asm_arrowp_ch = ARROW_02(channel.of("Step_1/01_ArrowPolish_pat"), asm_ch.first(), pacall_ch)
+        asm_arrowm_ch = ARROW_02b(channel.of("Step_1/01_ArrowPolish_mat"), asm_ch.last(), pacall_ch)
         asm_arrow_ch = asm_arrowp_ch | concat(asm_arrowm_ch)
       }
       
       // Step 3: Check quality of new assembly with Merqury 
-      channel.of("03_QV") | combine(merylDB_ch) | combine(asm_arrow_ch) | MerquryQV_03
-      channel.of("03_QV") | combine(asm_arrow_ch) | bbstat_03
+      channel.of("Step_1/01_QV") | combine(merylDB_ch) | combine(asm_arrow_ch) | MerquryQV_01
+      channel.of("Step_1/01_bbstat") | combine(asm_arrow_ch) | bbstat_01
     } else {
       asm_arrow_ch = asm_ch
     }
-    
-    // purge_dup would go here  
-    // (1) split merged into primary, alt, and mito again
-    // (2) purge primary, hap merged with alt, purge hap_alt
-    // (3) purged primary -> scaffolding pipeline? (might just need a part1, part2 pipeline)
-    // (4) merge scaffolded prime, purged alt, and mito
 
     pacfasta_ch = pac_ch | bam_to_fasta | collect | map {n -> [n]}
 
     if(params.primary_assembly){
-      tmp_ch = channel.of("02_ArrowPolish") | combine(asm_arrow_ch) | SPLIT_FILE_03 |
+      tmp_ch = channel.of("Step_1/01_ArrowPolish") | combine(asm_arrow_ch) | SPLIT_FILE_02 |
         map {n -> [n.get(0), n.get(1)] }
-      channel.of("03b_Purge_Dups") |
+      channel.of("Step_1/02_Purge_Dups") |
         combine(tmp_ch) |
         combine(pacfasta_ch) |
-        PURGE_DUPS_03b
+        PURGE_DUPS_02
   
       /* BUSCO check will go here */
-      PURGE_DUPS_03b.out | map {n -> [n.get(0), n.get(1)] } | flatMap | 
-      combine(channel.of("03c_BUSCO")) | map {n -> [n.get(1), n.get(0)]} |
+      PURGE_DUPS_02.out | map {n -> [n.get(0), n.get(1)] } | flatMap | 
+      combine(channel.of("Step_1/02_BUSCO")) | map {n -> [n.get(1), n.get(0)]} |
       BUSCO
     }else if(params.paternal_assembly) {
       // Paternal version goes here
-      tmp_ch = asm_arrow_ch.first() | SPLIT_FILE_03p |
+      tmp_ch = asm_arrow_ch.first() | SPLIT_FILE_02p |
         map {n -> n.get(0) }
-      channel.of("03b_Purge_Dups_pat") |
+      channel.of("Step_1/02_Purge_Dups_pat") |
         combine(tmp_ch) |
         combine(pacfasta_ch) |
         PURGE_DUPS_TRIOp       // <= swap this for PURGE_DUPS_TRIO
   
       /* BUSCO check will go here */
       PURGE_DUPS_TRIOp.out | map {n -> [n.get(0)] } | flatMap | 
-      combine(channel.of("03c_BUSCO_pat")) | map {n -> [n.get(1), n.get(0)]} |
+      combine(channel.of("Step_1/02_BUSCO_pat")) | map {n -> [n.get(1), n.get(0)]} |
       BUSCO
 
       // Maternal version 
-      tmpm_ch = asm_arrow_ch.last() | SPLIT_FILE_03m |
+      tmpm_ch = asm_arrow_ch.last() | SPLIT_FILE_02m |
         map {n -> n.get(0) }
-      channel.of("03b_Purge_Dups_mat") |
+      channel.of("Step_1/02_Purge_Dups_mat") |
         combine(tmpm_ch) |
         combine(pacfasta_ch) |
         PURGE_DUPS_TRIOm       // <= swap this for PURGE_DUPS_TRIO
   
       /* BUSCO check will go here */
       PURGE_DUPS_TRIOm.out | map {n -> [n.get(0)] } | flatMap | 
-      combine(channel.of("03c_BUSCO_mat")) | map {n -> [n.get(1), n.get(0)]} |
+      combine(channel.of("Step_1/02_BUSCO_mat")) | map {n -> [n.get(1), n.get(0)]} |
       BUSCO_mat
     }
   } else {
@@ -218,45 +215,45 @@ workflow {
 
     // Step 4: Arrow Polish with PacBio reads
     if(params.primary_assembly){
-      asm_arrow2_ch = ARROW_04(channel.of("04_ArrowPolish"), asm_arrow_ch, pacall_ch, peak_ch, merylDB_ch)
+      asm_arrow2_ch = ARROW_04(channel.of("Step_2/04_ArrowPolish"), asm_arrow_ch, pacall_ch, peak_ch, merylDB_ch)
     } else if (params.paternal_assembly) {
-      asm_arrow2p_ch = ARROW_04(channel.of("04_ArrowPolish_pat"), asm_arrow_ch.first() , pacall_ch, peak_ch, merylDB_ch)
-      asm_arrow2m_ch = ARROW_04b(channel.of("04_ArrowPolish_mat"), asm_arrow_ch.last(), pacall_ch, peak_ch, merylDB_ch)
+      asm_arrow2p_ch = ARROW_04(channel.of("Step_2/04_ArrowPolish_pat"), asm_arrow_ch.first() , pacall_ch, peak_ch, merylDB_ch)
+      asm_arrow2m_ch = ARROW_04b(channel.of("Step_2/04_ArrowPolish_mat"), asm_arrow_ch.last(), pacall_ch, peak_ch, merylDB_ch)
       asm_arrow2_ch = asm_arrow2p_ch | concat(asm_arrow2m_ch)
     }
     // Step 5: Check quality of new assembly with Merqury 
-    channel.of("05_QV") | combine(merylDB_ch) | combine(asm_arrow2_ch) | MerquryQV_05
-    channel.of("05_QV") | combine(asm_arrow2_ch) | bbstat_05
+    channel.of("Step_2/04_QV") | combine(merylDB_ch) | combine(asm_arrow2_ch) | MerquryQV_04
+    channel.of("Step_2/04_bbstat") | combine(asm_arrow2_ch) | bbstat_04
 
     // Step 6: FreeBayes Polish with Illumina reads
     if(params.primary_assembly){
-      asm_freebayes_ch = FREEBAYES_06(channel.of("06_FreeBayesPolish"), asm_arrow2_ch, ill_ch, peak_ch, merylDB_ch)
+      asm_freebayes_ch = FREEBAYES_05(channel.of("Step_2/05_FreeBayesPolish"), asm_arrow2_ch, ill_ch, peak_ch, merylDB_ch)
     }else if(params.paternal_assembly){
-      asm_freebayesp_ch = FREEBAYES_06(channel.of("06_FreeBayesPolish_pat"), asm_arrow2_ch.first(), ill_ch, peak_ch, merylDB_ch)
-      asm_freebayesm_ch = FREEBAYES_06b(channel.of("06_FreeBayesPolish_mat"), asm_arrow2_ch.last(), ill_ch, peak_ch, merylDB_ch)
+      asm_freebayesp_ch = FREEBAYES_05(channel.of("Step_2/05_FreeBayesPolish_pat"), asm_arrow2_ch.first(), ill_ch, peak_ch, merylDB_ch)
+      asm_freebayesm_ch = FREEBAYES_05b(channel.of("Step_2/05_FreeBayesPolish_mat"), asm_arrow2_ch.last(), ill_ch, peak_ch, merylDB_ch)
       asm_freebayes_ch = asm_freebayesp_ch | concat(asm_freebayesm_ch )
     }
     
-    channel.of("07_QV") | combine(merylDB_ch) | combine(asm_freebayes_ch) | MerquryQV_07
-    channel.of("07_QV") | combine(asm_freebayes_ch) | bbstat_07
+    channel.of("Step_2/05_QV") | combine(merylDB_ch) | combine(asm_freebayes_ch) | MerquryQV_05
+    channel.of("Step_2/05_bbstat") | combine(asm_freebayes_ch) | bbstat_05
  
     // Step 8: FreeBayes Polish with Illumina reads
     if(params.primary_assembly){
-      asm_freebayes2_ch = FREEBAYES_08(channel.of("08_FreeBayesPolish"), asm_freebayes_ch, ill_ch, peak_ch, merylDB_ch)
+      asm_freebayes2_ch = FREEBAYES_06(channel.of("Step_2/06_FreeBayesPolish"), asm_freebayes_ch, ill_ch, peak_ch, merylDB_ch)
     } else if (params.paternal_assembly) {
-      asm_freebayes2p_ch = FREEBAYES_08(channel.of("08_FreeBayesPolish_pat"), asm_freebayes_ch.first(), ill_ch, peak_ch, merylDB_ch)
-      asm_freebayes2m_ch = FREEBAYES_08b(channel.of("08_FreeBayesPolish_mat"), asm_freebayes_ch.last(), ill_ch, peak_ch, merylDB_ch)
+      asm_freebayes2p_ch = FREEBAYES_06(channel.of("Step_2/06_FreeBayesPolish_pat"), asm_freebayes_ch.first(), ill_ch, peak_ch, merylDB_ch)
+      asm_freebayes2m_ch = FREEBAYES_06b(channel.of("Step_2/06_FreeBayesPolish_mat"), asm_freebayes_ch.last(), ill_ch, peak_ch, merylDB_ch)
       asm_freebayes2_ch = asm_freebayes2p_ch | concat(asm_freebayes2m_ch)
     }
     
-    channel.of("09_QV") | combine(merylDB_ch) | combine(asm_freebayes2_ch) | MerquryQV_09
-    channel.of("09_QV") | combine(asm_freebayes2_ch) | bbstat_09
+    channel.of("Step_2/06_QV") | combine(merylDB_ch) | combine(asm_freebayes2_ch) | MerquryQV_06
+    channel.of("Step_2/06_bbstat") | combine(asm_freebayes2_ch) | bbstat_06
 
     if(params.primary_assembly){
-      channel.of("08_FreeBayesPolish") | combine(asm_freebayes2_ch) | SPLIT_FILE_09b
+      channel.of("Step_2/06_FreeBayesPolish") | combine(asm_freebayes2_ch) | SPLIT_FILE_07
     } else if (params.paternal_assembly) {
-      asm_freebayes2_ch.first() | SPLIT_FILE_09p
-      asm_freebayes2_ch.last() | SPLIT_FILE_09m
+      asm_freebayes2_ch.first() | SPLIT_FILE_07p
+      asm_freebayes2_ch.last() | SPLIT_FILE_07m
     }
   }
 }

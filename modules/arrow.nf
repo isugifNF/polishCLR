@@ -9,7 +9,10 @@ process pbmm2_index {
   input: tuple val(outdir), path(assembly_fasta)
   output: tuple val("$outdir"), path("$assembly_fasta"), path("*.mmi")
   script:
-  template 'pbmm2_index.sh'
+  """
+  #! /usr/bin/env bash
+  ${pbmm2_app} index ${assembly_fasta} ${assembly_fasta}.mmi
+  """
 
   stub:
   """
@@ -23,7 +26,19 @@ process pbmm2_align {
   input:tuple val(outdir), path(assembly_fasta), path(assembly_mmi), path(pacbio_read)
   output: tuple val("$outdir"), path("*.bam"), path("*.bai")
   script:
-  template 'pbmm2_align.sh'
+  """
+  #! /usr/bin/env bash
+  PROC=\$(((`nproc`-1)*3/4+1))
+  PROC2=\$(((`nproc`-1)*1/4+1))
+  mkdir tmp
+
+  # for multiple pacbio subread files
+  ls ${pacbio_read} > bam.fofn
+
+  ${pbmm2_app} align -j \$PROC ${assembly_fasta} bam.fofn | \
+    ${samtools_app} sort -T tmp -m 8G --threads \$PROC2 - > ${assembly_fasta.simpleName}_aln.bam
+  ${samtools_app} index -@ \${PROC} ${assembly_fasta.simpleName}_aln.bam
+  """
 
   stub:
   """
@@ -32,14 +47,22 @@ process pbmm2_align {
   """
 }
 
-process gcc_Arrow {
+process gcpp_arrow {
   errorStrategy { task.attempt < 4 ? 'retry' : 'terminate' }
 
-  publishDir "${params.outdir}/${outdir}/gccruns", mode: 'symlink'
+  publishDir "${params.outdir}/${outdir}/gccpruns", mode: 'symlink'
   input: tuple val(outdir), path(pacbio_bam), path(pacbio_bai),  path(assembly_fasta), path(assembly_fai), val(window)
   output: tuple val("$outdir"), path("*.fasta"), path("*.vcf")
   script:
-  template 'gcc_arrow.sh'
+  """
+  #! /usr/bin/env bash
+  PROC=\$(((`nproc`-1)*3/4+1))
+  ${gcpp_app} --algorithm=arrow \
+    -x 10 -X 120 -q 0 \
+    -j \${PROC} -w "$window" \
+    -r ${assembly_fasta} ${pacbio_bam} \
+    -o ${assembly_fasta.simpleName}_${window.replace(':','_').replace('|','_')}.vcf,${assembly_fasta.simpleName}_${window.replace(':','_').replace('|','_')}.fasta
+  """
 
   stub:
   """
@@ -51,13 +74,18 @@ process gcc_Arrow {
 process merge_consensus {
   publishDir "${params.outdir}/${outdir}", mode: 'copy'
   input: tuple val(outdir), path(windows_fasta)
-  output: path("${outdir}_consensus.fasta")
+  output: path("*_consensus.fasta")
   script:
-  template 'merge_consensus.sh'
+  """
+  #! /usr/bin/env bash
+  OUTNAME=`echo "$outdir" | sed 's:/:_:g'`
+  cat ${windows_fasta} > \${OUTNAME}_consensus.fasta
+  """
 
   stub:
   """
-  touch ${outdir}_consensus.fasta
+  OUTNAME=`echo "$outdir" | sed 's:/:_:g'`
+  touch \${OUTNAME}_consensus.fasta
   """
 }
 
@@ -72,7 +100,7 @@ workflow ARROW {
     fai_ch = create_windows.out | map { n -> n.get(0) }
 
     newasm_ch = outdir_ch | combine(asm_ch) | pbmm2_index | combine(pac_ch) | pbmm2_align |
-      combine(asm_ch) | combine(fai_ch) | combine(win_ch) | gcc_Arrow | 
+      combine(asm_ch) | combine(fai_ch) | combine(win_ch) | gcpp_arrow | 
       map { n -> [ n.get(0), n.get(1) ] } | groupTuple | 
       merge_consensus
   
@@ -110,7 +138,7 @@ workflow ARROW_MERFIN {
     fai_ch = create_windows.out | map { n -> n.get(0) } 
 
     arrow_run_ch = outdir_ch | combine(asm_ch) | pbmm2_index | combine(pac_ch) | pbmm2_align |
-      combine(asm_ch) | combine(fai_ch) | combine(win_ch) | gcc_Arrow 
+      combine(asm_ch) | combine(fai_ch) | combine(win_ch) | gcpp_arrow 
     if (params.same_specimen) {
       /* create a genome meryl db */
       asm_meryl = outdir_ch | combine(channel.of(params.k)) | combine(asm_ch) | meryl_genome 
