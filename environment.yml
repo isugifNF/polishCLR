@@ -19,3 +19,4 @@ dependencies:
   - bbtools
   - purge_dups
   - bamtools
+  - nextflow

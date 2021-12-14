@@ -1,23 +1,19 @@
-FROM mambaorg/micromamba
+FROM mambaorg/micromamba:0.19.1
+USER root
+COPY --chown=micromamba:micromamba environment.yml /tmp/env.yaml
+RUN apt-get update
+RUN apt-get install -y git curl python3-pip
+RUN micromamba env create -y -f /tmp/env.yaml && \
+    micromamba clean --all --yes
+RUN ln -s /bin/micromamba /bin/conda
 
-# === Update installers
-RUN apt-get update && apt-get install -y git && apt-get -y install mafft
-RUN apt-get install -y curl && apt-get install -y python3-pip
+ARG MAMBA_DOCKERFILE_ACTIVATE=1 
+#RUN python -c 'import uuid; print(uuid.uuid4())' > /tmp/my_uuid
 
-# === Pull repo
-RUN git clone https://github.com/isugifNF/polishCLR.git
+RUN git clone https://github.com/arangrhie/merfin.git
+RUN cd merfin/src; make -j 8
+RUN ln -s /tmp/merfin/build/bin/merfin /bin/merfin
 
-# === install any conda packages
-RUN cd polishCLR; mamba env create -f environment.yml
+RUN echo "micromamba activate polishCLR_env" >> ~/.bashrc
+SHELL ["/bin/bash", "--login", "-c"]
 
-# === merfin not on conda
-RUN cd; git clone https://github.com/arangrhie/merfin.git
-RUN cd merfin/src
-RUN make -j 8
-RUN ./merfin --version
-
-# === install nextflow?
-RUN curl -s https://get.nextflow.io | bash
-RUN mv nextflow ~/bin/.
-
-# Rough outline, still need to build to check if this works
