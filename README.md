@@ -1,6 +1,25 @@
-# polishCLR
+## Nextflow polishCLR pipeline
+*polishCLR* is a [nextflow](https://www.nextflow.io/) workflow for polishing genome assemblies (improving accuary) generated with noisy PacBio reads using accurate, short Illumina reads. It implements the best practices descbribed by the Vertebrate Genome Project (VGP) Assembly community (Rhie et al. 2021) and extends these for use-cases we found common in the [Ag100Pest Genome Initiative](http://i5k.github.io/ag100pest).
 
-## fetch pipeline
+The polishCLR workflow can be easily initiated from three input cases (Fig. 1). In the first case (Case 1), users may initiate with an unresolved primary assembly with associated contigs (the output of FALCON 2-asm) or without (e.g. the output of Canu or wtdbg2) (https://doi.org/10.1101/gr.215087.116, https://doi.org/10.1038/s41592-019-0669-3 ) (Fig. 1). Additionally, it can handle a haplotype-resolved but unpolished set (Case 2) (e.g., the output of FALCON-Unzip 3-unzip). In the ideal case (Case 3), the pipeline is initiated with a haplotype-resolved, CLR long-read polished set of primary and alternate contigs (e.g. the output of FALCON-Unzip 4-polish) (Fig. 1). In all cases, inclusion of the organelle genome will improve the polishing of nuclear mitochondrial or plasmid pseudogenes (Howe et al. 2021). Organelle genomes should be generated and polished separately for best results, using pipelines such as the mitochondrial companion to polishCLR, Ag100MitoPolishCLR (Stahlke et al, in prep), mitoVGP (Formenti et al., 2021), or another method. The core workflow is divided into two steps (controlled by a --step 1 or --step 2 parameter flag) to allow for scaffolding data (Hi-C ref) to be incorporated if available and manual review, for example in Juicebox (Durand et al, 2016; Durand et al, 2016b) before final polishing. 
+
+## Documentation
+You can find more details on the usage in the [wiki](https://github.com/polichCLR/wiki) pages. These also include a simple [step-by-step] tutorial to run the analyses on your own genomes.
+
+## Table of Contents
+
+- [Installation](#Installation)
+- [Basic Run](#Basic Run)
+- [Profiles](#Profiles)
+- [Inputs](#Inputs)
+  - [Trio Input](#Trio Input)
+- [Resources](#Resources) 
+- [Example](#Example)
+- [Citing](#Citing-nf-LO)
+- [References](#References)
+
+## Installation
+Fetch pipeline
 
 ```
 git clone https://github.com/isugifNF/polishCLR.git
@@ -226,7 +245,7 @@ Final Polished Assembly QV = 45.0425
 
 ## Step 1 of 2 - up through purge_dups
 
-Scaffolding is currently done by hand. The below is run on a test dataset of 3 contigs.
+Scaffolding is done independently of this pipline. The below is run on a test dataset of 3 contigs.
 
 **Falcon Assembly**
 
@@ -268,6 +287,7 @@ executor >  local (20)
 
 </details>
 
+### Trio Input
 **TrioCanu Assembly**
 
 ```
