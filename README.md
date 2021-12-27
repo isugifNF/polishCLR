@@ -9,13 +9,13 @@ You can find more details on the usage in the [wiki](https://github.com/polichCL
 ## Table of Contents
 
 - [Installation](#Installation)
-- [Basic Run](#Basic Run)
+- [Basic Run](#Basic-Run)
 - [Profiles](#Profiles)
 - [Inputs](#Inputs)
-  - [Trio Input](#Trio Input)
+  - [Trio Input](#Trio-Input)
 - [Resources](#Resources) 
 - [Example](#Example)
-- [Citing](#Citing-nf-LO)
+- [Citing](#Citing)
 - [References](#References)
 
 ## Installation
