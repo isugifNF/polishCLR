@@ -4,7 +4,7 @@
 The polishCLR workflow can be easily initiated from three input cases (Fig. 1). In the first case (Case 1), users may initiate with an unresolved primary assembly with associated contigs (the output of FALCON 2-asm) or without (e.g. the output of Canu or wtdbg2) (https://doi.org/10.1101/gr.215087.116, https://doi.org/10.1038/s41592-019-0669-3 ) (Fig. 1). Additionally, it can handle a haplotype-resolved but unpolished set (Case 2) (e.g., the output of FALCON-Unzip 3-unzip). In the ideal case (Case 3), the pipeline is initiated with a haplotype-resolved, CLR long-read polished set of primary and alternate contigs (e.g. the output of FALCON-Unzip 4-polish) (Fig. 1). In all cases, inclusion of the organelle genome will improve the polishing of nuclear mitochondrial or plasmid pseudogenes (Howe et al. 2021). Organelle genomes should be generated and polished separately for best results, using pipelines such as the mitochondrial companion to polishCLR, Ag100MitoPolishCLR (Stahlke et al, in prep), mitoVGP (Formenti et al., 2021), or another method. The core workflow is divided into two steps (controlled by a --step 1 or --step 2 parameter flag) to allow for scaffolding data (Hi-C ref) to be incorporated if available and manual review, for example in Juicebox (Durand et al, 2016; Durand et al, 2016b) before final polishing. 
 
 ## Documentation
-You can find more details on the usage in the [wiki](https://github.com/polichCLR/wiki) pages. These also include a simple [step-by-step] tutorial to run the analyses on your own genomes.
+You can find more details on the usage below. These also include a simple [step-by-step] tutorial to run the analyses on your own genomes.
 
 ## Table of Contents
 
@@ -113,23 +113,6 @@ git clone https://github.com/arangrhie/merfin.git
 cd merfin/src
 make -j 8
 ./merfin --version
-```
-
-</details>
-
-<details><summary>Install `genomescope2.0` if not already in a module</summary>
-
-https://github.com/tbenavi1/genomescope2.0
-
-```
-alloc -N 1 -n 8 -p scavenger -t 04:00:00
-git clone https://github.com/tbenavi1/genomescope2.0.git
-cd genomescope2.0
-emacs install.R       # edit to set 'local_lib_path = "/project/ag100pest/software/R_libs/"'
-module load r/3.4.1
-Rscript install.R
-emacs genomescope.R   # add the lib path to each library 'library(XXXXX, lib.loc = local_lib_path)'
-Rscript genomescope.R --help
 ```
 
 </details>
