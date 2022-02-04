@@ -13,10 +13,7 @@ You can find more details on the usage below. These also include a simple [step-
 - [Profiles](#Profiles)
 - [Inputs](#Inputs)
   - [Trio Input](#Trio-Input)
-- [Resources](#Resources) 
 - [Example](#Example)
-- [Citing](#Citing)
-- [References](#References)
 
 ## Installation
 Fetch pipeline
