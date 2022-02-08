@@ -1,12 +1,12 @@
 ## Nextflow polishCLR pipeline
-*polishCLR* is a [nextflow](https://www.nextflow.io/) workflow for polishing genome assemblies (improving accuary) generated with noisy PacBio reads using accurate, short Illumina reads. It implements the best practices descbribed by the Vertebrate Genome Project (VGP) Assembly community (Rhie et al. 2021) and extends these for use-cases we found common in the [Ag100Pest Genome Initiative](http://i5k.github.io/ag100pest).
+*polishCLR* is a [nextflow](https://www.nextflow.io/) workflow for polishing genome assemblies (improving accuracy) generated with noisy PacBio reads using accurate, short Illumina reads. It implements the best practices described by the Vertebrate Genome Project (VGP) Assembly community (Rhie et al. 2021) and extends these for use-cases we found common in the [Ag100Pest Genome Initiative](http://i5k.github.io/ag100pest).
 
 The polishCLR workflow can be easily initiated from three input cases:
 - Case 1: An unresolved primary assembly with associated contigs (the output of FALCON 2-asm) or without (e.g., the output of Canu or wtdbg2). 
 - Case 2: A haplotype-resolved but unpolished set (e.g., the output of FALCON-Unzip 3-unzip). 
 - **Case 3: IDEAL! A haplotype-resolved, CLR long-read, Arrow-polished set of primary and alternate contigs (e.g., the output of FALCON-Unzip 4-polish).** 
 
-We strongly reccomend including the organellular genome to improve the polishing of nuclear mitochondrial or plasmid pseudogenes (Howe et al., 2021). Organelle genomes should be generated and polished separately for best results. You could use the mitochondrial companion to polishCLR, [polishCLRmt](https://github.com/Ag100Pest/Ag100MitoPolishCLR) or [mitoVGP](https://github.com/gf777/mitoVGP) (Formenti et al., 2021). 
+We strongly recommend including the organellular genome to improve the polishing of nuclear mitochondrial or plasmid pseudogenes (Howe et al., 2021). Organelle genomes should be generated and polished separately for best results. You could use the mitochondrial companion to polishCLR, [polishCLRmt](https://github.com/Ag100Pest/Ag100MitoPolishCLR) or [mitoVGP](https://github.com/gf777/mitoVGP) (Formenti et al., 2021). 
 
 To allow for the inclusion of scaffolding before final polishing  and increase the potential for gap-filling across correctly oriented scaffolded contigs, the core workflow is divided into two steps, controlled by a `--step` parameter flag. 
 
@@ -15,7 +15,7 @@ To allow for the inclusion of scaffolding before final polishing  and increase t
   
 </p>
 
-You can view a more complete vizualization of the pipleine in [Supp. Fig. S1](https://github.com/isugifNF/polishCLR/blob/main/FigureS01.svg)
+You can view a more complete visualization of the pipeline in [Supp. Fig. S1](https://github.com/isugifNF/polishCLR/blob/main/FigureS01.svg)
 
 ## Documentation
 You can find more details on the usage below. These also include a simple [step-by-step] tutorial to run the analyses on your own genomes.
@@ -67,11 +67,11 @@ Launching `main.nf` [lonely_liskov] - revision: 6a81970115
    Mandatory arguments:
    --illumina_reads               paired end illumina reads, to be used for Merqury QV scores, and freebayes polish primary assembly
    --pacbio_reads                 pacbio reads in bam format, to be used to arrow polish primary assembly
-   --mitochondrial_assembly       mitocondrial assembly will be concatinated to the assemblies before polishing [default: false]
+   --mitochondrial_assembly       mitochondrial assembly will be concatenated to the assemblies before polishing [default: false]
 
    Either FALCON (or FALCON Unzip) assembly:
    --primary_assembly             genome assembly fasta file to polish
-   --alternate_assembly           if alternate/haplotig assembly file is provided, will be concatinated to the primary assembly before polishing [default: false]
+   --alternate_assembly           if alternate/haplotig assembly file is provided, will be concatenated to the primary assembly before polishing [default: false]
    --falcon_unzip                 if primary assembly has already undergone falcon unzip [default: false]. If true, will Arrow polish once instead of twice.
 
    Or TrioCanu assembly
@@ -84,7 +84,7 @@ Launching `main.nf` [lonely_liskov] - revision: 6a81970115
    Optional modifiers
    --species                      if a string is given, rename the final assembly by species name [default:false]
    --k                            kmer to use in MerquryQV scoring [default:21]
-   --same_specimen                if illumina and pacbio reads are from the same specimin [default: true].
+   --same_specimen                if illumina and pacbio reads are from the same specimen [default: true].
    --meryldb                      path to a prebuilt meryl database, built from the illumina reads. If not provided, tehen build.
 
    Optional configuration arguments
@@ -151,7 +151,7 @@ nextflow run /project/ag100pest/software/polishCLR/main.nf \
   -profile ceres
 ```
 ### Outputs
-Key Ouputs are found in
+Key Outputs are found in
 ```
 - PolishCLR_Results/Step_1/02_BUSCO/primary_purged/ ## BUSCO stats after purge_dups
 - PolishCLR_Results/Step_1/02_Purge_Dups/primary_purged.fa ## Primary assembly after Step 1
