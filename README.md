@@ -24,8 +24,10 @@ You can find more details on the usage below. These also include a simple [step-
 
 - [Installation](#Installation)
 - [Basic Run](#Basic-Run)
+- [Outputs](#Outputs)
 - [Trio Input](#Trio-Input)
 - [References](#References)
+
 
 ## Installation
 Fetch pipeline
@@ -110,7 +112,7 @@ Launching `main.nf` [lonely_liskov] - revision: 6a81970115
   ```
 
 
-**Example Run**
+**Example**
 
 ```
 source activate ${PWD}/env/polishCLR_env
