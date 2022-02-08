@@ -1,15 +1,29 @@
 ## Nextflow polishCLR pipeline
 *polishCLR* is a [nextflow](https://www.nextflow.io/) workflow for polishing genome assemblies (improving accuary) generated with noisy PacBio reads using accurate, short Illumina reads. It implements the best practices descbribed by the Vertebrate Genome Project (VGP) Assembly community (Rhie et al. 2021) and extends these for use-cases we found common in the [Ag100Pest Genome Initiative](http://i5k.github.io/ag100pest).
 
-The polishCLR workflow can be easily initiated from three input cases (Fig. 1). In the first case (Case 1), users may initiate with an unresolved primary assembly with associated contigs (the output of FALCON 2-asm) or without (e.g. the output of Canu or wtdbg2) (https://doi.org/10.1101/gr.215087.116, https://doi.org/10.1038/s41592-019-0669-3 ) (Fig. 1). Additionally, it can handle a haplotype-resolved but unpolished set (Case 2) (e.g., the output of FALCON-Unzip 3-unzip). In the ideal case (Case 3), the pipeline is initiated with a haplotype-resolved, CLR long-read polished set of primary and alternate contigs (e.g. the output of FALCON-Unzip 4-polish) (Fig. 1). In all cases, inclusion of the organelle genome will improve the polishing of nuclear mitochondrial or plasmid pseudogenes (Howe et al. 2021). Organelle genomes should be generated and polished separately for best results, using pipelines such as the mitochondrial companion to polishCLR, MitoPolishCLR (Stahlke et al, in prep), mitoVGP (Formenti et al., 2021), or another method. The core workflow is divided into two steps (controlled by a --step 1 or --step 2 parameter flag) to allow for scaffolding data (Hi-C ref) to be incorporated if available and manual review, for example in Juicebox (Durand et al, 2016; Durand et al, 2016b) before final polishing. 
+The polishCLR workflow can be easily initiated from three input cases:
+- Case 1: An unresolved primary assembly with associated contigs (the output of FALCON 2-asm) or without (e.g., the output of Canu or wtdbg2). 
+- Case 2: A haplotype-resolved but unpolished set (e.g., the output of FALCON-Unzip 3-unzip). 
+- **Case 3: IDEAL! A haplotype-resolved, CLR long-read, Arrow-polished set of primary and alternate contigs (e.g., the output of FALCON-Unzip 4-polish).** 
+
+We strongly reccomend including the organellular genome to improve the polishing of nuclear mitochondrial or plasmid pseudogenes (Howe et al., 2021). Organelle genomes should be generated and polished separately for best results. You could use the mitochondrial companion to polishCLR, [polishCLRmt](https://github.com/Ag100Pest/Ag100MitoPolishCLR) or [mitoVGP](https://github.com/gf777/mitoVGP) (Formenti et al., 2021). 
+
+To allow for the inclusion of scaffolding before final polishing  and increase the potential for gap-filling across correctly oriented scaffolded contigs, the core workflow is divided into two steps, controlled by a `--step` parameter flag. 
+
+<p align="center">
+	<img src="https://github.com/isugifNF/polishCLR/blob/main/Figure01.svg" width="750" />
+  
+</p>
+
+You can view a more complete vizualization of the pipleine in [Supp. Fig. S1](https://github.com/isugifNF/polishCLR/blob/main/FigureS01.svg)
 
 ## Documentation
 You can find more details on the usage below. These also include a simple [step-by-step] tutorial to run the analyses on your own genomes.
 
 ## Table of Contents
 
-- [Installation](#Installation)
-- [Basic Run](#Basic-Run)
+- [Installation](##Installation)
+- [Basic Run](##Basic-Run)
 - [Trio Input](#Trio-Input)
 - [References](#References)
 
@@ -20,22 +34,27 @@ Fetch pipeline
 git clone https://github.com/isugifNF/polishCLR.git
 cd polishCLR
 ```
+Install dependencies in a [miniconda](https://docs.conda.io/en/latest/miniconda.html) environment.
 
-<details><summary>print usage statement</summary>
+```
+conda env create -f environment.yml -p ${PWD}/env/polishCLR_env
+```
+
+## Basic Run
+
+Print usage statement
 
   ```
-  nextflow run main.nf --help
-
-  N E X T F L O W  ~  version 21.04.3
-  Launching `main.nf` [amazing_torvalds] - revision: bfeb7f0055
+N E X T F L O W  ~  version 21.04.2
+Launching `main.nf` [lonely_liskov] - revision: 6a81970115
   ----------------------------------------------------
-                                \\---------//       
-  ___  ___        _   ___  ___    \\-----//        
-   |  (___  |  | / _   |   |_       \-//         
-  _|_  ___) |__| \_/  _|_  |        // \        
-                                  //-----\\       
-                                //---------\\       
-  isugifNF/polishCLR  v1.0.0       
+                                \\---------//
+  ___  ___        _   ___  ___    \\-----//
+   |  (___  |  | / _   |   |_       \-//
+  _|_  ___) |__| \_/  _|_  |        // \
+                                  //-----\\
+                                //---------\\
+  isugifNF/polishCLR  v1.0.0
 ----------------------------------------------------
 
 
@@ -57,7 +76,10 @@ cd polishCLR
    --paternal_assembly            paternal genome assembly fasta file to polish
    --maternal_assembly            maternal genome assembly fasta file to polish
 
-   Optional modifiers   
+   Pick Step 1 (arrow, purgedups) or Step 2 (arrow, freebayes, freebayes)
+   --step                         Run step 1 or step 2 (default: 1)
+
+   Optional modifiers
    --species                      if a string is given, rename the final assembly by species name [default:false]
    --k                            kmer to use in MerquryQV scoring [default:21]
    --same_specimen                if illumina and pacbio reads are from the same specimin [default: true].
@@ -84,187 +106,124 @@ cd polishCLR
    --queueSize                    Maximum number of jobs to be queued [default: 50]
    --account                      Some HPCs require you supply an account name for tracking usage.  You can supply that here.
    --help                         This usage statement.
+
   ```
 
-</details>
 
-## Install dependencies
-
-For now, installing dependencies in a [miniconda](https://docs.conda.io/en/latest/miniconda.html) environment.
+**Example Run**
 
 ```
-conda env create -f environment.yml -p ${PWD}/env/polishCLR_env
-```
-
-<details><summary>Install `merfin` if not already in a module</summary>
-
-https://github.com/arangrhie/merfin
-
-```
-alloc -N 1 -n 8 -p scavenger -t 04:00:00
-module load git
-module load gcc/8.1.0
-git clone https://github.com/arangrhie/merfin.git
-cd merfin/src
-make -j 8
-./merfin --version
-```
-
-</details>
-
-## Basic Run
-
-**Ceres HPC**
-
-Note: this may need to be updated. See "Step 1 of 2 - up through purge_dups" below for most recent commands.
-
-```
-module load nextflow
-module load miniconda
 source activate ${PWD}/env/polishCLR_env
-module load merfin
 
-SP_DIR=/project/ag100pest/Pectinophora_gossypiella_male/
+SP_DIR=/project/ag100pest/Helicoverpa_zea_male
 
-nextflow run main.nf \
-  --primary_assembly "$SP_DIR/RawData/3-unzip/all_p_ctg.fasta" \
-  --mitochondrial_assembly "$SP_DIR/MT_Contig/Pgos/Pgos_MitoFinder_mitfi_Final_Results/Pgos_mtDNA_contig.fasta" \
-  --alternate_assembly "$SP_DIR/RawData/4-polish/..../all_h_ctg.fasta" \
-  --illumina_reads "$SP_DIR/Illumina_polishing/JAMU*{R1,R2}.fastq.bz2" \
-  --pacbio_reads "$SP_DIR/RawData/m54334U_190823_194159.subreads.bam" \
+## === Step 1 (up to purge_dups)
+nextflow run /project/ag100pest/software/polishCLR/main.nf \
+  --primary_assembly "${SP_DIR}/Falcon/4-polish/cns-output/cns_p_ctg.fasta" \
+  --alternate_assembly "${SP_DIR}/Falcon/4-polish/cns-output/cns_h_ctg.fasta" \
+  --mitochondrial_assembly "${SP_DIR}/MT_Contig/Hzea_mtDNA_contig.fasta" \
+  --illumina_reads "${SP_DIR}/PolishingData/JDRP*{R1,R2}.fastq.bz2" \
+  --pacbio_reads "${SP_DIR}/RawData/m*.subreads.bam" \
+  --species "Hzea" \
   --k "21" \
-  -resume
+  --falcon_unzip true \
+  --step 1 \
+  --busco_lineage "lepideoptera_odb10" \
+  -resume \
+  -profile ceres
+
+### I often submit these as two separate slurm scripts
+
+## === Step 2 
+ nextflow run /project/ag100pest/software/polishCLR/main.nf \
+  --primary_assembly "PolishCLR_Results/Step_1/02_Purge_Dups/primary_purged.fa" \
+  --alternate_assembly "PolishCLR_Results/Step_1/02_Purge_Dups/haps_purged.fa" \
+  --mitochondrial_assembly "${SP_DIR}/MT_Contig/Hzea_mtDNA_contig.fasta" \
+  --illumina_reads "${SP_DIR}/PolishingData/JDRP*{R1,R2}.fastq.bz2" \
+  --pacbio_reads "${SP_DIR}/RawData/m*.subreads.bam" \
+  --species "Hzea" \
+  --k "21" \
+  --falcon_unzip true \
+  --step 2 \
+  -resume \
+  -profile ceres
 ```
 
-Current progress:
-
+### Example Output Logging
+**Step 1**
 ```
-N E X T F L O W  ~  version 20.07.1
-Launching `main.nf` [special_bartik] - revision: 7cb2c8ac31
-executor >  slurm (1954)
-[4b/d5fb33] process > addMito (1)                    [100%] 1 of 1, cached: 1 ✔
-[9d/d3d19f] process > bz_to_gz (1)                   [100%] 1 of 1, cached: 1 ✔
-[de/ef0633] process > meryl_count (2)                [100%] 2 of 2, cached: 2 ✔
-[fb/7ef659] process > meryl_union                    [100%] 1 of 1, cached: 1 ✔
-[23/ae01da] process > meryl_peak                     [100%] 1 of 1, cached: 1 ✔
-[bb/96e7da] process > MerquryQV_01 (1)               [100%] 1 of 1, cached: 1 ✔  // QV=31.1461
-[ae/c81f3c] process > bbstat_01 (1)                  [100%] 1 of 1, cached: 1 ✔
-[1c/f9f4a2] process > ARROW_02:create_windows (1)    [100%] 1 of 1, cached: 1 ✔
-[f6/a11eb2] process > ARROW_02:pbmm2_index (1)       [100%] 1 of 1, cached: 1 ✔
-[99/55ebfc] process > ARROW_02:pbmm2_align (1)       [100%] 1 of 1 ✔
-[8c/e62875] process > ARROW_02:gcc_Arrow (107)       [100%] 481 of 481 ✔
-[0e/e86ee7] process > ARROW_02:merge_consensus (1)   [100%] 1 of 1 ✔
-[a7/2a2420] process > MerquryQV_03 (1)               [100%] 1 of 1 ✔   // QV=38.7089
-[3f/8c66e2] process > bbstat_03 (1)                  [100%] 1 of 1 ✔
-[05/220810] process > ARROW_04:create_windows (1)    [100%] 1 of 1 ✔
-[ab/1cab8c] process > ARROW_04:pbmm2_index (1)       [100%] 1 of 1 ✔
-[0c/1a92d7] process > ARROW_04:pbmm2_align (1)       [100%] 1 of 1 ✔
-[4e/80a70b] process > ARROW_04:gcc_Arrow (68)        [100%] 481 of 481 ✔
-[1a/530d23] process > ARROW_04:meryl_genome (1)      [100%] 1 of 1 ✔
-[79/d30118] process > ARROW_04:combineVCF_arrow (1)  [100%] 1 of 1 ✔
-[5a/ca838c] process > ARROW_04:reshape_arrow (1)     [100%] 1 of 1 ✔
-[b7/2cc664] process > ARROW_04:merfin_polish_arro... [100%] 1 of 1 ✔
-[25/c8d4cd] process > ARROW_04:vcf_to_fasta_arrow... [100%] 1 of 1 ✔  // QV=41.0985
-[71/21f8ea] process > MerquryQV_05 (1)               [100%] 1 of 1 ✔
-[17/8bee1a] process > bbstat_05 (1)                  [100%] 1 of 1 ✔
-[99/dd5c4f] process > FREEBAYES_06:create_windows... [100%] 1 of 1 ✔
-[ea/62b6f0] process > FREEBAYES_06:meryl_genome_f... [100%] 1 of 1 ✔
-[0d/b74cde] process > FREEBAYES_06:align_shortrea... [100%] 1 of 1 ✔
-[39/2f8bbc] process > FREEBAYES_06:freebayes (335)   [100%] 481 of 481 ✔
-[23/75ce2a] process > FREEBAYES_06:combineVCF (1)    [100%] 1 of 1 ✔
-[e0/298ae8] process > FREEBAYES_06:merfin_polish (1) [100%] 1 of 1 ✔
-[41/27460a] process > FREEBAYES_06:vcf_to_fasta (1)  [100%] 1 of 1 ✔
-[48/cf8399] process > MerquryQV_07 (1)               [100%] 1 of 1 ✔  // QV=45.0154
-[3e/5a07de] process > bbstat_07 (1)                  [100%] 1 of 1 ✔
-[2b/515801] process > FREEBAYES_08:create_windows... [100%] 1 of 1 ✔
-[23/53bd22] process > FREEBAYES_08:meryl_genome_f... [100%] 1 of 1 ✔
-[db/2833ab] process > FREEBAYES_08:align_shortrea... [100%] 1 of 1 ✔
-[35/71633c] process > FREEBAYES_08:freebayes (68)    [100%] 481 of 481 ✔
-[57/6d06bb] process > FREEBAYES_08:combineVCF (1)    [100%] 1 of 1 ✔
-[40/cc4a82] process > FREEBAYES_08:merfin_polish (1) [100%] 1 of 1 ✔
-[f5/de1f18] process > FREEBAYES_08:vcf_to_fasta (1)  [100%] 1 of 1 ✔
-[3c/fdab12] process > MerquryQV_09 (1)               [100%] 1 of 1 ✔  // QV=45.0468
-[d3/009a91] process > bbstat_09 (1)                  [100%] 1 of 1 ✔
-Completed at: 17-Aug-2021 23:14:48
-Duration    : 17h 33m 38s
-CPU hours   : 89.2 (0.9% cached)
-Succeeded   : 1'954
-Cached      : 10
+[ea/f78cb8] process > RENAME_PRIMARY (1) [100%] 1 of 1, cached: 1 ✔
+[53/770510] process > MERGE_FILE_00 (1)  [100%] 1 of 1, cached: 1 ✔
+[34/a4b7ac] process > bz_to_gz (1)       [100%] 1 of 1, cached: 1 ✔
+[3e/0af766] process > meryl_count (1)    [100%] 2 of 2, cached: 2 ✔
+[76/a26404] process > meryl_union        [100%] 1 of 1, cached: 1 ✔
+[7c/d4916c] process > meryl_peak         [100%] 1 of 1, cached: 1 ✔
+[ef/c58401] process > MerquryQV_00 (1)   [100%] 1 of 1, cached: 1 ✔
+[cd/3ad9c7] process > bbstat_00 (1)      [100%] 1 of 1, cached: 1 ✔
+[3e/dd32f5] process > bam_to_fasta (1)   [100%] 1 of 1, cached: 1 ✔
+[00/1b1177] process > SPLIT_FILE_02 (1)  [100%] 1 of 1, cached: 1 ✔
+[78/df2d30] process > PURGE_DUPS_02 (1)  [100%] 1 of 1, cached: 1 ✔
+[5f/dec926] process > BUSCO (2)          [100%] 2 of 2 ✔
+
+Completed at: 21-Dec-2021 10:45:52
+Duration    : 51m 32s
+CPU hours   : 3.9 (63.3% cached)
+Succeeded   : 2
+Cached      : 12
+```
+
+**Step 2** 
+```
+executor >  local (1), slurm (2681)
+[d9/b48b2c] process > RENAME_PRIMARY (1)             [100%] 1 of 1 ✔
+[25/b9acec] process > MERGE_FILE_00 (1)              [100%] 1 of 1 ✔
+[94/ff9db2] process > bz_to_gz (1)                   [100%] 1 of 1 ✔
+[2c/bd2fc0] process > meryl_count (1)                [100%] 2 of 2 ✔
+[00/b4d5aa] process > meryl_union                    [100%] 1 of 1 ✔
+[62/116067] process > meryl_peak                     [100%] 1 of 1 ✔
+[76/7ecb59] process > MerquryQV_00 (1)               [100%] 1 of 1 ✔
+[12/ee4395] process > bbstat_00 (1)                  [100%] 1 of 1 ✔
+[93/7d56c3] process > ARROW_04:create_windows (1)    [100%] 1 of 1 ✔
+[3a/15bd43] process > ARROW_04:pbmm2_index (1)       [100%] 1 of 1 ✔
+[05/75aae9] process > ARROW_04:pbmm2_align (1)       [100%] 1 of 1 ✔
+[6b/92ea05] process > ARROW_04:gcpp_arrow (3)        [100%] 882 of 882 ✔
+[55/29df60] process > ARROW_04:meryl_genome (1)      [100%] 1 of 1 ✔
+[0f/8eb0eb] process > ARROW_04:combineVCF (1)        [100%] 1 of 1 ✔
+[9b/a8433d] process > ARROW_04:reshape_arrow (1)     [100%] 1 of 1 ✔
+[2f/bb106e] process > ARROW_04:merfin_polish (1)     [100%] 1 of 1 ✔
+[e5/609325] process > ARROW_04:vcf_to_fasta (1)      [100%] 1 of 1 ✔
+[d6/0b30fa] process > MerquryQV_04 (1)               [100%] 1 of 1 ✔
+[4c/dd5ce5] process > bbstat_04 (1)                  [100%] 1 of 1 ✔
+[5c/7d00a5] process > FREEBAYES_05:create_windows... [100%] 1 of 1 ✔
+[62/269cb4] process > FREEBAYES_05:meryl_genome (1)  [100%] 1 of 1 ✔
+[43/329d5d] process > FREEBAYES_05:align_shortrea... [100%] 1 of 1 ✔
+[15/ece2b2] process > FREEBAYES_05:freebayes (754)   [100%] 882 of 882 ✔
+[ab/47faff] process > FREEBAYES_05:combineVCF (1)    [100%] 1 of 1 ✔
+[8b/5461c2] process > FREEBAYES_05:merfin_polish (1) [100%] 1 of 1 ✔
+[ea/0a6fb3] process > FREEBAYES_05:vcf_to_fasta (1)  [100%] 1 of 1 ✔
+[4a/c67e0a] process > MerquryQV_05 (1)               [100%] 1 of 1 ✔
+[57/f661d4] process > bbstat_05 (1)                  [100%] 1 of 1 ✔
+[a5/5e8166] process > FREEBAYES_06:create_windows... [100%] 1 of 1 ✔
+[ea/ccf140] process > FREEBAYES_06:meryl_genome (1)  [100%] 1 of 1 ✔
+[40/d1cbd4] process > FREEBAYES_06:align_shortrea... [100%] 1 of 1 ✔
+[f3/a7920f] process > FREEBAYES_06:freebayes (514)   [100%] 882 of 882 ✔
+[ff/c3c29b] process > FREEBAYES_06:combineVCF (1)    [100%] 1 of 1 ✔
+[9f/462b6c] process > FREEBAYES_06:merfin_polish (1) [100%] 1 of 1 ✔
+[a0/3218e0] process > FREEBAYES_06:vcf_to_fasta (1)  [100%] 1 of 1 ✔
+[f8/0f5b7c] process > MerquryQV_06 (1)               [100%] 1 of 1 ✔
+[e8/09d9db] process > bbstat_06 (1)                  [100%] 1 of 1 ✔
+[12/04a0db] process > SPLIT_FILE_07 (1)              [100%] 1 of 1 ✔
+Completed at: 23-Dec-2021 11:45:16
+Duration    : 21h 33m 40s
+CPU hours   : 195.0
+Succeeded   : 2'682
+
 ```
 
 [timeline.html](https://isugifnf.github.io/polishCLR/timeline_ceres.html) | [report.html](https://isugifnf.github.io/polishCLR/report_ceres.html)
 
-Output Directory
-
-```
-PolishCLR_Results/
-  |_ 00_Preprocess/               # Illumina bz2 reads converted to gz files
-  |_ 01_QV/                       # quality value of primary assembly (before polishing)
-  |  |_ MerquryQV/                # Merqury quality value and histogram plots
-  |  |_ bbstat/                   # bbstat quality value
-  |  |_ merqury.qv                # <= text file with only the merqury qv value, can use as a checkpoint
-  |_ 02_ArrowPolish/              # polished with pacbio reads
-  |  |_ gccruns/                  # subfolder of vcf and fasta files per window
-  |  |_ 2_consensus.fasta         # arrow polished new consensus sequence
-  |_ 03_QV/                       # New merqury and bbstat quality values in subfolders. Continue with the assembly with the higher merqury.qv value
-  |_ 04_ArrowPolish/              # polished again with pacbio reads
-  |  |_ merfin/                   # merfin filtering if illumina and pacbio from same sample
-  |_ 05_QV/
-  |_ 06_FreeBayesPolish/          # polished with illumina reads
-  |  |_ merfin/                   # merfin filtering
-  |_ 07_QV/
-  |_ 08_FreeBayesPolish/          # <= should contain final polished assembly 8_consensus.fasta
-  |_ 09_QV/
-  |_ report.html
-  |_ timeline.html         # <= runtime for each step
-```
-
-Final Polished Assembly QV = 45.0425
-
-## Step 1 of 2 - up through purge_dups
-
-Scaffolding is done independently of this pipline. The below is run on a test dataset of 3 contigs.
-
-**Falcon Assembly**
-
-```
-nextflow run main.nf \
- -stub-run \
- -profile local \
- --primary_assembly "data/pri.fasta" \
- --alternate_assembly "data/alt.fasta" \
- --mitochondrial_assembly "data/mit.fasta" \
- --illumina_reads "data/readname_{R1,R2}.fastq.bz" \
- --pacbio_reads "data/*subreads.fasta" \
- --outdir "Falcon_Polish"
-```
-
-<details><summary>Falcon Step 1 Output</summary>
-
-```
-N E X T F L O W  ~  version 21.04.3
-Launching `main.nf` [sad_descartes] - revision: bfeb7f0055
-executor >  local (20)
-[cf/408bc8] process > MERGE_FILE_00 (1)            [100%] 1 of 1 ✔
-[fd/4bf867] process > meryl_count (2)              [100%] 2 of 2 ✔
-[05/d08e23] process > meryl_union                  [100%] 1 of 1 ✔
-[78/1b6c3c] process > meryl_peak                   [100%] 1 of 1 ✔
-[54/fbc19c] process > MerquryQV_01 (1)             [100%] 1 of 1 ✔
-[6a/3d661c] process > bbstat_01 (1)                [100%] 1 of 1 ✔
-[1e/605e8a] process > ARROW_02:create_windows (1)  [100%] 1 of 1 ✔
-[db/25e9a5] process > ARROW_02:pbmm2_index (1)     [100%] 1 of 1 ✔
-[76/77238b] process > ARROW_02:pbmm2_align (1)     [100%] 1 of 1 ✔
-[75/a964f3] process > ARROW_02:gcc_Arrow (3)       [100%] 3 of 3 ✔
-[8f/9a1a3b] process > ARROW_02:merge_consensus (1) [100%] 1 of 1 ✔
-[b0/a4ac98] process > MerquryQV_03 (1)             [100%] 1 of 1 ✔
-[fe/42b404] process > bbstat_03 (1)                [100%] 1 of 1 ✔
-[8a/345a4e] process > SPLIT_FILE_03 (1)            [100%] 1 of 1 ✔
-[71/adfccf] process > PURGE_DUPS_03b (1)           [100%] 1 of 1 ✔
-[5b/132630] process > BUSCO (1)                    [100%] 2 of 2 ✔
-```
-
-</details>
-
+We also developed a pipeline to work with Trio data, but this is less tested
+<details><summary>Trio Usage</summary>
 ### Trio Input
 **TrioCanu Assembly**
 
@@ -280,7 +239,7 @@ nextflow run main.nf \
   --outdir "TrioPolish_Polish"
 ```
 
-<details><summary>TrioCanu Step 1 Output</summary>
+TrioCanu Step 1 Output
 
 ```
 N E X T F L O W  ~  version 21.04.3
@@ -312,71 +271,6 @@ executor >  local (34)
 [c5/2fa18b] process > BUSCO_mat (1)                 [100%] 1 of 1 ✔
 ```
 
-</details>
-
-## Step 2 of 2 - after manual scaffolding
-
-**Falcon Assembly**
-
-```
-nextflow run main.nf \
-  -stub-run \
-  -profile local \
-  --primary_assembly "data/pri.fasta" \
-  --alternate_assembly "data/alt.fasta" \
-  --mitochondrial_assembly "data/mit.fasta" \
-  --illumina_reads "data/readname_{R1,R2}.fastq.bz" \
-  --pacbio_reads "data/*subreads.fasta" \
-  --outdir "Falcon_Polish" \
-  --steptwo true
-```
-
-<details><summary>Falcon Step 2 Output</summary>
-
-```
-N E X T F L O W  ~  version 21.04.3
-Launching `main.nf` [mad_bhaskara] - revision: bfeb7f0055
-executor >  local (43)
-[b9/c1685d] process > MERGE_FILE_00 (1)                 [100%] 1 of 1 ✔
-[15/72a69a] process > meryl_count (1)                   [100%] 2 of 2 ✔
-[e6/5ee0ea] process > meryl_union                       [100%] 1 of 1 ✔
-[4e/629266] process > meryl_peak                        [100%] 1 of 1 ✔
-[3d/046528] process > MerquryQV_01 (1)                  [100%] 1 of 1 ✔
-[e8/d75f00] process > bbstat_01 (1)                     [100%] 1 of 1 ✔
-[d0/08b7b9] process > ARROW_04:create_windows (1)       [100%] 1 of 1 ✔
-[88/c22c42] process > ARROW_04:pbmm2_index (1)          [100%] 1 of 1 ✔
-[1f/7328c6] process > ARROW_04:pbmm2_align (1)          [100%] 1 of 1 ✔
-[ff/c129b6] process > ARROW_04:gcc_Arrow (3)            [100%] 3 of 3 ✔
-[2c/de3259] process > ARROW_04:meryl_genome (1)         [100%] 1 of 1 ✔
-[c5/90367f] process > ARROW_04:combineVCF (1)           [100%] 1 of 1 ✔
-[84/6a0bf2] process > ARROW_04:reshape_arrow (1)        [100%] 1 of 1 ✔
-[0b/f7b5b9] process > ARROW_04:merfin_polish (1)        [100%] 1 of 1 ✔
-[fd/38c085] process > ARROW_04:vcf_to_fasta (1)         [100%] 1 of 1 ✔
-[45/5cb104] process > MerquryQV_05 (1)                  [100%] 1 of 1 ✔
-[68/91cefc] process > bbstat_05 (1)                     [100%] 1 of 1 ✔
-[c2/25d4f8] process > FREEBAYES_06:create_windows (1)   [100%] 1 of 1 ✔
-[b2/b6dcca] process > FREEBAYES_06:meryl_genome (1)     [100%] 1 of 1 ✔
-[e6/c35c66] process > FREEBAYES_06:align_shortreads (1) [100%] 1 of 1 ✔
-[70/028846] process > FREEBAYES_06:freebayes (3)        [100%] 3 of 3 ✔
-[40/8bc81f] process > FREEBAYES_06:combineVCF (1)       [100%] 1 of 1 ✔
-[84/5b4f9a] process > FREEBAYES_06:merfin_polish (1)    [100%] 1 of 1 ✔
-[ed/b5d452] process > FREEBAYES_06:vcf_to_fasta (1)     [100%] 1 of 1 ✔
-[85/c65a1e] process > MerquryQV_07 (1)                  [100%] 1 of 1 ✔
-[db/65c636] process > bbstat_07 (1)                     [100%] 1 of 1 ✔
-[66/226501] process > FREEBAYES_08:create_windows (1)   [100%] 1 of 1 ✔
-[e5/9bd546] process > FREEBAYES_08:meryl_genome (1)     [100%] 1 of 1 ✔
-[10/3e6543] process > FREEBAYES_08:align_shortreads (1) [100%] 1 of 1 ✔
-[22/bc46e2] process > FREEBAYES_08:freebayes (3)        [100%] 3 of 3 ✔
-[4d/b310f3] process > FREEBAYES_08:combineVCF (1)       [100%] 1 of 1 ✔
-[1b/5c854b] process > FREEBAYES_08:merfin_polish (1)    [100%] 1 of 1 ✔
-[17/012174] process > FREEBAYES_08:vcf_to_fasta (1)     [100%] 1 of 1 ✔
-[88/909513] process > MerquryQV_09 (1)                  [100%] 1 of 1 ✔
-[f3/3c67d6] process > bbstat_09 (1)                     [100%] 1 of 1 ✔
-[44/4ce1dd] process > SPLIT_FILE_09b (1)                [100%] 1 of 1 ✔
-```
-
-</details>
-
 **TrioCanu Assembly**
 
 ```
@@ -391,8 +285,6 @@ nextflow run main.nf \
   --outdir "TrioPolish_Polish" \
   --steptwo true
 ```
-
-<details><summary>TrioCanu Step 2 Output</summary>
 
 ```
 N E X T F L O W  ~  version 21.04.3
@@ -459,10 +351,9 @@ executor >  local (82)
 [83/592eb3] process > SPLIT_FILE_09p                     [100%] 1 of 1 ✔
 [b4/aa4ddb] process > SPLIT_FILE_09m                     [100%] 1 of 1 ✔
 ```
-
 </details>
 
-#References
+# References
 Rhie, A., McCarthy, S. A., Fedrigo, O., Damas, J., Formenti, G., Koren, S., Uliano-Silva, M., Chow, W., Fungtammasan, A., Kim, J., Lee, C., Ko, B. J., Chaisson, M., Gedman, G. L., Cantin, L. J., Thibaud-Nissen, F., Haggerty, L., Bista, I., Smith, M., . . . Jarvis, E. D. (2021). Towards complete and error-free genome assemblies of all vertebrate species. Nature, 592(7856), 737-746. https://doi.org/10.1038/s41586-021-03451-0 
 
 Rhie, A., Walenz, B. P., Koren, S., & Phillippy, A. M. (2020). Merqury: reference-free quality, completeness, and phasing assessment for genome assemblies. Genome Biol, 21(1), 245. https://doi.org/10.1186/s13059-020-02134-9.
