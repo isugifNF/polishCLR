@@ -20,3 +20,4 @@ dependencies:
   - purge_dups
   - bamtools
   - merfin
+  - nextflow
