@@ -62,7 +62,6 @@ process meryl_peak {
 process MerquryQV {
   publishDir "${params.outdir}/${outdir}/MerquryQV", mode: 'copy'
   publishDir "${params.outdir}/${outdir}/", mode: 'copy', pattern: "merqury.qv"
-
   input: tuple val(outdir), path(illumina_db), path(assembly_fasta)
   output: path("*")
   script:
@@ -70,18 +69,11 @@ process MerquryQV {
   #! /usr/bin/env bash
 
   merqury_sh="$params.merqury_sh"
+ \${merqury_sh} $illumina_db $assembly_fasta ${assembly_fasta.simpleName}
 
-  printf "======================================================= \n"
-  printf "uniq kmers in asm | kmers in both asm and reads | QV | Error rate \n"
-  printf "======================================================= \n"
-  \${merqury_sh} $illumina_db $assembly_fasta ${assembly_fasta.simpleName}
-  printf "======================================================= \n" > ${assembly_fasta.simpleName}_qv.txt
-  printf "uniq kmers in asm | kmers in both asm and reads | QV | Error rate \n" >> ${assembly_fasta.simpleName}_qv.txt
-  printf "======================================================= \n" >> ${assembly_fasta.simpleName}_qv.txt
-  cat  ${assembly_fasta.simpleName}.qv >> ${assembly_fasta.simpleName}_qv.txt
-
-  # == Get single QV value
+  # == Get single QV value and completeness stats
   cat ${assembly_fasta.simpleName}.qv | awk -F'\t' '{print \$4}' > merqury.qv
+  cat ${assembly_fasta.simpleName}.completeness.stats | awk -F'\t' '{print \$5}' > comepleteness.qv
   """
 
   stub:
@@ -103,7 +95,7 @@ process bbstat {
 
   echo "Assmbly stats of $assembly_fasta  according to bbtools stats.sh"
 
-  stats.sh in=$assembly_fasta out=${assembly_fasta.simpleName}
+  stats.sh in=$assembly_fasta out=${assembly_fasta.simpleName}.stats
   """
 
   stub:

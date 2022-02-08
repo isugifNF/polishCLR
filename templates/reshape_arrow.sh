@@ -11,6 +11,7 @@ EOF
 # == reshape_arrow.sh
 # https://github.com/arangrhie/merfin/blob/master/scripts/reformat_arrow/reshape_arrow.sh
 output=${vcf.baseName} # assumes input.vcf
+echo \${output}
 grep -v "#" \${output}.vcf | sed 's/,/;/g' > \${output}.temp.reshaped.vcf
 ${bcftools_app} view -h \${output}.vcf > \${output}.temp.reshaped.header.vcf
 cat \${output}.temp.reshaped.header.vcf \${output}.temp.reshaped.vcf > \${output}.temp.reshaped.combined.vcf

@@ -10,7 +10,7 @@ process bz_to_gz {
   script:
   """
   #! /usr/bin/env bash
-  #! /usr/bin/env bash
+
   PROC=\$(((`nproc`-1)/2+1))
   ${parallel_app} -j 2 "${bzcat_app} {1} | ${pigz_app} -p \${PROC} > {1/.}.gz" ::: *.bz2
   """
@@ -246,14 +246,17 @@ process combineVCF {
   output: tuple val("$outdir"), path("*_consensus.vcf")
   script:
   """
-  #! /usr/bin/env bash
-  
-  OUTNAME=`echo $outdir | sed 's:/:_:g'`
-  
-  ${bcftools_app} view -Oz ${vcf} > ${vcf}.gz
-  ${bcftools_app} index ${vcf}.gz
-  ${bcftools_app} consensus ${vcf}.gz -f ${genome_fasta} -Hla > \${OUTNAME}_consensus.fasta
-  """
+#! /usr/bin/env bash
+
+OUTNAME=`echo $outdir | sed 's:/:_:g'`
+OUTVCF=\${OUTNAME}_consensus.vcf
+
+# Merge by sections (1) headers up to contig, (2) all contig headers, (3) headers post contigs, (4) snp data
+cat ${vcfs.get(0)} | sed -n '1,/##reference=/'p > \$OUTVCF
+cat ${vcfs} | grep -h "##contig=" >> \$OUTVCF
+cat ${vcfs.get(0)} | sed -n '/##INFO=/,/#CHROM/'p >> \$OUTVCF
+cat ${vcfs} | grep -hv "#" >> \$OUTVCF
+"""
 
   stub:
   """
