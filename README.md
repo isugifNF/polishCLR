@@ -22,8 +22,8 @@ You can find more details on the usage below. These also include a simple [step-
 
 ## Table of Contents
 
-- [Installation](##Installation)
-- [Basic Run](##Basic-Run)
+- [Installation](#Installation)
+- [Basic Run](#Basic-Run)
 - [Trio Input](#Trio-Input)
 - [References](#References)
 
@@ -148,6 +148,17 @@ nextflow run /project/ag100pest/software/polishCLR/main.nf \
   -resume \
   -profile ceres
 ```
+### Outputs
+Key Ouputs are found in
+```
+- PolishCLR_Results/Step_1/02_BUSCO/primary_purged/ ## BUSCO stats after purge_dups
+- PolishCLR_Results/Step_1/02_Purge_Dups/primary_purged.fa ## Primary assembly after Step 1
+- PolishCLR_Results/Step_1/02_Purge_Dups/haps_purged.fa ## Alternate assembly after Step 1
+- PolishCLR_Results/Step_2/*_bbstat/ ## Length and number distributions through each process of Step 2
+- PolishCLR_Results/Step_2/*_QV/ ## QV and Completeness stats with merfin and merqury for each process of Step 2
+- PolishCLR_Results/Step_2/06_FreeBayesPolish/p_Step_2_06_FreeBayesPolish_consensus.fasta ## Final primary fasta (no mito)
+- PolishCLR_Results/Step_2/06_FreeBayesPolish/a_Step_2_06_FreeBayesPolish_consensus.fasta ## Final alternate fasta (no mito)
+```
 
 ### Example Output Logging
 **Step 1**
@@ -219,6 +230,7 @@ CPU hours   : 195.0
 Succeeded   : 2'682
 
 ```
+
 
 [timeline.html](https://isugifnf.github.io/polishCLR/timeline_ceres.html) | [report.html](https://isugifnf.github.io/polishCLR/report_ceres.html)
 
