@@ -235,7 +235,7 @@ Succeeded   : 2'682
 ```
 
 
-[timeline.html](https://isugifnf.github.io/polishCLR/timeline_ceres.html) | [report.html](https://isugifnf.github.io/polishCLR/report_ceres.html)
+[timeline.html](https://isugifnf.github.io/polishCLR/timeline.html) | [report.html](https://isugifnf.github.io/polishCLR/report.html)
 
 We also developed a pipeline to work with Trio data, but this is less tested
 <details><summary>Trio Usage</summary>
