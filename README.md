@@ -111,10 +111,9 @@ Launching `main.nf` [lonely_liskov] - revision: 6a81970115
 
   ```
 
-
 **Example**
 
-You will soon be able to find example input data from _Helicoverpa zea_ on Ag Data Commons: https://data.nal.usda.gov/dataset/data-polishclr-example-input-genome-assemblies. SRAs from NCBI for pacbio and illumina data will also soon be available.
+Example input data for each of the three input cases from _Helicoverpa zea_ on Ag Data Commons: https://data.nal.usda.gov/dataset/data-polishclr-example-input-genome-assemblies. SRAs from NCBI for pacbio and illumina data will also soon be available.
 
 ```
 source activate ${PWD}/env/polishCLR_env
