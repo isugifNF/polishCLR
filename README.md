@@ -18,7 +18,7 @@ To allow for the inclusion of scaffolding before final polishing  and increase t
 You can view a more complete visualization of the pipeline in [Supp. Fig. S1](https://github.com/isugifNF/polishCLR/blob/main/FigureS01.svg)
 
 ## Documentation
-You can find more details on the usage below. These also include a simple [step-by-step] tutorial to run the analyses on your own genomes.
+You can find more details on the usage below. These also include a simple [basic run](#Basic-Run) to run the analyses on your own genomes.
 
 ## Table of Contents
 
@@ -113,7 +113,7 @@ Launching `main.nf` [lonely_liskov] - revision: 6a81970115
 
 **Example**
 
-Example input data for each of the three input cases from _Helicoverpa zea_ on Ag Data Commons: https://data.nal.usda.gov/dataset/data-polishclr-example-input-genome-assemblies. SRAs from NCBI for pacbio and illumina data will also soon be available.
+Example input data for each of the three input cases from _Helicoverpa zea_ on Ag Data Commons: https://data.nal.usda.gov/dataset/data-polishclr-example-input-genome-assemblies. SRAs from NCBI for pacbio and illumina data are available through the BioProject: https://www.ncbi.nlm.nih.gov/bioproject/PRJNA804956
 
 ```
 source activate ${PWD}/env/polishCLR_env
@@ -233,7 +233,6 @@ CPU hours   : 195.0
 Succeeded   : 2'682
 
 ```
-
 
 [timeline.html](https://isugifnf.github.io/polishCLR/timeline.html) | [report.html](https://isugifnf.github.io/polishCLR/report.html)
 
@@ -367,6 +366,8 @@ executor >  local (82)
 [b4/aa4ddb] process > SPLIT_FILE_09m                     [100%] 1 of 1 ✔
 ```
 </details>
+
+This workflow was developed as part of the USDA-ARS Ag100Pest Initiative. The authors thank members of the USDA-ARS Ag100Pest Team and SCINet Virtual Resource Support Core (VRSC) for fruitful discussions and troubleshooting throughout the development of this workflow. 
 
 # References
 Rhie, A., McCarthy, S. A., Fedrigo, O., Damas, J., Formenti, G., Koren, S., Uliano-Silva, M., Chow, W., Fungtammasan, A., Kim, J., Lee, C., Ko, B. J., Chaisson, M., Gedman, G. L., Cantin, L. J., Thibaud-Nissen, F., Haggerty, L., Bista, I., Smith, M., . . . Jarvis, E. D. (2021). Towards complete and error-free genome assemblies of all vertebrate species. Nature, 592(7856), 737-746. https://doi.org/10.1038/s41586-021-03451-0 
