@@ -1,4 +1,11 @@
 ## Nextflow polishCLR pipeline
+
+
+
+[![DOI](https://zenodo.org/badge/375112950.svg)](https://zenodo.org/badge/latestdoi/375112950)
+
+
+
 *polishCLR* is a [nextflow](https://www.nextflow.io/) workflow for polishing genome assemblies (improving accuracy) generated with noisy PacBio reads using accurate, short Illumina reads. It implements the best practices described by the Vertebrate Genome Project (VGP) Assembly community (Rhie et al. 2021) and extends these for use-cases we found common in the [Ag100Pest Genome Initiative](http://i5k.github.io/ag100pest). This workflow was developed as part of the USDA-ARS Ag100Pest Initiative. The authors thank members of the USDA-ARS Ag100Pest Team and SCINet Virtual Resource Support Core (VRSC) for fruitful discussions and troubleshooting throughout the development of this workflow. 
 
 The polishCLR workflow can be easily initiated from three input cases:
