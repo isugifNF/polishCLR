@@ -19,9 +19,10 @@ for x in ${pacbio_reads.simpleName} ; do
 done
 
 ${pbcstat_app} *_p_mapping.paf.gz
-${hist_plot_py} PB.stat primary_hist
 
 ${calcuts_app} PB.stat > p_cutoffs 2> p_calcuts.log 
+
+${hist_plot_py} PB.stat --cutoffs p_cutoffs primary_hist
 
 ${split_fa_app} ${primary_assembly} > ${primary_assembly}.split
 
@@ -45,9 +46,9 @@ done
 
 ${pbcstat_app} *_h_mapping.paf.gz
 
-${hist_plot_py} PB.stat h_hist
-
 ${calcuts_app} PB.stat > h_cutoffs 2> h_calcuts.log
+
+${hist_plot_py} PB.stat --cutoffs h_cutoffs h_hist
 
 ${split_fa_app} h_${haplo_fasta} > h_${haplo_fasta}.split
 
@@ -58,10 +59,8 @@ ${purge_dups_app} -2 -T h_cufoffs -c PB.base.cov h_${haplo_fasta}.split.self.paf
 
 ${get_seqs_app} -e h_dups.bed h_${haplo_fasta} -p haps
 
-## TODO clean up this last bit here
-## run bbstats module on output
 ## create and add kat module 
-## is this necessary?
+
 ## rename to play nicely with nextflow simplename 
 mv primary.purged.fa primary_purged.fa
 mv haps.purged.fa haps_purged.fa
