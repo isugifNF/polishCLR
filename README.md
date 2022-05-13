@@ -1,9 +1,8 @@
 ## Nextflow polishCLR pipeline
 
-
-
-[![DOI](https://zenodo.org/badge/375112950.svg)](https://zenodo.org/badge/latestdoi/375112950)
-
+[![DOI](https://zenodo.org/badge/375112950.svg)](https://zenodo.org/badge/latestdoi/375112950) <a href="https://hub.docker.com/r/csiva2022/polishclr">
+      <img alt="isugifnf PolishCLR version" src="https://img.shields.io/docker/v/csiva2022/polishclr?label=%F0%9F%90%8B%20%20%20docker%3Apolishclr">
+  </a>
 
 
 *polishCLR* is a [nextflow](https://www.nextflow.io/) workflow for polishing genome assemblies (improving accuracy) generated with noisy PacBio reads using accurate, short Illumina reads. It implements the best practices described by the Vertebrate Genome Project (VGP) Assembly community (Rhie et al. 2021) and extends these for use-cases we found common in the [Ag100Pest Genome Initiative](http://i5k.github.io/ag100pest). This workflow was developed as part of the USDA-ARS Ag100Pest Initiative. The authors thank members of the USDA-ARS Ag100Pest Team and SCINet Virtual Resource Support Core (VRSC) for fruitful discussions and troubleshooting throughout the development of this workflow. 
@@ -37,17 +36,44 @@ You can find more details on the usage below. These also include a simple [basic
 
 
 ## Installation
+
 Fetch pipeline
 
 ```
 git clone https://github.com/isugifNF/polishCLR.git
 cd polishCLR
 ```
+
+For ag100pest projects, we have been installing dependencies in a [miniconda](https://docs.conda.io/en/latest/miniconda.html) environment. Dependencies may also be installed via [docker](https://www.docker.com/) or [singularity](https://sylabs.io/guides/3.0/user-guide/quick_start.html).
+
+### Miniconda
+
 Install dependencies in a [miniconda](https://docs.conda.io/en/latest/miniconda.html) environment.
 
 ```
+[[ -d env ]] || mkdir env
 conda env create -f environment.yml -p ${PWD}/env/polishCLR_env
 ```
+
+### Docker
+
+Start up [docker](https://docs.docker.com/get-docker/) and pull the [csiva2022/polishclr:latest](https://hub.docker.com/r/csiva2022/polishclr) image.
+
+```
+docker pull csiva2022/polishclr:latest
+```
+
+Run the polishCLR pipeline with an added `-with-docker csiva2022/polishclr:latest ` parameter. See [nextflow docker run documentation](https://www.nextflow.io/docs/latest/docker.html#how-it-works) for more information.
+
+### Singularity
+
+Install dependencies as a [singularity](https://sylabs.io/guides/3.0/user-guide/quick_start.html) image.
+
+```
+singularity pull polishclr.sif docker://csiva2022/polishclr:latest
+```
+
+Run the polishCLR pipeline with an added `-with-singularity polishclr.sif ` parameter. See [nextflow singularity run documentation](https://www.nextflow.io/docs/latest/singularity.html#how-it-works) for more information.
 
 ## Basic Run
 
@@ -123,6 +149,7 @@ Launching `main.nf` [lonely_liskov] - revision: 6a81970115
 Example input data for each of the three input cases from _Helicoverpa zea_ on Ag Data Commons: https://data.nal.usda.gov/dataset/data-polishclr-example-input-genome-assemblies. SRAs from NCBI for pacbio and illumina data are available through the BioProject: https://www.ncbi.nlm.nih.gov/bioproject/PRJNA804956
 
 ```
+# If you have installed dependencies in a miniconda environment
 source activate ${PWD}/env/polishCLR_env
 
 SP_DIR=/project/ag100pest/Helicoverpa_zea_male
@@ -375,6 +402,7 @@ executor >  local (82)
 </details>
 
 # References
+
 Rhie, A., McCarthy, S. A., Fedrigo, O., Damas, J., Formenti, G., Koren, S., Uliano-Silva, M., Chow, W., Fungtammasan, A., Kim, J., Lee, C., Ko, B. J., Chaisson, M., Gedman, G. L., Cantin, L. J., Thibaud-Nissen, F., Haggerty, L., Bista, I., Smith, M., . . . Jarvis, E. D. (2021). Towards complete and error-free genome assemblies of all vertebrate species. Nature, 592(7856), 737-746. https://doi.org/10.1038/s41586-021-03451-0 
 
 Rhie, A., Walenz, B. P., Koren, S., & Phillippy, A. M. (2020). Merqury: reference-free quality, completeness, and phasing assessment for genome assemblies. Genome Biol, 21(1), 245. https://doi.org/10.1186/s13059-020-02134-9.
