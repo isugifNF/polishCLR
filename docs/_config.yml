@@ -1,0 +1,29 @@
+title: polishCLR RTD
+lang: en
+description: More detailed documentation of the polishCLR nextflow pipeline
+
+## local method ##
+# theme: jekyll-rtd-theme
+# debug:
+#   compress: false
+#   dist: true
+#   extension: true
+
+## remote method ##
+remote_theme: rundocs/jekyll-rtd-theme
+
+readme_index:
+  with_frontmatter: true
+
+#include:
+#  - content
+#  - content/Part01
+  
+exclude:
+  - Gemfile
+  - Gemfile.lock
+
+plugins:
+  - jemoji
+  - jekyll-avatar
+  - jekyll-mentions
