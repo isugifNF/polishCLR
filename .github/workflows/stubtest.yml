@@ -1,0 +1,61 @@
+name: stubtest
+
+on: 
+  push:
+    branches:
+      - main
+      - ci
+  pull_request:
+
+jobs:
+  stubtestjob:
+    name: Nextflow stub test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Check if Dockerfile or Miniconda environment changed
+        uses: technote-space/get-diff-action@v4
+        with:
+          FILES: |
+            Dockerfile
+            environment.yml
+
+      - name: Build new docker image
+        if: env.MATCHED_FILES
+        run: docker build --no-cache . -t csiva2022/polishclr:latest
+
+      - name: Pull docker image
+        if: ${{ !env.MATCHED_FILES }}
+        run: |
+          docker pull csiva2022/polishclr:latest
+
+      # Runs a set of commands using the runners shell
+      - name: install nextflow
+        run: |
+          curl -s https://get.nextflow.io | bash
+          ./nextflow -version
+      
+      - name: help statement
+        run: |
+          ./nextflow run main.nf --help
+
+      - name: stub run
+        run: |
+          mkdir data 
+          cd data
+          touch pri.fa alt.fa mit.fa ill_R1.fastq.bz2 ill_R2.fastq.bz2 pac.subreads.bam
+          cd ..
+          ./nextflow run main.nf \
+            --primary_assembly data/pri.fa \
+            --alternate_assembly data/alt.fa \
+            --mitochondrial_assembly data/mit.fa \
+            --illumina_reads "data/ill_{R1,R2}.fastq.bz2" \
+            --pacbio_reads data/pac.subreads.bam \
+            --species "BugName" \
+            --k "21" \
+            --falcon_unzip true \
+            --step 1 \
+            -stub-run \
+            -profile local
