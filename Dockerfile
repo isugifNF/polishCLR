@@ -14,3 +14,4 @@ RUN echo "micromamba activate polishCLR_env" >> ~/.bashrc
 RUN echo "export PATH=$PATH:${MAMBA_ROOT_PREFIX}/envs/polishCLR_env/bin" >> ~/.bashrc
 SHELL ["/bin/bash", "--login", "-c"]
 ENV PATH "$PATH:${MAMBA_ROOT_PREFIX}/envs/polishCLR_env/bin"
+RUN ls -ltr > list.txt
