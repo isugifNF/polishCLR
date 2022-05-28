@@ -6,4 +6,4 @@ RUN apt-get update
 RUN apt-get install -y git curl python3-pip
 RUN micromamba install -y -n base -f /tmp/env.yaml && \
     micromamba clean --all --yes
-ENV PATH "$PATH:$MAMBA_ROOT_PREFIX/envs/polishCLR_env/bin"
+ENV PATH "$PATH:$MAMBA_ROOT_PREFIX/bin"
