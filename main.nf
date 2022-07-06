@@ -15,6 +15,7 @@ include { ARROW as ARROW_02; ARROW as ARROW_02b; ARROW_MERFIN as ARROW_04; ARROW
 include { FREEBAYES as FREEBAYES_05; FREEBAYES as FREEBAYES_05b; FREEBAYES as FREEBAYES_06; FREEBAYES as FREEBAYES_06b } from './modules/freebayes.nf'
 // Preprocess and helper functions
 include {bz_to_gz; MERGE_FILE as MERGE_FILE_00; MERGE_FILE_TRIO; SPLIT_FILE as SPLIT_FILE_02; SPLIT_FILE as SPLIT_FILE_07} from './modules/helper_functions.nf'
+include {SPLIT_FILE_CASE1 as SPLIT_FILE_02} from './modules/helper_functions.nf'
 include {SPLIT_FILE_p as SPLIT_FILE_02p; SPLIT_FILE_m as SPLIT_FILE_02m} from './modules/helper_functions.nf'
 include {SPLIT_FILE_p as SPLIT_FILE_07p; SPLIT_FILE_m as SPLIT_FILE_07m} from './modules/helper_functions.nf'
 // Other
@@ -22,7 +23,7 @@ include { PURGE_DUPS as PURGE_DUPS_02; PURGE_DUPS_TRIO as PURGE_DUPS_TRIOp; PURG
 include { BUSCO; BUSCO as BUSCO_mat } from './modules/busco.nf'
 
 include {RENAME_FILE as RENAME_PRIMARY; RENAME_FILE as RENAME_PAT; RENAME_FILE as RENAME_MAT} from './modules/helper_functions.nf'
-include {MERGE_FILE_FCANU as MERGE_FCANU; bam_to_fasta } from './modules/helper_functions.nf'
+include {MERGE_FILE_CASE1 as MERGE_CASE1; bam_to_fasta } from './modules/helper_functions.nf'
 
 def helpMessage() {
   log.info isuGIFHeader()
@@ -113,7 +114,7 @@ workflow {
       pri_ch = channel.fromPath(params.primary_assembly, checkIfExists:true) |
         combine(channel.of("${params.species}_pri.fasta")) | RENAME_PRIMARY
 
-      asm_ch = pri_ch | combine(mito_ch) | MERGE_FCANU
+      asm_ch = pri_ch | combine(mito_ch) | MERGE_CASE1
     } else { // mito not available, may still have issues with split_file
       asm_ch = channel.fromPath(params.primary_assembly, checkIfExists:true) |
         combine(channel.of("${params.species}_pri.fasta")) | RENAME_PRIMARY
@@ -171,8 +172,23 @@ workflow {
 
     pacfasta_ch = pac_ch | bam_to_fasta | collect | map {n -> [n]}
 
-    if(params.primary_assembly){
-      tmp_ch = channel.of("Step_1/01_ArrowPolish") | combine(asm_arrow_ch) | SPLIT_FILE_02 |
+    if(params.alternate_assembly){
+
+	/* Case 1 - primary and mito assembly, no alternate. 
+	if(!params.alternate_assembly) {
+        tmp_ch = channel.of("Step_1/01_ArrowPolish") | combine(asm_arrow_ch) | SPLIT_FILE_CASE1 |
+        map {n -> [n.get(0), n.get(1)] }
+      channel.of("Step_1/02_Purge_Dups") |
+        combine(tmp_ch) |
+        combine(pacfasta_ch) |
+        PURGE_DUPS_02
+
+      PURGE_DUPS_02.out | map {n -> [n.get(0), n.get(1)] } | flatMap |
+      combine(channel.of("Step_1/02_BUSCO")) | map {n -> [n.get(1), n.get(0)]} |
+      BUSCO
+	}      
+
+	tmp_ch = channel.of("Step_1/01_ArrowPolish") | combine(asm_arrow_ch) | SPLIT_FILE_02 |
         map {n -> [n.get(0), n.get(1)] }
       channel.of("Step_1/02_Purge_Dups") |
         combine(tmp_ch) |
@@ -183,7 +199,9 @@ workflow {
       PURGE_DUPS_02.out | map {n -> [n.get(0), n.get(1)] } | flatMap | 
       combine(channel.of("Step_1/02_BUSCO")) | map {n -> [n.get(1), n.get(0)]} |
       BUSCO
-    }else if(params.paternal_assembly) {
+
+      
+      }else if(params.paternal_assembly) {
       // Paternal version goes here
       tmp_ch = asm_arrow_ch.first() | SPLIT_FILE_02p |
         map {n -> n.get(0) }
