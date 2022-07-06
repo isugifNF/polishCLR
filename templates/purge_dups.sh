@@ -5,10 +5,6 @@
 # pacbio_reads=*subreads.fasta
 # === Outputs
 
-module load python_3
-
-## These should all be included in the environment.yml
-# export PATH="/project/ag100pest/software/purge_dups/bin/:$PATH"
 
 PROC=\$((`nproc`))
 
@@ -22,7 +18,7 @@ ${pbcstat_app} *_p_mapping.paf.gz
 
 ${calcuts_app} PB.stat > p_cutoffs 2> p_calcuts.log 
 
-${hist_plot_py} PB.stat --cutoffs p_cutoffs primary_hist
+#${hist_plot_py} PB.stat --cutoffs p_cutoffs primary_hist
 
 ${split_fa_app} ${primary_assembly} > ${primary_assembly}.split
 
@@ -48,7 +44,7 @@ ${pbcstat_app} *_h_mapping.paf.gz
 
 ${calcuts_app} PB.stat > h_cutoffs 2> h_calcuts.log
 
-${hist_plot_py} PB.stat --cutoffs h_cutoffs h_hist
+#${hist_plot_py} PB.stat --cutoffs h_cutoffs h_hist
 
 ${split_fa_app} h_${haplo_fasta} > h_${haplo_fasta}.split
 
