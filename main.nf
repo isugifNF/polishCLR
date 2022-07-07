@@ -19,7 +19,7 @@ include {SPLIT_FILE_CASE1 as SPLIT_FILE_CASE1} from './modules/helper_functions.
 include {SPLIT_FILE_p as SPLIT_FILE_02p; SPLIT_FILE_m as SPLIT_FILE_02m} from './modules/helper_functions.nf'
 include {SPLIT_FILE_p as SPLIT_FILE_07p; SPLIT_FILE_m as SPLIT_FILE_07m} from './modules/helper_functions.nf'
 // Other
-include { PURGE_DUPS as PURGE_DUPS_02; PURGE_DUPS as PURGE_DUPS_02_CASE1; PURGE_DUPS_TRIO as PURGE_DUPS_TRIOp; PURGE_DUPS_TRIO as PURGE_DUPS_TRIOm } from './modules/purge_dups.nf'
+include { PURGE_DUPS as PURGE_DUPS_02; PURGE_DUPS_CASE1 as PURGE_DUPS_CASE1; PURGE_DUPS_TRIO as PURGE_DUPS_TRIOp; PURGE_DUPS_TRIO as PURGE_DUPS_TRIOm } from './modules/purge_dups.nf'
 include { BUSCO; BUSCO as BUSCO_CASE1; BUSCO as BUSCO_mat } from './modules/busco.nf'
 
 include {RENAME_FILE as RENAME_PRIMARY; RENAME_FILE as RENAME_PAT; RENAME_FILE as RENAME_MAT} from './modules/helper_functions.nf'
@@ -177,13 +177,13 @@ workflow {
 	// Case 1 - primary and mito assembly, no alternate. 
 	if(!params.alternate_assembly) {
         tmp_ch = channel.of("Step_1/01_ArrowPolish") | combine(asm_arrow_ch) | SPLIT_FILE_CASE1 |
-        map {n -> [n.get(0), n.get(1)] }
+        map {n -> [n.get(0)] }
       channel.of("Step_1/02_Purge_Dups") |
         combine(tmp_ch) |
         combine(pacfasta_ch) |
-        PURGE_DUPS_02_CASE1
+        PURGE_DUPS_CASE1
 
-      PURGE_DUPS_02_CASE1.out | map {n -> [n.get(0), n.get(1)] } | flatMap |
+      PURGE_DUPS_CASE1.out | map {n -> [n.get(0), n.get(1)] } | flatMap |
       combine(channel.of("Step_1/02_BUSCO")) | map {n -> [n.get(1), n.get(0)]} |
       BUSCO_CASE1
 	}      

@@ -35,7 +35,7 @@ cat primary.hap.fa  ${haplo_fasta} >  h_${haplo_fasta}
 ${samtools_app} faidx h_${haplo_fasta}
 
 for x in ${pacbio_reads.simpleName} ; do
-       ${minimap2_app} -xmap-pb $primary_assembly \${x}.fasta | $gzip_app -c - > \${x}_h_mapping.paf.gz
+       ${minimap2_app} -xmap-pb h_${haplo_fasta} \${x}.fasta | $gzip_app -c - > \${x}_h_mapping.paf.gz
 done
 
 ${pbcstat_app} *_h_mapping.paf.gz
