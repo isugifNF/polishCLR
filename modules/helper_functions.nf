@@ -83,7 +83,7 @@ process MERGE_FILE_TRIO {
 }
 
 // concat genome and mito together
-process MERGE_FILE_FCANU {
+process MERGE_FILE_CASE1 {
   publishDir "${params.outdir}/00_Preprocess", mode: 'copy'
   input: tuple path(primary_assembly), path(mito_assembly)
   output: path("${primary_assembly.simpleName}_merged.fasta")
@@ -168,6 +168,38 @@ process SPLIT_FILE_m {
   touch mat_${genome_fasta} mit_${genome_fasta}
   """
 }
+
+
+process SPLIT_FILE_CASE1 {
+  publishDir "${params.outdir}/${outdir}", mode:'copy'
+
+  input:tuple val(outdir), path(genome_fasta)
+  output: tuple path("p_${genome_fasta}"), path("m_${genome_fasta}")
+  script:
+  """
+ #! /usr/bin/env bash
+ #
+ # === Inputs
+ # genome_fasta = primary_assembly_merged.fasta
+ #=== Outputs
+ #  p_${genome_fasta}     # primary assembly
+ #  m_${genome_fasta}     # mitochondrial assembly
+
+  ${samtools_app} faidx ${genome_fasta}
+  grep ">pri_" ${genome_fasta} | cut -f1 | sed 's/>//g' > pri.list
+  ${samtools_app} faidx -r pri.list ${genome_fasta} > p_${genome_fasta}
+
+  grep ">mit_" ${genome_fasta} | cut -f1 | sed 's/>//g' > mit.list
+  ${samtools_app} faidx -r mit.list ${genome_fasta} > m_${genome_fasta}
+
+  """
+
+  stub:
+  """
+  touch p_${genome_fasta} m_${genome_fasta}
+  """
+}
+
 
 process SPLIT_FILE {
   publishDir "${params.outdir}/${outdir}", mode:'copy'

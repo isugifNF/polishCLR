@@ -25,6 +25,9 @@ process BUSCO {
   """
   #! /usr/bin/env bash
   PROC=\$((`nproc`))
+ 
+  if [ -s ${genomeFile} ]; then  
+ 
   cat ${genomeFile} | tr '|' '_' > ${genomeFile.simpleName}_fixheaders.fna
 
   ${busco_app} \
@@ -34,6 +37,12 @@ process BUSCO {
     -m genome \
     -c \${PROC} \
     -f
+
+else 
+  mkdir ${genomeFile.simpleName}
+  echo '${genomeFile.simpleName} is empty, this is a stub' > ${genomeFile.simpleName}/empty.txt 
+
+fi
   """
 
   stub:

@@ -18,8 +18,6 @@ ${pbcstat_app} *_p_mapping.paf.gz
 
 ${calcuts_app} PB.stat > p_cutoffs 2> p_calcuts.log 
 
-#${hist_plot_py} PB.stat --cutoffs p_cutoffs primary_hist
-
 ${split_fa_app} ${primary_assembly} > ${primary_assembly}.split
 
 ${minimap2_app} -xasm5 -DP -t \${PROC} ${primary_assembly}.split ${primary_assembly}.split | gzip -c - > ${primary_assembly}.split.self.paf.gz
@@ -37,14 +35,12 @@ cat primary.hap.fa  ${haplo_fasta} >  h_${haplo_fasta}
 ${samtools_app} faidx h_${haplo_fasta}
 
 for x in ${pacbio_reads.simpleName} ; do
-       ${minimap2_app} -xmap-pb $primary_assembly \${x}.fasta | $gzip_app -c - > \${x}_h_mapping.paf.gz
+       ${minimap2_app} -xmap-pb h_${haplo_fasta} \${x}.fasta | $gzip_app -c - > \${x}_h_mapping.paf.gz
 done
 
 ${pbcstat_app} *_h_mapping.paf.gz
 
 ${calcuts_app} PB.stat > h_cutoffs 2> h_calcuts.log
-
-#${hist_plot_py} PB.stat --cutoffs h_cutoffs h_hist
 
 ${split_fa_app} h_${haplo_fasta} > h_${haplo_fasta}.split
 
