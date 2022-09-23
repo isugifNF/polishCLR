@@ -5,23 +5,35 @@ maxdepth: 1
 sort: 1
 ---
 
-# Case 1: Primary Assembly
+# Case 1
+ **A primary assembly without haplotype  (e.g., the output of Canu or wtdbg2).**
 
-This describes Case 1 of the three input cases:
-
-* **Case 1: An unresolved primary assembly with associated contigs (the output of FALCON 2-asm) or without (e.g., the output of Canu or wtdbg2).**
-* Case 2: A haplotype-resolved but unpolished set (e.g., the output of FALCON-Unzip 3-unzip).
-* Case 3: IDEAL! A haplotype-resolved, CLR long-read, Arrow-polished set of primary and alternate contigs (e.g., the output of FALCON-Unzip 4-polish).
-
-### Recommended parameters
+Step 1 runs another round of Arrow polishing and then purge_dups to split off alternate haplotypes.
 
 ```
-nextflow run isugifNF/polishCLR --main \
+nextflow run <path/to/polishCLR>/main.nf  \
   --primary_assembly "data/primary.fasta" \
   --mitocondrial_assembly "data/mitochondrial.fasta" \
   --illiumina_reads "data/illumina/*_{R1,R2}.fasta.bz" \
   --pacbio_reads "data/pacbio/pacbio.subreads.bam" \
   --step 1 \
-  --arrow01 \
+  --falcon-unzip false \
   -profile slurm
 ```
+
+Step 2 runs another round of Arrow polishing with the PacBio reads, then polishes with short-reads with two rounds of FreeBayes.
+
+Provide the purged primary and alternate contigs from purge dups, and mitochondrial genome as input - or, if scaffolding data, like Hi-C, are available to you, you should scaffold the output of Step 1. Don't forget to include parameter flags `--step 2` and `resume` to this command. 
+
+`haps_purged.fa` and `primary_purged.fa`
+
+```
+ nextflow run <path/to/polishCLR>/main.nf \
+  --primary_assembly "primary_purged.fa" \
+  --alternate_assembly "haps_purged.fa" \
+  --mitochondrial_assembly "Otur_mtDNA_contig.fasta" \
+  --illumina_reads "../RawPolishingData/JAMW*{R1,R2}.fastq.bz2" \
+  --pacbio_reads "../RawSequelData/m*.subreads.bam" \
+  --step 2 \
+  -resume
+  ```
