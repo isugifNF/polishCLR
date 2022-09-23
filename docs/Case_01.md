@@ -25,7 +25,7 @@ Step 2 runs another round of Arrow polishing with the PacBio reads, then polishe
 
 Provide the purged primary `primary_purged.fa` and alternate contigs `haps_purged.fa` from purge_dups, and mitochondrial genome `mitochondrial.fasta` as input to step 2. 
 
-If scaffolding data, like Hi-C, are available to you, you should scaffold the `primary_purged.fa` and provide that as input `primary_purged.fa`. 
+If scaffolding data, like Hi-C, are available to you, you should scaffold the `primary_purged.fa` and provide that as input for the  `--primary_assembly`. 
 
 Regardless don't forget to include parameter flags `--step 2` and `resume` to this command. 
 
