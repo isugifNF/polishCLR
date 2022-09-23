@@ -21,17 +21,19 @@ nextflow run <path/to/polishCLR>/main.nf  \
   -profile slurm
 ```
 
-Step 2 runs another round of Arrow polishing with the PacBio reads, then polishes with short-reads with two rounds of FreeBayes.
+Step 2 runs another round of Arrow polishing with the PacBio reads, then polishes with short-reads with two rounds of FreeBayes. We broke these two steps into seperate phases to allow for manual scaffolding.
 
-Provide the purged primary and alternate contigs from purge dups, and mitochondrial genome as input - or, if scaffolding data, like Hi-C, are available to you, you should scaffold the output of Step 1. Don't forget to include parameter flags `--step 2` and `resume` to this command. 
+Provide the purged primary `primary_purged.fa` and alternate contigs `haps_purged.fa` from purge_dups, and mitochondrial genome `mitochondrial.fasta` as input to step 2. 
 
-`haps_purged.fa` and `primary_purged.fa`
+If scaffolding data, like Hi-C, are available to you, you should scaffold the `primary_purged.fa` and provide that as input `primary_purged.fa`. 
+
+Regardless don't forget to include parameter flags `--step 2` and `resume` to this command. 
 
 ```
  nextflow run <path/to/polishCLR>/main.nf \
   --primary_assembly "primary_purged.fa" \
   --alternate_assembly "haps_purged.fa" \
-  --mitochondrial_assembly "Otur_mtDNA_contig.fasta" \
+  --mitochondrial_assembly "data/mitochondrial.fasta" \
   --illumina_reads "../RawPolishingData/JAMW*{R1,R2}.fastq.bz2" \
   --pacbio_reads "../RawSequelData/m*.subreads.bam" \
   --step 2 \
