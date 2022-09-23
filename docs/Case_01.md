@@ -37,5 +37,6 @@ Regardless don't forget to include parameter flags `--step 2` and `resume` to th
   --illumina_reads "data/illumina/*_{R1,R2}.fasta.bz" \
   --pacbio_reads "../RawSequelData/m*.subreads.bam" \
   --step 2 \
+  -profile slurm \
   -resume
   ```
