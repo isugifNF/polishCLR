@@ -33,10 +33,8 @@ process BUSCO {
   ${busco_app} \
     -o ${genomeFile.simpleName} \
     -i ${genomeFile.simpleName}_fixheaders.fna \
-    -l ${busco_lineage} \
-    -m genome \
-    -c \${PROC} \
-    -f
+    ${busco_params} \
+    -c \${PROC} 
 
 else 
   mkdir ${genomeFile.simpleName}
