@@ -6,10 +6,6 @@
 # primary_hist
 # fastas
 
-module load minimap2
-module load python_3
-export PATH="/project/ag100pest/software/purge_dups/bin/:$PATH"
-
 PROC=\$((`nproc`))
 
 ## TODO make sure that the short names inlcude maternal/paternal 
@@ -37,7 +33,6 @@ grep 'JUNK\|OVLP' ${primary_assembly.shortName}_dups.bed > ${primary_assembly.sh
 ## -e flag to only remove haplotypic regions at the ends of contigs
 ${get_seqs_app} -e dups_JUNK_OVLP.bed ${primary_assembly} -p ${primary_assembly.shortName}
 
-module load bbtools
 stats.sh -Xmx2048m ${primary_assembly.shortName}.purged.fa > ${primary_assembly.shortName}_purged.fa.stats
 stats.sh -Xmx2048m ${primary_assembly.shortName}.hap.fa > ${primary_assembly.shortName}_hap.fa.stats
 
