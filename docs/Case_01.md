@@ -34,7 +34,7 @@ Regardless don't forget to include parameter flags `--step 2` and `resume` to th
   --primary_assembly "primary_purged.fa" \
   --alternate_assembly "haps_purged.fa" \
   --mitochondrial_assembly "data/mitochondrial.fasta" \
-  --illumina_reads "../RawPolishingData/JAMW*{R1,R2}.fastq.bz2" \
+  --illumina_reads "data/illumina/*_{R1,R2}.fasta.bz" \
   --pacbio_reads "../RawSequelData/m*.subreads.bam" \
   --step 2 \
   -resume
