@@ -97,6 +97,22 @@ if ( params.profile ) {
   exit 0
 }
 
+def parameters_valid = ['help','monochrome_logs','outdir',
+'primary_assembly','alternate_assembly','paternal_assembly','maternal_assembly','mitochondrial_assembly',
+'illumina_reads','pacbio_reads','k','species','meryldb','falcon_unzip','same_specimen','steptwo','step',
+'queueSize','account','threads','clusterOptions',
+'queue-size', 'cluster-options',
+'parallel_app','bzcat_app','pigz_app','meryl_app','merqury_sh','pbmm2_app','minimap2_app','samtools_app',
+'gcpp_app','bwamem2_app','freebayes_app','bcftools_app','merfin_app','pbcstat_app','hist_plot_py',
+'calcuts_app','split_fa_app','purge_dups_app','get_seqs_app','gzip_app','busco_app','busco_lineage',
+'parallel_params','pbmm2_params','minimap2_params','gcpp_params','bwamem2_params','freebayes_params',
+'purge_dups_params','busco_params','check_software','profile'] as Set
+
+def parameter_diff = params.keySet() - parameters_valid
+if (parameter_diff.size() != 0){
+   exit 1, "[Pipeline error] Parameter(s) $parameter_diff is(are) not valid in the pipeline!\n"
+}
+
 workflow {
   // === Setup input channels
   // Case 2 or Case 3: Primary, alternate, and mito exist
