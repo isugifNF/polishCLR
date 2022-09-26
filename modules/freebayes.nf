@@ -15,7 +15,7 @@ process align_shortreads {
   PROC2=\$(((`nproc`-1)*1/4+1))
   mkdir tmp
   ${bwamem2_app} index ${assembly_fasta}
-  ${bwamem2_app} mem -SP -t \$PROC ${assembly_fasta} ${illumina_one} ${illumina_two} | \
+  ${bwamem2_app} mem ${bwamem2_params} -t \$PROC ${assembly_fasta} ${illumina_one} ${illumina_two} | \
     ${samtools_app} sort -T tmp -m 8G --threads \$PROC2 - > ${illumina_one.simpleName}_aln.bam
   ${samtools_app} index -@ \${PROC} ${illumina_one.simpleName}_aln.bam
   """
@@ -38,12 +38,7 @@ process freebayes {
   #! /usr/bin/env bash
   ${freebayes_app} \
     --region "${window}" \
-    --min-mapping-quality 0 \
-    --min-coverage 3 \
-    --min-supporting-allele-qsum 0 \
-    --ploidy 2 \
-    --min-alternate-fraction 0.2 \
-    --max-complex-gap 0 \
+    ${freebayes_params} \
     --bam ${illumina_bam} \
     --vcf ${illumina_bam.simpleName}_${window.replace(':','_').replace('|','_')}.vcf \
     --fasta-reference ${assembly_fasta}

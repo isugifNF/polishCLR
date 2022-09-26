@@ -69,6 +69,17 @@ def helpMessage() {
    --bcftools_app                 Link to bcftools executable [default: 'bcftools']
    --merfin_app                   Link to merfin executable [default: 'merfin']
 
+   Optional parameter arguments
+   --parallel_params              Parameters passed to parallel executable [default: ' -j 2 ']
+   --pbmm2_params                 Parameters passed to pbmm2 align [default: '']
+   --minimap2_params              Parameters passed to minimap2 -xmap-pb or -xasm5 [default: '']
+   --gcpp_params                  Parameters passed to gcpp [default: ' -x 10 -X 120 -q 0 ']
+   --bwamem2_params               Parameters passed to bwamem2 [default: ' -SP ']
+   --freebayes_params             Parameters passed to freebayes [default: ' --min-mapping-quality 0 --min-coverage 3 --min-supporting-allele-qsum 0  --ploidy 2 --min-alternate-fraction 0.2 --max-complex-gap 0 ']
+   --purge_dups_params            Parameters passed to purge_dups [default: ' -2 -T p_cufoffs ']
+   --busco_params                 Parameters passed to busco [default: ' -l insecta_odb10 -m genome -f ']
+
+
    Optional arguments:
    --outdir                       Output directory to place final output [default: 'PolishCLR_Results']
    --clusterOptions               Cluster options for slurm or sge profiles [default slurm: '-N 1 -n 40 -t 04:00:00'; default sge: ' ']
@@ -76,16 +87,19 @@ def helpMessage() {
    --queueSize                    Maximum number of jobs to be queued [default: 50]
    --account                      Some HPCs require you supply an account name for tracking usage.  You can supply that here.
    --help                         This usage statement.
+   --check_software               Check if software dependencies are available.               
   """
 }
 
 // Show help message
-if ( params.help || !params.illumina_reads || !params.pacbio_reads ) {
+if ( ( params.help || !params.illumina_reads || !params.pacbio_reads ) && !params.check_software ) {
+  log.info("$params.check_software")
+  log.info("$params.help || !$params.illumina_reads || !$params.pacbio_reads")
   helpMessage()
   exit 0
 }
 
-if ( !params.primary_assembly && !params.paternal_assembly ) {
+if ( (!params.primary_assembly && !params.paternal_assembly) && !params.check_software ) {
   helpMessage()
   exit 0
 }
@@ -113,7 +127,41 @@ if (parameter_diff.size() != 0){
    exit 1, "[Pipeline error] Parameter(s) $parameter_diff is(are) not valid in the pipeline!\n"
 }
 
+process check_software {
+  output: stdout()
+  script:
+  """
+  #! /usr/bin/env bash
+  echo "===== Dependencies check ====="
+
+  [[ -z `which $parallel_app` ]]   && echo "${parallel_app}   .... need to install." && ERR=1 || echo "${parallel_app}   .... good. " `${parallel_app} --version | head -n1`
+  [[ -z `which $bzcat_app` ]]      && echo "${bzcat_app}      .... need to install." && ERR=1 || echo "${bzcat_app}      .... good. " `${bzcat_app} --help &> temp ; head -n 1 temp`
+  [[ -z `which $pigz_app` ]]       && echo "${pigz_app}       .... need to install." && ERR=1 || echo "${pigz_app}       .... good. " `${pigz_app} --version`
+  [[ -z `which $meryl_app ` ]]     && echo "${meryl_app}      .... need to install." && ERR=1 || echo "${meryl_app}      .... good. " `${meryl_app} --version &> temp ; head temp`
+  [[ -z `which $pbmm2_app` ]]      && echo "${pbmm2_app}      .... need to install." && ERR=1 || echo "${pbmm2_app}      .... good. " `${pbmm2_app} --version`
+  [[ -z `which $minimap2_app` ]]   && echo "${minimap2_app}   .... need to install." && ERR=1 || echo "${minimap2_app}   .... good. " `${minimap2_app} --version`
+  [[ -z `which $samtools_app` ]]   && echo "${samtools_app}   .... need to install." && ERR=1 || echo "${samtools_app}   .... good. " `${samtools_app} --version | head -n1`
+  [[ -z `which $gcpp_app` ]]       && echo "${gcpp_app}       .... need to install." && ERR=1 || echo "${gcpp_app}       .... good. " `${gcpp_app} --version &> temp ; head temp`
+  [[ -z `which $bwamem2_app` ]]    && echo "${bwamem2_app}    .... need to install." && ERR=1 || echo "${bwamem2_app}    .... good. " `${bwamem2_app} --version`
+  [[ -z `which $freebayes_app` ]]  && echo "${freebayes_app}  .... need to install." && ERR=1 || echo "${freebayes_app}  .... good. " `${freebayes_app} --version`
+  [[ -z `which $bcftools_app` ]]   && echo "${bcftools_app}   .... need to install." && ERR=1 || echo "${bcftools_app}   .... good. " `${bcftools_app} --version | head -n1`
+  [[ -z `which $merfin_app` ]]     && echo "${merfin_app}     .... need to install." && ERR=1 || echo "${merfin_app}     .... good. " `${merfin_app} --version &> temp ; head temp`
+  [[ -z `which $pbcstat_app` ]]    && echo "${pbcstat_app}    .... need to install." && ERR=1 || echo "${pbcstat_app}    .... good. " `${pbcstat_app} -h &> temp ; head -n2 temp | tail -n1`
+  [[ -z `which $calcuts_app` ]]    && echo "${calcuts_app}    .... need to install." && ERR=1 || echo "${calcuts_app}    .... good. " `${calcuts_app} -h &> temp ; head -n2 temp | tail -n1`
+  [[ -z `which $split_fa_app` ]]   && echo "${split_fa_app}   .... need to install." && ERR=1 || echo "${split_fa_app}   .... good. " `${split_fa_app} -h &> temp ; head -n2 temp | tail -n1`
+  [[ -z `which $purge_dups_app` ]] && echo "${purge_dups_app} .... need to install." && ERR=1 || echo "${purge_dups_app} .... good. " `${purge_dups_app} -h &> temp ; grep Version temp`
+  [[ -z `which $get_seqs_app` ]]   && echo "${get_seqs_app}   .... need to install." && ERR=1 || echo "${get_seqs_app}   .... good. " `${get_seqs_app} -h &> temp ; head -n2 temp | tail -n1`
+  [[ -z `which $gzip_app` ]]       && echo "${gzip_app}       .... need to install." && ERR=1 || echo "${gzip_app}       .... good. " `${gzip_app} --version | head -n1`
+  [[ -z `which $busco_app ` ]]     && echo "${busco_app}      .... need to install." && ERR=1 || echo "${busco_app}      .... good. " `${busco_app} --version`
+  
+  """
+}
+
 workflow {
+  if( params.check_software ) {
+    check_software()
+    | view
+  } else {
   // === Setup input channels
   // Case 2 or Case 3: Primary, alternate, and mito exist
   if( params.alternate_assembly ){ 
@@ -291,6 +339,7 @@ workflow {
       asm_freebayes2_ch.first() | SPLIT_FILE_07p
       asm_freebayes2_ch.last() | SPLIT_FILE_07m
     }
+  }
   }
 }
 

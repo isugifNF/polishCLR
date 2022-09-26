@@ -12,7 +12,7 @@ process bz_to_gz {
   #! /usr/bin/env bash
 
   PROC=\$(((`nproc`-1)/2+1))
-  ${parallel_app} -j 2 "${bzcat_app} {1} | ${pigz_app} -p \${PROC} > {1/.}.gz" ::: *.bz2
+  ${parallel_app} ${parallel_params} "${bzcat_app} {1} | ${pigz_app} -p \${PROC} > {1/.}.gz" ::: *.bz2
   """
 
   stub:
@@ -329,7 +329,9 @@ process merfin_polish {
     -readmers ${meryldb} \
     -peak ${peak} \
     -vcf ${vcf} \
-    -output \${OUTNAME}_merfin
+    -output \${OUTNAME}_merfin \
+    ${merfin_params}
+    
   """
   
   stub:
