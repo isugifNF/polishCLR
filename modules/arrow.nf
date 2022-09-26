@@ -35,7 +35,7 @@ process pbmm2_align {
   # for multiple pacbio subread files
   ls ${pacbio_read} > bam.fofn
 
-  ${pbmm2_app} align -j \$PROC ${assembly_fasta} bam.fofn | \
+  ${pbmm2_app} align ${pbmm2_params} -j \$PROC ${assembly_fasta} bam.fofn | \
     ${samtools_app} sort -T tmp -m 8G --threads \$PROC2 - > ${assembly_fasta.simpleName}_aln.bam
   ${samtools_app} index -@ \${PROC} ${assembly_fasta.simpleName}_aln.bam
   """
@@ -58,7 +58,7 @@ process gcpp_arrow {
   #! /usr/bin/env bash
   PROC=\$(((`nproc`-1)*3/4+1))
   ${gcpp_app} --algorithm=arrow \
-    -x 10 -X 120 -q 0 \
+    ${gcpp_params} \
     -j \${PROC} -w "$window" \
     -r ${assembly_fasta} ${pacbio_bam} \
     -o ${assembly_fasta.simpleName}_${window.replace(':','_').replace('|','_')}.vcf,${assembly_fasta.simpleName}_${window.replace(':','_').replace('|','_')}.fasta

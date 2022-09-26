@@ -69,6 +69,17 @@ def helpMessage() {
    --bcftools_app                 Link to bcftools executable [default: 'bcftools']
    --merfin_app                   Link to merfin executable [default: 'merfin']
 
+   Optional parameter arguments
+   --parallel_params              Parameters passed to parallel executable [default: ' -j 2 ']
+   --pbmm2_params                 Parameters passed to pbmm2 align [default: '']
+   --minimap2_params              Parameters passed to minimap2 -xmap-pb or -xasm5 [default: '']
+   --gcpp_params                  Parameters passed to gcpp [default: ' -x 10 -X 120 -q 0 ']
+   --bwamem2_params               Parameters passed to bwamem2 [default: ' -SP ']
+   --freebayes_params             Parameters passed to freebayes [default: ' --min-mapping-quality 0 --min-coverage 3 --min-supporting-allele-qsum 0  --ploidy 2 --min-alternate-fraction 0.2 --max-complex-gap 0 ']
+   --purge_dups_params            Parameters passed to purge_dups [default: ' -2 -T p_cufoffs ']
+   --busco_params                 Parameters passed to busco [default: ' -l insecta_odb10 -m genome -f ']
+
+
    Optional arguments:
    --outdir                       Output directory to place final output [default: 'PolishCLR_Results']
    --clusterOptions               Cluster options for slurm or sge profiles [default slurm: '-N 1 -n 40 -t 04:00:00'; default sge: ' ']
