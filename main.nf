@@ -87,16 +87,19 @@ def helpMessage() {
    --queueSize                    Maximum number of jobs to be queued [default: 50]
    --account                      Some HPCs require you supply an account name for tracking usage.  You can supply that here.
    --help                         This usage statement.
+   --check_software               Check if software dependencies are available.               
   """
 }
 
 // Show help message
-if ( params.help || !params.illumina_reads || !params.pacbio_reads ) {
+if ( ( params.help || !params.illumina_reads || !params.pacbio_reads ) && !params.check_software ) {
+  log.info("$params.check_software")
+  log.info("$params.help || !$params.illumina_reads || !$params.pacbio_reads")
   helpMessage()
   exit 0
 }
 
-if ( !params.primary_assembly && !params.paternal_assembly ) {
+if ( (!params.primary_assembly && !params.paternal_assembly) && !params.check_software ) {
   helpMessage()
   exit 0
 }
@@ -108,7 +111,41 @@ if ( params.profile ) {
   exit 0
 }
 
+process check_software {
+  output: stdout()
+  script:
+  """
+  #! /usr/bin/env bash
+  echo "===== Dependencies check ====="
+
+  [[ -z `which $parallel_app` ]]   && echo "${parallel_app}   .... need to install." && ERR=1 || echo "${parallel_app}   .... good. " `${parallel_app} --version | head -n1`
+  [[ -z `which $bzcat_app` ]]      && echo "${bzcat_app}      .... need to install." && ERR=1 || echo "${bzcat_app}      .... good. " `${bzcat_app} --help &> temp ; head -n 1 temp`
+  [[ -z `which $pigz_app` ]]       && echo "${pigz_app}       .... need to install." && ERR=1 || echo "${pigz_app}       .... good. " `${pigz_app} --version`
+  [[ -z `which $meryl_app ` ]]     && echo "${meryl_app}      .... need to install." && ERR=1 || echo "${meryl_app}      .... good. " `${meryl_app} --version &> temp ; head temp`
+  [[ -z `which $pbmm2_app` ]]      && echo "${pbmm2_app}      .... need to install." && ERR=1 || echo "${pbmm2_app}      .... good. " `${pbmm2_app} --version`
+  [[ -z `which $minimap2_app` ]]   && echo "${minimap2_app}   .... need to install." && ERR=1 || echo "${minimap2_app}   .... good. " `${minimap2_app} --version`
+  [[ -z `which $samtools_app` ]]   && echo "${samtools_app}   .... need to install." && ERR=1 || echo "${samtools_app}   .... good. " `${samtools_app} --version | head -n1`
+  [[ -z `which $gcpp_app` ]]       && echo "${gcpp_app}       .... need to install." && ERR=1 || echo "${gcpp_app}       .... good. " `${gcpp_app} --version &> temp ; head temp`
+  [[ -z `which $bwamem2_app` ]]    && echo "${bwamem2_app}    .... need to install." && ERR=1 || echo "${bwamem2_app}    .... good. " `${bwamem2_app} --version`
+  [[ -z `which $freebayes_app` ]]  && echo "${freebayes_app}  .... need to install." && ERR=1 || echo "${freebayes_app}  .... good. " `${freebayes_app} --version`
+  [[ -z `which $bcftools_app` ]]   && echo "${bcftools_app}   .... need to install." && ERR=1 || echo "${bcftools_app}   .... good. " `${bcftools_app} --version | head -n1`
+  [[ -z `which $merfin_app` ]]     && echo "${merfin_app}     .... need to install." && ERR=1 || echo "${merfin_app}     .... good. " `${merfin_app} --version &> temp ; head temp`
+  [[ -z `which $pbcstat_app` ]]    && echo "${pbcstat_app}    .... need to install." && ERR=1 || echo "${pbcstat_app}    .... good. " `${pbcstat_app} -h &> temp ; head -n2 temp | tail -n1`
+  [[ -z `which $calcuts_app` ]]    && echo "${calcuts_app}    .... need to install." && ERR=1 || echo "${calcuts_app}    .... good. " `${calcuts_app} -h &> temp ; head -n2 temp | tail -n1`
+  [[ -z `which $split_fa_app` ]]   && echo "${split_fa_app}   .... need to install." && ERR=1 || echo "${split_fa_app}   .... good. " `${split_fa_app} -h &> temp ; head -n2 temp | tail -n1`
+  [[ -z `which $purge_dups_app` ]] && echo "${purge_dups_app} .... need to install." && ERR=1 || echo "${purge_dups_app} .... good. " `${purge_dups_app} -h &> temp ; grep Version temp`
+  [[ -z `which $get_seqs_app` ]]   && echo "${get_seqs_app}   .... need to install." && ERR=1 || echo "${get_seqs_app}   .... good. " `${get_seqs_app} -h &> temp ; head -n2 temp | tail -n1`
+  [[ -z `which $gzip_app` ]]       && echo "${gzip_app}       .... need to install." && ERR=1 || echo "${gzip_app}       .... good. " `${gzip_app} --version | head -n1`
+  [[ -z `which $busco_app ` ]]     && echo "${busco_app}      .... need to install." && ERR=1 || echo "${busco_app}      .... good. " `${busco_app} --version`
+  
+  """
+}
+
 workflow {
+  if( params.check_software ) {
+    check_software()
+    | view
+  } else {
   // === Setup input channels
   // Case 2 or Case 3: Primary, alternate, and mito exist
   if( params.alternate_assembly ){ 
@@ -286,6 +323,7 @@ workflow {
       asm_freebayes2_ch.first() | SPLIT_FILE_07p
       asm_freebayes2_ch.last() | SPLIT_FILE_07m
     }
+  }
   }
 }
 
