@@ -2,7 +2,7 @@
 title: "Case 3: Polished"
 sidebar: toc
 maxdepth: 1
-sort: 2
+sort: 3
 ---
 
 # Case 2: Polished
