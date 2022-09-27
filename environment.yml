@@ -21,3 +21,5 @@ dependencies:
   - bamtools
   - merfin
   - nextflow
+  - busco=5.4.2
+  - openjdk=11.0.15
