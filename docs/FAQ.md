@@ -5,6 +5,50 @@ maxdepth: 1
 sort: 4
 ---
 
+### How to I check that software dependencies are available?
+
+Use the `--check_software` flag to print out paths to software dependencies and their versions:
+
+```
+nextflow run isugifNF/polishCLR -r main \
+  --check_software \
+  -profile local
+```
+
+Which should print out something like:
+
+```
+N E X T F L O W  ~  version 22.04.5
+Pulling isugifNF/polishCLR ...
+ downloaded from https://github.com/isugifNF/polishCLR.git
+Launching `https://github.com/isugifNF/polishCLR` [amazing_lamarck] DSL2 - revision: e0325a97a5 [main]
+executor >  local (1)
+[38/26cb53] process > check_software [100%] 1 of 1 ✔
+===== Dependencies check =====
+parallel   .... good.  GNU parallel 20160622
+bzcat      .... good.  bzip2, a block-sorting file compressor. Version 1.0.8, 13-Jul-2019.
+pigz       .... good.  pigz 2.6
+meryl      .... good.  meryl 1.3
+pbmm2      .... good.  pbmm2 1.9.0 Using: pbmm2 : 1.9.0 (commit v1.9.0) pbbam : 2.1.0 (commit v2.1.0) pbcopper : 2.0.0 (commit v2.0.0-54-g1ce9870) boost : 1.77 htslib : 1.15 minimap2 : 2.15 zlib : 1.2.11
+minimap2   .... good.  2.24-r1122
+samtools   .... good.  samtools 1.15.1
+gcpp       .... good.  gcpp 2.0.2-2.0.2
+bwa-mem2   .... good.  bwa-mem v
+freebayes  .... good.  version: v1.3.6
+bcftools   .... good.  bcftools 1.15.1
+merfin     .... good.  merfin 1.0
+pbcstat    .... good.  Usage: aa_pb [options] <PAF_FILE> ...
+calcuts    .... good.  Usage: calcuts [<options>] <STAT> ...
+split_fa   .... good.  Usage: split_fa [<options>] <STAT> ...
+purge_dups .... good.  Version: 1.2.5
+get_seqs   .... good.  Usage: get_seqs [<options>] <DUPs.BED> <FASTA>
+gzip       .... good.  gzip 1.12
+busco      .... good.  BUSCO 5.4.2
+```
+
+or some combination of `software ... need to install.`
+
+
 ### What does "[Pipeline error] Parameter(s) [...] is(are) not valid in the pipeline!" mean?
 
 If you receive an error similar to:
