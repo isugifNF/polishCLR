@@ -32,13 +32,13 @@ process MERGE_FILE {
   #! /usr/bin/env bash
 
   # === Inputs
-  # primary_assembly = p_ctg.fasta     # From FALCON or FALCON-Unzip 
+  # primary_assembly = p_ctg.fasta     # From FALCON or FALCON-Unzip
   # alternate_assembly = a_ctg.fasta
   # mito_assembly = mt.fasta           # From vgpMito pipeline
-  
+
   # === Outputs
   # ${primary_assembly.simpleName}_merged.fasta
-  
+
   cat ${primary_assembly} | sed 's/>/>pri_/g' > ${primary_assembly.simpleName}_temp.fasta
   echo "" >> ${primary_assembly.simpleName}_temp.fasta
   cat ${mito_assembly} | sed 's/>/>mit_/g' >> ${primary_assembly.simpleName}_temp.fasta
@@ -61,14 +61,14 @@ process MERGE_FILE_TRIO {
   script:
   """
   #! /usr/bin/env bash
-  
+
   # === Inputs
   # primary_assembly = p_ctg.fasta     # From Canu, maternal or paternal
   # mito_assembly = mt.fasta           # From vgpMito pipeline
-  
+
   # === Outputs
   # ${primary_assembly.simpleName}_merged.fasta
-  
+
   cat ${primary_assembly} | sed 's/>/>pri_/g' > ${primary_assembly.simpleName}_temp.fasta
   echo "" >> ${primary_assembly.simpleName}_temp.fasta
   cat ${mito_assembly} | sed 's/>/>mit_/g' >> ${primary_assembly.simpleName}_temp.fasta
@@ -90,14 +90,14 @@ process MERGE_FILE_CASE1 {
   script:
   """
   #! /usr/bin/env bash
-  
+
   # === Inputs
   # primary_assembly = p_ctg.fasta     # From CANU, similar to Falcon but without alternative assembly
   # mito_assembly = mt.fasta           # From vgpMito pipeline
-  
+
   # === Outputs
   # ${primary_assembly.simpleName}_merged.fasta
-  
+
   cat ${primary_assembly} | sed 's/>/>pri_/g' > ${primary_assembly.simpleName}_temp.fasta
   echo "" >> ${primary_assembly.simpleName}_temp.fasta
   cat ${mito_assembly} | sed 's/>/>mit_/g' >> ${primary_assembly.simpleName}_temp.fasta
@@ -118,18 +118,18 @@ process SPLIT_FILE_p {
   script:
   """
   #! /usr/bin/env bash
-  
+
   # === Inputs
   # genome_fasta = primary_assembly_merged.fasta
   # === Outputs
   # p_${genome_fasta}     # primary assembly
   # a_${genome_fasta}     # alternative assembly
   # m_${genome_fasta}     # mitochondrial assembly
-  
+
   ${samtools_app} faidx ${genome_fasta}
   grep ">pri_" ${genome_fasta} | cut -f1 | sed 's/>//g' > pri.list
   ${samtools_app} faidx -r pri.list ${genome_fasta} > pat_${genome_fasta}
-  
+
   grep ">mit_" ${genome_fasta} | cut -f1 | sed 's/>//g' > mit.list
   ${samtools_app} faidx -r mit.list ${genome_fasta} > mit_${genome_fasta}
   """
@@ -147,18 +147,18 @@ process SPLIT_FILE_m {
   script:
   """
   #! /usr/bin/env bash
-  
+
   # === Inputs
   # genome_fasta = primary_assembly_merged.fasta
   # === Outputs
   # p_${genome_fasta}     # primary assembly
   # a_${genome_fasta}     # alternative assembly
   # m_${genome_fasta}     # mitochondrial assembly
-  
+
   ${samtools_app} faidx ${genome_fasta}
   grep ">pri_" ${genome_fasta} | cut -f1 | sed 's/>//g' > pri.list
   ${samtools_app} faidx -r pri.list ${genome_fasta} > mat_${genome_fasta}
-  
+
   grep ">mit_" ${genome_fasta} | cut -f1 | sed 's/>//g' > mit.list
   ${samtools_app} faidx -r mit.list ${genome_fasta} > mit_${genome_fasta}
   """
@@ -209,25 +209,25 @@ process SPLIT_FILE {
   script:
   """
   #! /usr/bin/env bash
-  
+
   # === Inputs
   # genome_fasta = primary_assembly_merged.fasta
   # === Outputs
   # p_${genome_fasta}     # primary assembly
   # a_${genome_fasta}     # alternative assembly
   # m_${genome_fasta}     # mitochondrial assembly
-  
+
   ${samtools_app} faidx ${genome_fasta}
   grep ">pri_" ${genome_fasta} | cut -f1 | sed 's/>//g' > pri.list
   ${samtools_app} faidx -r pri.list ${genome_fasta} > p_${genome_fasta}
-  
+
   grep ">mit_" ${genome_fasta} | cut -f1 | sed 's/>//g' > mit.list
   ${samtools_app} faidx -r mit.list ${genome_fasta} > m_${genome_fasta}
-  
+
   grep ">alt_" ${genome_fasta} | cut -f1 | sed 's/>//g' > alt.list
   ${samtools_app} faidx -r alt.list ${genome_fasta} > a_${genome_fasta}
   """
-  
+
   stub:
   """
   touch p_${genome_fasta} a_${genome_fasta} m_${genome_fasta}
@@ -236,7 +236,7 @@ process SPLIT_FILE {
 
 process RENAME_FILE {
   publishDir "${params.outdir}/00_Preprocess/", mode:'copy'
-  
+
   input: tuple path(filename), val(newname)
   output: path("$newname")
   script:
@@ -320,9 +320,9 @@ process merfin_polish {
   script:
   """
   #! /usr/bin/env bash
-  
+
   OUTNAME=`echo $outdir | sed 's:/:_:g'`
-  
+
   ${merfin_app} -polish \
     -sequence ${genome_fasta} \
     -seqmers ${genome_meryl} \
@@ -331,9 +331,9 @@ process merfin_polish {
     -vcf ${vcf} \
     -output \${OUTNAME}_merfin \
     ${merfin_params}
-    
+
   """
-  
+
   stub:
   """
   OUTNAME=`echo $outdir | sed 's:/:_:g'`
@@ -348,9 +348,9 @@ process vcf_to_fasta {
   script:
   """
   #! /usr/bin/env bash
-  
+
   OUTNAME=`echo $outdir | sed 's:/:_:g'`
-  
+
   ${bcftools_app} view -Oz ${vcf} > ${vcf}.gz
   ${bcftools_app} index ${vcf}.gz
   ${bcftools_app} consensus ${vcf}.gz -f ${genome_fasta} -Hla > \${OUTNAME}_consensus.fasta

@@ -2,7 +2,11 @@
 
 nextflow.enable.dsl=2
 
-include { create_windows; combineVCF; meryl_genome; merfin_polish; vcf_to_fasta } from './helper_functions.nf'
+include { create_windows;
+          combineVCF;
+          meryl_genome;
+          merfin_polish;
+          vcf_to_fasta } from './helper_functions.nf'
 
 process align_shortreads {
   publishDir "${params.outdir}/${outdir}/bam", mode: 'symlink'
@@ -58,16 +62,38 @@ workflow FREEBAYES {
     peak_ch
     merylDB_ch
   main:
-    win_ch = outdir_ch | combine(asm_ch) | create_windows | 
-      map { n -> n.get(1) } | splitText() {it.trim() }
-    fai_ch = create_windows.out | map { n -> n.get(0) }
-    asm_meryl = outdir_ch | combine(channel.from(params.k)) | collect | combine(asm_ch) | meryl_genome
+    win_ch = outdir_ch
+      | combine(asm_ch)
+      | create_windows
+      | map { n -> n.get(1) }
+      | splitText() {it.trim() }
 
-    new_asm_ch = outdir_ch | combine(asm_ch) | combine(ill_ch.collect()) | align_shortreads |
-      combine(asm_ch) | combine(fai_ch) | combine(win_ch) |
-      freebayes | groupTuple | combineVCF | combine(asm_ch) | 
-      combine(asm_meryl) | combine(peak_ch) | combine(merylDB_ch) |  merfin_polish | combine(asm_ch) |
-      vcf_to_fasta
+    fai_ch = create_windows.out
+      | map { n -> n.get(0) }
+
+    asm_meryl = outdir_ch
+      | combine(channel.from(params.k))
+      | collect
+      | combine(asm_ch)
+      | meryl_genome
+
+    new_asm_ch = outdir_ch
+      | combine(asm_ch)
+      | combine(ill_ch.collect())
+      | align_shortreads
+      | combine(asm_ch)
+      | combine(fai_ch)
+      | combine(win_ch)
+      | freebayes
+      | groupTuple
+      | combineVCF
+      | combine(asm_ch)
+      | combine(asm_meryl)
+      | combine(peak_ch)
+      | combine(merylDB_ch)
+      |  merfin_polish
+      | combine(asm_ch)
+      | vcf_to_fasta
   emit:
     new_asm_ch
 }
