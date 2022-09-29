@@ -1,7 +1,7 @@
 name: polishCLR_env
 channels:
-  - bioconda
   - conda-forge
+  - bioconda
   - agbiome
   - defaults
 dependencies:
@@ -20,6 +20,7 @@ dependencies:
   - purge_dups
   - bamtools
   - merfin
+  - openjdk=11.0.15
   - nextflow
   - busco=5.4.2
-  - openjdk=11.0.15
+

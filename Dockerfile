@@ -8,4 +8,4 @@ RUN micromamba install -y -n base -f /tmp/env.yaml && \
     micromamba clean --all --yes
 RUN rm /opt/conda/lib/jvm/bin/java
 RUN ln -s /opt/conda/pkgs/openjdk-11.0.15-h1e1ecb3_2/bin/java /opt/conda/lib/jvm/bin/java
-ENV PATH "$PATH:$MAMBA_ROOT_PREFIX/bin"
+ENV PATH "$MAMBA_ROOT_PREFIX/bin:$PATH"
