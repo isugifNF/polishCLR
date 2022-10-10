@@ -27,10 +27,17 @@ jobs:
         run: docker build --no-cache . -t csiva2022/polishclr:latest
 
       # Commented out till we can check freemium dockerhub pull limit
-      #- name: Pull docker image
-      #  if: ${{ !env.MATCHED_FILES }}
-      #  run: |
-      #    docker pull csiva2022/polishclr:latest
+      - name: Pull docker image
+        if: ${{ !env.MATCHED_FILES }}
+        run: |
+          docker pull csiva2022/polishclr:latest
+
+      - name: Docker check software
+        run: |
+          docker run csiva2022/polishclr:latest \
+          nextflow run isugifNF/polishCLR -r main \
+            --check_software \
+            -profile local
 
       # Runs a set of commands using the runners shell
       - name: install nextflow

@@ -16,8 +16,7 @@ We strongly recommend including the organellular genome to improve the polishing
 To allow for the inclusion of scaffolding before final polishing  and increase the potential for gap-filling across correctly oriented scaffolded contigs, the core workflow is divided into two steps, controlled by a `--step` parameter flag. 
 
 <p align="center">
-	<img src="https://github.com/isugifNF/polishCLR/blob/main/Figure01.svg" width="750" />
-  
+	<img src="https://github.com/isugifNF/polishCLR/blob/main/docs/imgs/Figure01.svg" width="750" />
 </p>
 
 You can view a more complete visualization of the pipeline in [Supp. Fig. S1](https://github.com/isugifNF/polishCLR/blob/main/FigureS01.svg)
