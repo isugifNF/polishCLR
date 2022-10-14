@@ -53,9 +53,9 @@ include { PURGE_DUPS as PURGE_DUPS_02;
           PURGE_DUPS_TRIO as PURGE_DUPS_TRIOp;
           PURGE_DUPS_TRIO as PURGE_DUPS_TRIOm } from './modules/purge_dups.nf'
 
-include { BUSCO;
-          BUSCO as BUSCO_CASE1;
-          BUSCO as BUSCO_mat } from './modules/busco.nf'
+include { BUSCO as BUSCO_CASE1;
+          BUSCO as BUSCO_mat;
+          BUSCO } from './modules/busco.nf'
 
 def helpMessage() {
   log.info isuGIFHeader()
