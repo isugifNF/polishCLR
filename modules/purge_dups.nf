@@ -5,7 +5,7 @@ nextflow.enable.dsl=2
 process PURGE_DUPS {
   publishDir "${params.outdir}/$outdir", mode:'copy'
   input: tuple val(outdir), path(primary_assembly), path(haplo_fasta), path(pacbio_reads)
-  output: tuple path("primary_purged.fa"), path("haps_purged.fa"), path("*.log") //
+  output: tuple path("primary_purged.fa"), path("haps_purged.fa"), path("*.log")
   script:
   """
   #! /usr/bin/env bash
@@ -131,9 +131,6 @@ process PURGE_DUPS_CASE1 {
   # haplo_fasta=haplotype genome (cns_h_ctg.fasta)
   # pacbio_reads=*subreads.fasta
   # === Outputs
-  
-  PROC=\$((`nproc`))
-  
   ${samtools_app} faidx ${primary_assembly}
   
   for x in ${pacbio_reads.simpleName} ; do
@@ -156,7 +153,7 @@ process PURGE_DUPS_CASE1 {
     -xasm5 \
     ${params.minimap2_params} \
     -DP \
-    -t \${PROC} \
+    -t ${task.cpus} \
     ${primary_assembly}.split ${primary_assembly}.split \
     | gzip -c - \
     > ${primary_assembly}.split.self.paf.gz
@@ -199,7 +196,7 @@ process PURGE_DUPS_CASE1 {
   ${minimap2_app} \
     -xasm5 \
     -DP \
-    -t \${PROC} \
+    -t ${task.cpus} \
     primary.hap.split primary.hap.split \
     | ${gzip_app} -c - \
     > primary.hap.split.self.paf.gz
@@ -212,12 +209,14 @@ process PURGE_DUPS_CASE1 {
     > h_dups.bed \
     2> h_purge_dups.log
   
-  ${get_seqs_app} \
-    -e \
-    h_dups.bed primary.hap.fa \
-    -p haps
-  
-  ## create and add kat module 
+  if [[ -s h_dups.bed ]]; then
+    ${get_seqs_app} \
+      -e \
+      h_dups.bed primary.hap.fa \
+      -p haps
+  else
+    cat primary.hap.fa | sed 's/ REPEAT//g' > haps.purged.fa
+  fi 
   
   ## rename to play nicely with nextflow simplename 
   mv primary.purged.fa primary_purged.fa
