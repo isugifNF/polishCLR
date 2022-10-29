@@ -34,7 +34,7 @@ You can find more details on the usage below. These also include a simple [basic
 
 ## Installation
 
-This pipeline will require [nextflow](https://www.nextflow.io/docs/latest/getstarted.html). The rest fo the dependencies can be installed via [miniconda](https://github.com/isugifNF/polishCLR/tree/main#miniconda), [Docker](https://github.com/isugifNF/polishCLR/tree/main#docker), or [Singularity](https://github.com/isugifNF/polishCLR/tree/main#singularity)
+This pipeline will require [nextflow](https://www.nextflow.io/docs/latest/getstarted.html). The rest of the dependencies can be installed via [miniconda](https://github.com/isugifNF/polishCLR/tree/main#miniconda), [Docker](https://github.com/isugifNF/polishCLR/tree/main#docker), or [Singularity](https://github.com/isugifNF/polishCLR/tree/main#singularity)
 
 ```
 nextflow -version
@@ -147,28 +147,28 @@ Launching `main.nf` [lonely_liskov] - revision: 6a81970115
 ----------------------------------------------------
 
 
-   Usage:
+  Usage:
    The typical command for running the pipeline are as follows:
    nextflow run main.nf --primary_assembly "*fasta" --illumina_reads "*{1,2}.fastq.bz2" --pacbio_reads "*_subreads.bam" -resume
 
    Mandatory arguments:
-   --illumina_reads               paired end illumina reads, to be used for Merqury QV scores, and freebayes polish primary assembly
-   --pacbio_reads                 pacbio reads in bam format, to be used to arrow polish primary assembly
-   --mitochondrial_assembly       mitochondrial assembly will be concatenated to the assemblies before polishing [default: false]
+   --illumina_reads               Paired end Illumina reads, to be used for Merqury QV scores, and FreeBayes polish primary assembly
+   --pacbio_reads                 PacBio reads in bam format, to be used to Arrow polish primary assembly
+   --mitochondrial_assembly       Mitochondrial assembly will be concatenated to the assemblies before polishing [default: false]
 
-   Either FALCON (or FALCON Unzip) assembly:
-   --primary_assembly             genome assembly fasta file to polish
-   --alternate_assembly           if alternate/haplotig assembly file is provided, will be concatenated to the primary assembly before polishing [default: false]
-   --falcon_unzip                 if primary assembly has already undergone falcon unzip [default: false]. If true, will Arrow polish once instead of twice.
+   Either FALCON (or FALCON-Unzip) assembly:
+   --primary_assembly             Genome assembly fasta file to polish
+   --alternate_assembly           If alternate/haplotig assembly file is provided, will be concatenated to the primary assembly before polishing [default: false]
+   --falcon_unzip                 If primary assembly has already undergone FALCON-Unzip [default: false]. If true, will Arrow polish once instead of twice.
 
-   Pick Step 1 (arrow, purgedups) or Step 2 (arrow, freebayes, freebayes)
+   Pick Step 1 (arrow, purgedups) or Step 2 (Arrow, FreeBayes, FreeBayes)
    --step                         Run step 1 or step 2 (default: 1)
 
    Optional modifiers
-   --species                      if a string is given, rename the final assembly by species name [default:false]
+   --species                      If a string is given, rename the final assembly by species name [default:false]
    --k                            kmer to use in MerquryQV scoring [default:21]
-   --same_specimen                if illumina and pacbio reads are from the same specimen [default: true].
-   --meryldb                      path to a prebuilt meryl database, built from the illumina reads. If not provided, tehen build.
+   --same_specimen                If Illumina and PacBio reads are from the same specimen [default: true].
+   --meryldb                      Path to a prebuilt Meryl database, built from the Illumina reads. If not provided, then build.
 
    Optional configuration arguments
    --parallel_app                 Link to parallel executable [default: 'parallel']
@@ -184,6 +184,17 @@ Launching `main.nf` [lonely_liskov] - revision: 6a81970115
    --bcftools_app                 Link to bcftools executable [default: 'bcftools']
    --merfin_app                   Link to merfin executable [default: 'merfin']
 
+   Optional parameter arguments
+   --parallel_params              Parameters passed to parallel executable [default: ' -j 2 ']
+   --pbmm2_params                 Parameters passed to pbmm2 align [default: '']
+   --minimap2_params              Parameters passed to minimap2 -xmap-pb or -xasm5 [default: '']
+   --gcpp_params                  Parameters passed to gcpp [default: ' -x 10 -X 120 -q 0 ']
+   --bwamem2_params               Parameters passed to bwamem2 [default: ' -SP ']
+   --freebayes_params             Parameters passed to freebayes [default: ' --min-mapping-quality 0 --min-coverage 3 --min-supporting-allele-qsum 0  --ploidy 2 --min-alternate-fraction 0.2 --max-complex-gap 0 ']
+   --purge_dups_params            Parameters passed to purge_dups [default: ' -2 -T p_cufoffs ']
+   --busco_params                 Parameters passed to busco [default: ' -l insecta_odb10 -m genome -f ']
+
+
    Optional arguments:
    --outdir                       Output directory to place final output [default: 'PolishCLR_Results']
    --clusterOptions               Cluster options for slurm or sge profiles [default slurm: '-N 1 -n 40 -t 04:00:00'; default sge: ' ']
@@ -191,6 +202,7 @@ Launching `main.nf` [lonely_liskov] - revision: 6a81970115
    --queueSize                    Maximum number of jobs to be queued [default: 50]
    --account                      Some HPCs require you supply an account name for tracking usage.  You can supply that here.
    --help                         This usage statement.
+   --check_software               Check if software dependencies are available.
 
   ```
 

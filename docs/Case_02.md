@@ -20,9 +20,10 @@ nextflow run isugifNF/polishCLR --main \
   --primary_assembly "data/primary.fasta" \
   --alternate_assembly "data/alternate.fasta" \
   --mitocondrial_assembly "data/mitochondrial.fasta" \
-  --illiumina_reads "data/illumina/*_{R1,R2}.fasta.bz" \
+  --illumina_reads "data/illumina/*_{R1,R2}.fasta.bz" \
   --pacbio_reads "data/pacbio/pacbio.subreads.bam" \
   --step 1 \
   --arrow01 \
-  -profile slurm
+  -profile slurm \
+  -resume
 ```

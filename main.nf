@@ -57,11 +57,11 @@ def helpMessage() {
    Mandatory arguments:
    --illumina_reads               Paired end Illumina reads, to be used for Merqury QV scores, and FreeBayes polish primary assembly
    --pacbio_reads                 PacBio reads in bam format, to be used to Arrow polish primary assembly
-   --mitochondrial_assembly       Mitocondrial assembly will be concatinated to the assemblies before polishing [default: false]
+   --mitochondrial_assembly       Mitochondrial assembly will be concatenated to the assemblies before polishing [default: false]
 
    Either FALCON (or FALCON-Unzip) assembly:
    --primary_assembly             Genome assembly fasta file to polish
-   --alternate_assembly           If alternate/haplotig assembly file is provided, will be concatinated to the primary assembly before polishing [default: false]
+   --alternate_assembly           If alternate/haplotig assembly file is provided, will be concatenated to the primary assembly before polishing [default: false]
    --falcon_unzip                 If primary assembly has already undergone FALCON-Unzip [default: false]. If true, will Arrow polish once instead of twice.
 
    Pick Step 1 (arrow, purgedups) or Step 2 (Arrow, FreeBayes, FreeBayes)
@@ -70,7 +70,7 @@ def helpMessage() {
    Optional modifiers
    --species                      If a string is given, rename the final assembly by species name [default:false]
    --k                            kmer to use in MerquryQV scoring [default:21]
-   --same_specimen                If Illumina and PacBio reads are from the same specimin [default: true].
+   --same_specimen                If Illumina and PacBio reads are from the same specimen [default: true].
    --meryldb                      Path to a prebuilt Meryl database, built from the Illumina reads. If not provided, then build.
 
    Optional configuration arguments
