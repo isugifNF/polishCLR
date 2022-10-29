@@ -29,28 +29,42 @@ You can find more details on the usage below. These also include a simple [basic
 - [Installation](#Installation)
 - [Basic Run](#Basic-Run)
 - [Outputs](#Outputs)
-- [Trio Input](#Trio-Input)
 - [References](#References)
 
 
 ## Installation
 
-Fetch pipeline
+This pipeline will require [nextflow](https://www.nextflow.io/docs/latest/getstarted.html). The rest fo the dependencies can be installed via [miniconda](https://github.com/isugifNF/polishCLR/tree/main#miniconda), [Docker](https://github.com/isugifNF/polishCLR/tree/main#docker), or [Singularity](https://github.com/isugifNF/polishCLR/tree/main#singularity)
 
 ```
-git clone https://github.com/isugifNF/polishCLR.git
-cd polishCLR
+nextflow -version
+
+nextflow run isugifNF/polishCLR -r main \
+  --help
 ```
 
 For ag100pest projects, we have been installing dependencies in a [miniconda](https://docs.conda.io/en/latest/miniconda.html) environment. Dependencies may also be installed via [docker](https://www.docker.com/) or [singularity](https://sylabs.io/guides/3.0/user-guide/quick_start.html).
+
+To update to the latest version of the pipeline, run:
+
+```
+nextflow pull isugifNF/polishCLR -r main
+```
 
 ### Miniconda
 
 Install dependencies in a [miniconda](https://docs.conda.io/en/latest/miniconda.html) environment.
 
 ```
+wget https://raw.githubusercontent.com/isugifNF/polishCLR/main/environment.yml
+
 [[ -d env ]] || mkdir env
 conda env create -f environment.yml -p ${PWD}/env/polishCLR_env
+
+conda activate env/polishCLR_env
+
+nextflow run isugifNF/polishCLR -r main \
+  --check_software
 ```
 
 ### Docker
@@ -59,7 +73,32 @@ Start up [docker](https://docs.docker.com/get-docker/) and pull the [csiva2022/p
 
 ```
 docker pull csiva2022/polishclr:latest
+
+# Option 1
+docker run -it csiva2022/polishclr:latest \
+  nextflow run isugifNF/polishCLR -r main \
+  --check_software
+
+# Option 2
+nextflow run isugifNF/polishCLR -r main \
+  --check_software \
+  -profile docker
+
+# Option 3
+nextflow run isugifNF/polishCLR -r main \
+  --check_software \
+  --with-docker csiva2022/polishclr:latest
 ```
+
+<!-- # fill this in
+If you are on MacOS with a Silicon chip (M1 or M2) you may run into the following warning.
+
+```
+WARNING: The requested image's platform (linux/amd64) does not match the detected host platform (linux/arm64/v8) and no specific platform was requested
+```
+
+You will need to add the following flag to specify the platform.
+-->
 
 Run the polishCLR pipeline with an added `-with-docker csiva2022/polishclr:latest ` parameter. See [nextflow docker run documentation](https://www.nextflow.io/docs/latest/docker.html#how-it-works) for more information.
 
@@ -69,6 +108,21 @@ Install dependencies as a [singularity](https://sylabs.io/guides/3.0/user-guide/
 
 ```
 singularity pull polishclr.sif docker://csiva2022/polishclr:latest
+
+# Option 1:
+singularity exec polishclr.sif \
+  nextflow run isugifNF/polishCLR -r main \
+  --check_software
+
+# Option 2:
+nextflow run isugifNF/polishCLR -r main \
+  --check_software \
+  -profile singularity
+
+# Option 3:
+nextflow run isugifNF/polishCLR -r main \
+  --check_software \
+  -with-singularity polishclr.sif
 ```
 
 Run the polishCLR pipeline with an added `-with-singularity polishclr.sif ` parameter. See [nextflow singularity run documentation](https://www.nextflow.io/docs/latest/singularity.html#how-it-works) for more information.
@@ -78,6 +132,8 @@ Run the polishCLR pipeline with an added `-with-singularity polishclr.sif ` para
 Print usage statement
 
   ```
+  nextflow run isugifNF/polishCLR -r main --help
+
 N E X T F L O W  ~  version 21.04.2
 Launching `main.nf` [lonely_liskov] - revision: 6a81970115
   ----------------------------------------------------
@@ -104,10 +160,6 @@ Launching `main.nf` [lonely_liskov] - revision: 6a81970115
    --primary_assembly             genome assembly fasta file to polish
    --alternate_assembly           if alternate/haplotig assembly file is provided, will be concatenated to the primary assembly before polishing [default: false]
    --falcon_unzip                 if primary assembly has already undergone falcon unzip [default: false]. If true, will Arrow polish once instead of twice.
-
-   Or TrioCanu assembly
-   --paternal_assembly            paternal genome assembly fasta file to polish
-   --maternal_assembly            maternal genome assembly fasta file to polish
 
    Pick Step 1 (arrow, purgedups) or Step 2 (arrow, freebayes, freebayes)
    --step                         Run step 1 or step 2 (default: 1)
@@ -153,7 +205,7 @@ source activate ${PWD}/env/polishCLR_env
 SP_DIR=/project/ag100pest/Helicoverpa_zea_male
 
 ## === Step 1 (up to purge_dups)
-nextflow run /project/ag100pest/software/polishCLR/main.nf \
+nextflow run isugifNF/polishCLR -r main \
   --primary_assembly "${SP_DIR}/Falcon/4-polish/cns-output/cns_p_ctg.fasta" \
   --alternate_assembly "${SP_DIR}/Falcon/4-polish/cns-output/cns_h_ctg.fasta" \
   --mitochondrial_assembly "${SP_DIR}/MT_Contig/Hzea_mtDNA_contig.fasta" \
@@ -170,7 +222,7 @@ nextflow run /project/ag100pest/software/polishCLR/main.nf \
 ### I often submit these as two separate slurm scripts
 
 ## === Step 2 
- nextflow run /project/ag100pest/software/polishCLR/main.nf \
+ nextflow run isugifNF/polishCLR -r main \
   --primary_assembly "PolishCLR_Results/Step_1/02_Purge_Dups/primary_purged.fa" \
   --alternate_assembly "PolishCLR_Results/Step_1/02_Purge_Dups/haps_purged.fa" \
   --mitochondrial_assembly "${SP_DIR}/MT_Contig/Hzea_mtDNA_contig.fasta" \
@@ -267,137 +319,6 @@ Succeeded   : 2'682
 ```
 
 [timeline.html](https://isugifnf.github.io/polishCLR/timeline.html) | [report.html](https://isugifnf.github.io/polishCLR/report.html)
-
-We also developed a pipeline to work with Trio data, but this is less tested
-<details><summary>Trio Usage</summary>
-### Trio Input
-**TrioCanu Assembly**
-
-```
-nextflow run main.nf \
-  -stub-run \
-  -profile local \
-  --paternal_assembly "data/pri.fasta" \
-  --maternal_assembly "data/alt.fasta" \
-  --mitochondrial_assembly "data/mit.fasta" \
-  --illumina_reads "data/readname_{R1,R2}.fastq.bz" \
-  --pacbio_reads "data/*subreads.fasta" \
-  --outdir "TrioPolish_Polish"
-```
-
-TrioCanu Step 1 Output
-
-```
-N E X T F L O W  ~  version 21.04.3
-Launching `main.nf` [elegant_wiles] - revision: bfeb7f0055
-executor >  local (34)
-[02/be6f35] process > MERGE_FILE_TRIO (1)           [100%] 2 of 2 ✔
-[a0/5c5042] process > meryl_count (1)               [100%] 2 of 2 ✔
-[f0/9c536a] process > meryl_union                   [100%] 1 of 1 ✔
-[9b/ce96e3] process > meryl_peak                    [100%] 1 of 1 ✔
-[e4/1c3238] process > MerquryQV_01 (2)              [100%] 2 of 2 ✔
-[36/b1494c] process > bbstat_01 (2)                 [100%] 2 of 2 ✔
-[4c/46aa68] process > ARROW_02:create_windows (1)   [100%] 1 of 1 ✔
-[c0/e9bb62] process > ARROW_02:pbmm2_index (1)      [100%] 1 of 1 ✔
-[44/0e1bce] process > ARROW_02:pbmm2_align (1)      [100%] 1 of 1 ✔
-[d3/e97fcd] process > ARROW_02:gcc_Arrow (3)        [100%] 3 of 3 ✔
-[90/d306b3] process > ARROW_02:merge_consensus (1)  [100%] 1 of 1 ✔
-[d5/13127b] process > ARROW_02b:create_windows (1)  [100%] 1 of 1 ✔
-[92/302898] process > ARROW_02b:pbmm2_index (1)     [100%] 1 of 1 ✔
-[a7/1a0dc2] process > ARROW_02b:pbmm2_align (1)     [100%] 1 of 1 ✔
-[4e/8994ef] process > ARROW_02b:gcc_Arrow (3)       [100%] 3 of 3 ✔
-[a3/3fc599] process > ARROW_02b:merge_consensus (1) [100%] 1 of 1 ✔
-[1a/83e513] process > MerquryQV_03 (2)              [100%] 2 of 2 ✔
-[cc/399faa] process > bbstat_03 (2)                 [100%] 2 of 2 ✔
-[ca/734f45] process > SPLIT_FILE_03p                [100%] 1 of 1 ✔
-[40/61755d] process > PURGE_DUPS_TRIOp (1)          [100%] 1 of 1 ✔
-[1a/cd0464] process > BUSCO (1)                     [100%] 1 of 1 ✔
-[6e/797242] process > SPLIT_FILE_03m                [100%] 1 of 1 ✔
-[39/f44778] process > PURGE_DUPS_TRIOm (1)          [100%] 1 of 1 ✔
-[c5/2fa18b] process > BUSCO_mat (1)                 [100%] 1 of 1 ✔
-```
-
-**TrioCanu Assembly**
-
-```
-nextflow run main.nf \
-  -stub-run \
-  -profile local \
-  --paternal_assembly "data/pri.fasta" \
-  --maternal_assembly "data/alt.fasta" \
-  --mitochondrial_assembly "data/mit.fasta" \
-  --illumina_reads "data/readname_{R1,R2}.fastq.bz" \
-  --pacbio_reads "data/*subreads.fasta" \
-  --outdir "TrioPolish_Polish" \
-  --steptwo true
-```
-
-```
-N E X T F L O W  ~  version 21.04.3
-Launching `main.nf` [gloomy_lichterman] - revision: bfeb7f0055
-executor >  local (82)
-[d7/056083] process > MERGE_FILE_TRIO (1)                [100%] 2 of 2 ✔
-[93/51edce] process > meryl_count (1)                    [100%] 2 of 2 ✔
-[ed/5527db] process > meryl_union                        [100%] 1 of 1 ✔
-[e6/e804bc] process > meryl_peak                         [100%] 1 of 1 ✔
-[63/c47356] process > MerquryQV_01 (2)                   [100%] 2 of 2 ✔
-[c1/bb67de] process > bbstat_01 (2)                      [100%] 2 of 2 ✔
-[8b/490e0f] process > ARROW_04:create_windows (1)        [100%] 1 of 1 ✔
-[a3/a5e0b1] process > ARROW_04:pbmm2_index (1)           [100%] 1 of 1 ✔
-[ed/a2259b] process > ARROW_04:pbmm2_align (1)           [100%] 1 of 1 ✔
-[a3/020fa4] process > ARROW_04:gcc_Arrow (2)             [100%] 3 of 3 ✔
-[eb/631b37] process > ARROW_04:meryl_genome (1)          [100%] 1 of 1 ✔
-[01/ebc79b] process > ARROW_04:combineVCF (1)            [100%] 1 of 1 ✔
-[c5/84d378] process > ARROW_04:reshape_arrow (1)         [100%] 1 of 1 ✔
-[69/b0cde0] process > ARROW_04:merfin_polish (1)         [100%] 1 of 1 ✔
-[f3/8b6850] process > ARROW_04:vcf_to_fasta (1)          [100%] 1 of 1 ✔
-[14/effa19] process > ARROW_04b:create_windows (1)       [100%] 1 of 1 ✔
-[49/f3c8fb] process > ARROW_04b:pbmm2_index (1)          [100%] 1 of 1 ✔
-[dc/093b9d] process > ARROW_04b:pbmm2_align (1)          [100%] 1 of 1 ✔
-[15/a58989] process > ARROW_04b:gcc_Arrow (3)            [100%] 3 of 3 ✔
-[d5/d4b0dd] process > ARROW_04b:meryl_genome (1)         [100%] 1 of 1 ✔
-[cb/77a45b] process > ARROW_04b:combineVCF (1)           [100%] 1 of 1 ✔
-[e1/984069] process > ARROW_04b:reshape_arrow (1)        [100%] 1 of 1 ✔
-[de/7d54db] process > ARROW_04b:merfin_polish (1)        [100%] 1 of 1 ✔
-[20/de921d] process > ARROW_04b:vcf_to_fasta (1)         [100%] 1 of 1 ✔
-[af/8fb965] process > MerquryQV_05 (2)                   [100%] 2 of 2 ✔
-[57/17e453] process > bbstat_05 (2)                      [100%] 2 of 2 ✔
-[b3/db7637] process > FREEBAYES_06:create_windows (1)    [100%] 1 of 1 ✔
-[8f/561e8e] process > FREEBAYES_06:meryl_genome (1)      [100%] 1 of 1 ✔
-[fa/737fd4] process > FREEBAYES_06:align_shortreads (1)  [100%] 1 of 1 ✔
-[4c/a9817c] process > FREEBAYES_06:freebayes (2)         [100%] 3 of 3 ✔
-[79/9b75f0] process > FREEBAYES_06:combineVCF (1)        [100%] 1 of 1 ✔
-[6a/aa4244] process > FREEBAYES_06:merfin_polish (1)     [100%] 1 of 1 ✔
-[b6/fb2986] process > FREEBAYES_06:vcf_to_fasta (1)      [100%] 1 of 1 ✔
-[26/272e2a] process > FREEBAYES_06b:create_windows (1)   [100%] 1 of 1 ✔
-[ae/28f8fb] process > FREEBAYES_06b:meryl_genome (1)     [100%] 1 of 1 ✔
-[ae/068a62] process > FREEBAYES_06b:align_shortreads (1) [100%] 1 of 1 ✔
-[e2/8884d6] process > FREEBAYES_06b:freebayes (3)        [100%] 3 of 3 ✔
-[bd/97676a] process > FREEBAYES_06b:combineVCF (1)       [100%] 1 of 1 ✔
-[8e/6b69ad] process > FREEBAYES_06b:merfin_polish (1)    [100%] 1 of 1 ✔
-[1f/9dbbb2] process > FREEBAYES_06b:vcf_to_fasta (1)     [100%] 1 of 1 ✔
-[5e/626d17] process > MerquryQV_07 (2)                   [100%] 2 of 2 ✔
-[61/e076cd] process > bbstat_07 (2)                      [100%] 2 of 2 ✔
-[7c/f18e5f] process > FREEBAYES_08:create_windows (1)    [100%] 1 of 1 ✔
-[3a/effebc] process > FREEBAYES_08:meryl_genome (1)      [100%] 1 of 1 ✔
-[f3/ae1183] process > FREEBAYES_08:align_shortreads (1)  [100%] 1 of 1 ✔
-[f5/365d05] process > FREEBAYES_08:freebayes (1)         [100%] 3 of 3 ✔
-[b7/064817] process > FREEBAYES_08:combineVCF (1)        [100%] 1 of 1 ✔
-[ac/c326bb] process > FREEBAYES_08:merfin_polish (1)     [100%] 1 of 1 ✔
-[cd/8fba43] process > FREEBAYES_08:vcf_to_fasta (1)      [100%] 1 of 1 ✔
-[ee/928768] process > FREEBAYES_08b:create_windows (1)   [100%] 1 of 1 ✔
-[f4/386ef4] process > FREEBAYES_08b:meryl_genome (1)     [100%] 1 of 1 ✔
-[b5/e7edeb] process > FREEBAYES_08b:align_shortreads (1) [100%] 1 of 1 ✔
-[50/ae5389] process > FREEBAYES_08b:freebayes (1)        [100%] 3 of 3 ✔
-[27/e057bb] process > FREEBAYES_08b:combineVCF (1)       [100%] 1 of 1 ✔
-[59/6387f0] process > FREEBAYES_08b:merfin_polish (1)    [100%] 1 of 1 ✔
-[56/539a81] process > FREEBAYES_08b:vcf_to_fasta (1)     [100%] 1 of 1 ✔
-[97/dffa16] process > MerquryQV_09 (2)                   [100%] 2 of 2 ✔
-[1b/a81a7a] process > bbstat_09 (2)                      [100%] 2 of 2 ✔
-[83/592eb3] process > SPLIT_FILE_09p                     [100%] 1 of 1 ✔
-[b4/aa4ddb] process > SPLIT_FILE_09m                     [100%] 1 of 1 ✔
-```
-</details>
 
 # References
 
