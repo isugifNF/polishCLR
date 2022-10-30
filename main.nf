@@ -192,6 +192,8 @@ workflow {
     | view
   } else {
     // === Setup input channels
+
+    // Assembly files
     if(params.primary_assembly) {
       primary_assembly_ch = channel.fromPath(params.primary_assembly, checkIfExists:true) 
         | view {file -> "Primary Assembly: $file "}
@@ -206,16 +208,16 @@ workflow {
         | combine(channel.of("alt"))
         | PREFIX_ALT
     } else {
-      log.info("LOG: Skip step since --alternate_assembly [assembly fasta file] was not given.")
+      log.info("LOG: Not using alternate assembly since --alternate_assembly [assembly fasta file] was not given.")
       alternate_assembly_ch = channel.empty()
     }
-    if(params.mitochondrial_assembly) {
+    if(params.mitochondrial_assembly) { // Historically required
       mitochondrial_assembly_ch = channel.fromPath(params.mitochondrial_assembly, checkIfExists:true)
         | view {file -> "Mitochondrial Assembly: $file "}
         | combine(channel.of("mit"))
         | PREFIX_MIT
     } else {
-      log.info("LOG: Skip step since --mitochondrial_assembly [mitochondrial fasta file] was not given.")
+      log.info("LOG: Not using mitochondrial assembly since --mitochondrial_assembly [mitochondrial fasta file] was not given.")
       mitochondrial_assembly_ch = channel.empty()
     }
 
@@ -257,58 +259,8 @@ workflow {
       exit 1, "[Missing File(s) Error] polishCLR requires '--illumina_reads [illumina_paired_end_{R1,R2}.fq]' for FreeBayes steps.\n"
     }
 
-    /* // Case 2 or Case 3: Primary, alternate, and mito exist
-    if ( params.alternate_assembly ) {
-      mitochondrial_ch = channel.fromPath(params.mitochondrial_assembly, checkIfExists:true)
-      alternate_assembly_ch = channel.fromPath(params.alternate_assembly, checkIfExists:true)
-      primary_assembly_ch = channel.fromPath(params.primary_assembly, checkIfExists:true)
-        | combine(channel.of("${params.species}_pri.fasta"))
-        | RENAME_PRIMARY
-
-      assembly_ch = primary_assembly_ch
-        | combine(alternate_assembly_ch)
-        | combine(mitochondrial_ch)
-        | MERGE_FILE_00
-
-    } else if ( params.primary_assembly ) { // Option 1b: Canu, same as FALCON but without alternative assembly
-      if ( params.mitochondrial_assembly ) {  // Merge mitochondrial assembly if available
-        mitochondrial_ch = channel.fromPath(params.mitochondrial_assembly, checkIfExists:true)
-        primary_assembly_ch = channel.fromPath(params.primary_assembly, checkIfExists:true)
-          | combine(channel.of("${params.species}_pri.fasta"))
-          | RENAME_PRIMARY
-
-        assembly_ch = primary_assembly_ch
-          | combine(mitochondrial_ch)
-          | MERGE_CASE1
-
-      } else { // If mitochondrial assembly not available, may still have issues with split_file
-        assembly_ch = channel.fromPath(params.primary_assembly, checkIfExists:true)
-          | combine(channel.of("${params.species}_pri.fasta"))
-          | RENAME_PRIMARY
-      }
-    }
-
-    //k_ch   = channel.of(params.k)
-    pacbio_reads_ch = channel.fromPath(params.pacbio_reads, checkIfExists:true)
-    pacbio_all_ch = pacbio_reads_ch
-      | collect
-      | map {n -> [n]}
-
-    // Step 0: Preprocess Illumina files from bz2 to gz files. Instead of a flag, auto detect, however it must be in the pattern, * will fail
-    if ( params.illumina_reads =~ /bz2$/ ) {
-      illumina_reads_ch = channel.fromFilePairs(params.illumina_reads, checkIfExists:true)
-        | bz_to_gz
-        | map { n -> n.get(1) }
-        | flatten
-    } else {
-      illumina_reads_ch = channel.fromFilePairs(params.illumina_reads, checkIfExists:true)
-        | map { n -> n.get(1) }
-        | flatten
-    }
-    */
-
-    // Create meryl database and compute peak
     k_ch   = channel.of(params.k)
+    // Create meryl database and compute peak
     if ( params.meryldb ) {
       merylDB_ch = channel.fromPath(params.meryldb, checkIfExists:true)
     } else {
