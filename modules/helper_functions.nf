@@ -22,6 +22,31 @@ process bz_to_gz {
   """
 }
 
+process PREFIX_FASTA {
+  input: tuple path(fasta), val(prefix)
+  output: path("${prefix}_$fasta")
+  script:
+  """
+  #! /usr/bin/env bash
+  cat ${fasta} | sed 's/>/>${prefix}_/g' > ${prefix}_${fasta}
+  """
+}
+
+process CONCATINATE_FASTA {
+  input: tuple path(fastas), val(concatinated_fasta)
+  output: path("${concatinated_fasta}")
+  script:
+  """
+  #! /usr/bin/env bash
+  touch temp.fasta
+  for FILE in "${fastas}"; do
+    cat \${FILE} >> temp.fasta
+    echo "" >> temp.fasta
+  done
+  grep -v "^\$" temp.fasta > ${concatinated_fasta}
+  """
+}
+
 // concat genome and mito together
 process MERGE_FILE {
   publishDir "${params.outdir}/00_Preprocess", mode: 'copy'

@@ -32,6 +32,10 @@ include { FREEBAYES as FREEBAYES_05;
 
 // Preprocess, postprocess, and helper functions
 include { bz_to_gz;
+          PREFIX_FASTA as PREFIX_PRI;
+          PREFIX_FASTA as PREFIX_ALT;
+          PREFIX_FASTA as PREFIX_MIT;
+          CONCATINATE_FASTA as MERGE_FASTAS_01;
           MERGE_FILE as MERGE_FILE_00;
           SPLIT_FILE as SPLIT_FILE_02;
           SPLIT_FILE as SPLIT_FILE_07;
@@ -110,21 +114,27 @@ def helpMessage() {
 }
 
 // Show help message
-if ( ( params.help || !params.illumina_reads || !params.pacbio_reads ) && !params.check_software ) {
-  log.info("$params.check_software")
-  log.info("$params.help || !$params.illumina_reads || !$params.pacbio_reads")
+if ( params.help) {
   helpMessage()
   exit 0
 }
 
+if ( !params.pacbio_reads && !params.check_software ) {
+  println("[Missing File(s) Error] polishCLR requires '--pacbio_reads [PacBio bam file]' for ArrowPolish steps.")
+  exit 0
+}
+if ( !params.illumina_reads && !params.check_software ) {
+  println("[Missing File(s) Error] polishCLR requires '--illumina_reads [illumina_paired_end_{R1,R2}.fq]' for FreeBayes steps.")
+  exit 0
+}
+
 if ( !params.primary_assembly && !params.check_software ) {
-  helpMessage()
+  println("[Missing File(s) Error] polishCLR requires a '--primary_assembly [primary fasta file]' to polish.")
   exit 0
 }
 
 // If user uses --profile, exit early. The param should be -profile (one hyphen)
 if ( params.profile ) {
-  helpMessage()
   println("Instead of --profile, use -profile")
   exit 0
 }
@@ -182,7 +192,72 @@ workflow {
     | view
   } else {
     // === Setup input channels
-    // Case 2 or Case 3: Primary, alternate, and mito exist
+    if(params.primary_assembly) {
+      primary_assembly_ch = channel.fromPath(params.primary_assembly, checkIfExists:true) 
+        | view {file -> "Primary Assembly: $file "}
+        | combine(channel.of("pri"))
+        | PREFIX_PRI
+    } else {
+      exit 1, "[Missing File(s) Error] polishCLR requires a '--primary_assembly [primary fasta file]' to polish.\n"
+    }
+    if(params.alternate_assembly) {
+      alternate_assembly_ch = channel.fromPath(params.alternate_assembly, checkIfExists:true) 
+        | view {file -> "Alternate Assembly: $file "}
+        | combine(channel.of("alt"))
+        | PREFIX_ALT
+    } else {
+      log.info("LOG: Skip step since --alternate_assembly [assembly fasta file] was not given.")
+      alternate_assembly_ch = channel.empty()
+    }
+    if(params.mitochondrial_assembly) {
+      mitochondrial_assembly_ch = channel.fromPath(params.mitochondrial_assembly, checkIfExists:true)
+        | view {file -> "Mitochondrial Assembly: $file "}
+        | combine(channel.of("mit"))
+        | PREFIX_MIT
+    } else {
+      log.info("LOG: Skip step since --mitochondrial_assembly [mitochondrial fasta file] was not given.")
+      mitochondrial_assembly_ch = channel.empty()
+    }
+
+    assembly_ch = primary_assembly_ch
+      | concat(alternate_assembly_ch)  // Will be an empty channel in case 1, will have values in case 2 and 3
+      | concat(mitochondrial_assembly_ch)
+      | collect
+      | map { n -> [n]}
+      | combine(channel.of("${params.species}_assembly.fasta"))
+      | MERGE_FASTAS_01
+
+    // PacBio and Illumina Reads for polishing
+    if(params.pacbio_reads){
+      pacbio_reads_ch = channel.fromPath(params.pacbio_reads, checkIfExists:true)
+        | view {file -> "PacBio Reads: $file"}
+      
+      pacbio_all_ch = pacbio_reads_ch
+        | collect
+        | map {n -> [n]}
+    } else {
+      exit 1, "[Missing File(s) Error] polishCLR requires '--pacbio_reads [PacBio bam file]' for ArrowPolish steps.\n"
+    }
+
+    if(params.illumina_reads){
+      // Step 0: Preprocess Illumina files from bz2 to gz files. Instead of a flag, auto detect, however it must be in the pattern, * will fail
+      if ( params.illumina_reads =~ /bz2$/ ) {
+        illumina_reads_ch = channel.fromFilePairs(params.illumina_reads, checkIfExists:true)
+          | view {file -> "Illumina Reads: $file"}
+          | bz_to_gz
+          | map { n -> n.get(1) }
+          | flatten
+      } else {
+        illumina_reads_ch = channel.fromFilePairs(params.illumina_reads, checkIfExists:true)
+          | view {file -> "Illumina Reads: $file"}
+          | map { n -> n.get(1) }
+          | flatten
+      }
+    } else {
+      exit 1, "[Missing File(s) Error] polishCLR requires '--illumina_reads [illumina_paired_end_{R1,R2}.fq]' for FreeBayes steps.\n"
+    }
+
+    /* // Case 2 or Case 3: Primary, alternate, and mito exist
     if ( params.alternate_assembly ) {
       mitochondrial_ch = channel.fromPath(params.mitochondrial_assembly, checkIfExists:true)
       alternate_assembly_ch = channel.fromPath(params.alternate_assembly, checkIfExists:true)
@@ -213,7 +288,7 @@ workflow {
       }
     }
 
-    k_ch   = channel.of(params.k)
+    //k_ch   = channel.of(params.k)
     pacbio_reads_ch = channel.fromPath(params.pacbio_reads, checkIfExists:true)
     pacbio_all_ch = pacbio_reads_ch
       | collect
@@ -230,10 +305,14 @@ workflow {
         | map { n -> n.get(1) }
         | flatten
     }
+    */
+
     // Create meryl database and compute peak
+    k_ch   = channel.of(params.k)
     if ( params.meryldb ) {
       merylDB_ch = channel.fromPath(params.meryldb, checkIfExists:true)
     } else {
+      log.info("Creating the meryl database from the illumina reads. Passing in a precomputed meryl database via the '--meryldb [path/to/db]' flag may speed up QV checks in subsequent runs.")
       merylDB_ch = k_ch
         | combine(illumina_reads_ch)
         | meryl_count
@@ -367,6 +446,7 @@ workflow {
           | combine(asm_freebayes2_ch)
           | SPLIT_FILE_07
       } 
+     
     }
   }
 }
