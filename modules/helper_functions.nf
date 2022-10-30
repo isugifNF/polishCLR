@@ -47,6 +47,7 @@ process CONCATINATE_FASTA {
     echo "" >> temp.fasta
   done
   grep -v "^\$" temp.fasta > ${concatinated_fasta}
+  
   ls -ltr
   """
 }
@@ -112,65 +113,6 @@ process MERGE_FILE_CASE1 {
 
 }
 
-process SPLIT_FILE_p {
-  publishDir "${params.outdir}/${outdir}", mode:'copy'
-  input: path(genome_fasta)
-  output: tuple path("pat_${genome_fasta}"), path("mit_${genome_fasta}")
-  script:
-  """
-  #! /usr/bin/env bash
-
-  # === Inputs
-  # genome_fasta = primary_assembly_merged.fasta
-  # === Outputs
-  # p_${genome_fasta}     # primary assembly
-  # a_${genome_fasta}     # alternative assembly
-  # m_${genome_fasta}     # mitochondrial assembly
-
-  ${samtools_app} faidx ${genome_fasta}
-  grep ">pri_" ${genome_fasta} | cut -f1 | sed 's/>//g' > pri.list
-  ${samtools_app} faidx -r pri.list ${genome_fasta} > pat_${genome_fasta}
-
-  grep ">mit_" ${genome_fasta} | cut -f1 | sed 's/>//g' > mit.list
-  ${samtools_app} faidx -r mit.list ${genome_fasta} > mit_${genome_fasta}
-  """
-
-  stub:
-  """
-  touch pat_${genome_fasta} mit_${genome_fasta}
-  """
-}
-
-process SPLIT_FILE_m {
-  publishDir "${params.outdir}/${outdir}", mode:'copy'
-  input: path(genome_fasta)
-  output: tuple path("mat_${genome_fasta}"), path("mit_${genome_fasta}")
-  script:
-  """
-  #! /usr/bin/env bash
-
-  # === Inputs
-  # genome_fasta = primary_assembly_merged.fasta
-  # === Outputs
-  # p_${genome_fasta}     # primary assembly
-  # a_${genome_fasta}     # alternative assembly
-  # m_${genome_fasta}     # mitochondrial assembly
-
-  ${samtools_app} faidx ${genome_fasta}
-  grep ">pri_" ${genome_fasta} | cut -f1 | sed 's/>//g' > pri.list
-  ${samtools_app} faidx -r pri.list ${genome_fasta} > mat_${genome_fasta}
-
-  grep ">mit_" ${genome_fasta} | cut -f1 | sed 's/>//g' > mit.list
-  ${samtools_app} faidx -r mit.list ${genome_fasta} > mit_${genome_fasta}
-  """
-
-  stub:
-  """
-  touch mat_${genome_fasta} mit_${genome_fasta}
-  """
-}
-
-
 process SPLIT_FILE_CASE1 {
   publishDir "${params.outdir}/${outdir}", mode:'copy'
 
@@ -178,19 +120,21 @@ process SPLIT_FILE_CASE1 {
   output: tuple path("p_${genome_fasta}"), path("m_${genome_fasta}")
   script:
   """
- #! /usr/bin/env bash
- #
- # === Inputs
- # genome_fasta = primary_assembly_merged.fasta
- #=== Outputs
- #  p_${genome_fasta}     # primary assembly
- #  m_${genome_fasta}     # mitochondrial assembly
+  #! /usr/bin/env bash
+  #
+  # === Inputs
+  # genome_fasta = primary_assembly_merged.fasta
+  #=== Outputs
+  #  p_${genome_fasta}     # primary assembly
+  #  m_${genome_fasta}     # mitochondrial assembly
 
   ${samtools_app} faidx ${genome_fasta}
-  grep ">pri_" ${genome_fasta} | cut -f1 | sed 's/>//g' > pri.list
+  grep "pri_" ${genome_fasta}.fai | cut -f1  > pri.list
+  head -n1 pri.list
   ${samtools_app} faidx -r pri.list ${genome_fasta} > p_${genome_fasta}
 
-  grep ">mit_" ${genome_fasta} | cut -f1 | sed 's/>//g' > mit.list
+  grep "mit_" ${genome_fasta}.fai | cut -f1  > mit.list
+  head -n1 mit.list
   ${samtools_app} faidx -r mit.list ${genome_fasta} > m_${genome_fasta}
 
   """
@@ -219,13 +163,16 @@ process SPLIT_FILE {
   # m_${genome_fasta}     # mitochondrial assembly
 
   ${samtools_app} faidx ${genome_fasta}
-  grep ">pri_" ${genome_fasta} | cut -f1 | sed 's/>//g' > pri.list
+  grep "pri_" ${genome_fasta}.fai | cut -f1 > pri.list
+  head -n1 pri.list
   ${samtools_app} faidx -r pri.list ${genome_fasta} > p_${genome_fasta}
 
-  grep ">mit_" ${genome_fasta} | cut -f1 | sed 's/>//g' > mit.list
+  grep "mit_" ${genome_fasta}.fai | cut -f1  > mit.list
+  head -n1 mit.list
   ${samtools_app} faidx -r mit.list ${genome_fasta} > m_${genome_fasta}
 
-  grep ">alt_" ${genome_fasta} | cut -f1 | sed 's/>//g' > alt.list
+  grep "alt_" ${genome_fasta}.fai | cut -f1 > alt.list
+  head -n1 alt.list
   ${samtools_app} faidx -r alt.list ${genome_fasta} > a_${genome_fasta}
   """
 
