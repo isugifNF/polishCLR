@@ -54,34 +54,6 @@ process MERGE_FILE {
 
 }
 
-process MERGE_FILE_TRIO {
-  publishDir "${params.outdir}/00_Preprocess", mode: 'copy'
-  input: tuple path(primary_assembly), path(mito_assembly)
-  output: path("${primary_assembly.simpleName}_merged.fasta")
-  script:
-  """
-  #! /usr/bin/env bash
-
-  # === Inputs
-  # primary_assembly = p_ctg.fasta     # From Canu, maternal or paternal
-  # mito_assembly = mt.fasta           # From vgpMito pipeline
-
-  # === Outputs
-  # ${primary_assembly.simpleName}_merged.fasta
-
-  cat ${primary_assembly} | sed 's/>/>pri_/g' > ${primary_assembly.simpleName}_temp.fasta
-  echo "" >> ${primary_assembly.simpleName}_temp.fasta
-  cat ${mito_assembly} | sed 's/>/>mit_/g' >> ${primary_assembly.simpleName}_temp.fasta
-  echo "" >> ${primary_assembly.simpleName}_temp.fasta
-  cat ${primary_assembly.simpleName}_temp.fasta | grep -v "^\$" > ${primary_assembly.simpleName}_merged.fasta
-  """
-
-  stub:
-  """
-  touch ${primary_assembly.simpleName}_merged.fasta
-  """
-}
-
 // concat genome and mito together
 process MERGE_FILE_CASE1 {
   publishDir "${params.outdir}/00_Preprocess", mode: 'copy'

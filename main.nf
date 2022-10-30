@@ -33,28 +33,18 @@ include { FREEBAYES as FREEBAYES_05;
 // Preprocess, postprocess, and helper functions
 include { bz_to_gz;
           MERGE_FILE as MERGE_FILE_00;
-          MERGE_FILE_TRIO;
           SPLIT_FILE as SPLIT_FILE_02;
           SPLIT_FILE as SPLIT_FILE_07;
           SPLIT_FILE_CASE1 as SPLIT_FILE_CASE1;
-          SPLIT_FILE_p as SPLIT_FILE_02p;
-          SPLIT_FILE_m as SPLIT_FILE_02m;
-          SPLIT_FILE_p as SPLIT_FILE_07p;
-          SPLIT_FILE_m as SPLIT_FILE_07m;
           RENAME_FILE as RENAME_PRIMARY;
-          RENAME_FILE as RENAME_PAT;
-          RENAME_FILE as RENAME_MAT;
           MERGE_FILE_CASE1 as MERGE_CASE1;
           bam_to_fasta } from './modules/helper_functions.nf'
 
 // Other
 include { PURGE_DUPS as PURGE_DUPS_02;
-          PURGE_DUPS_CASE1;
-          PURGE_DUPS_TRIO as PURGE_DUPS_TRIOp;
-          PURGE_DUPS_TRIO as PURGE_DUPS_TRIOm } from './modules/purge_dups.nf'
+          PURGE_DUPS_CASE1 as PURGE_DUPS_CASE1 } from './modules/purge_dups.nf'
 
 include { BUSCO as BUSCO_CASE1;
-          BUSCO as BUSCO_mat;
           BUSCO } from './modules/busco.nf'
 
 def helpMessage() {
@@ -67,16 +57,12 @@ def helpMessage() {
    Mandatory arguments:
    --illumina_reads               Paired end Illumina reads, to be used for Merqury QV scores, and FreeBayes polish primary assembly
    --pacbio_reads                 PacBio reads in bam format, to be used to Arrow polish primary assembly
-   --mitochondrial_assembly       Mitocondrial assembly will be concatinated to the assemblies before polishing [default: false]
+   --mitochondrial_assembly       Mitochondrial assembly will be concatenated to the assemblies before polishing [default: false]
 
    Either FALCON (or FALCON-Unzip) assembly:
    --primary_assembly             Genome assembly fasta file to polish
-   --alternate_assembly           If alternate/haplotig assembly file is provided, will be concatinated to the primary assembly before polishing [default: false]
+   --alternate_assembly           If alternate/haplotig assembly file is provided, will be concatenated to the primary assembly before polishing [default: false]
    --falcon_unzip                 If primary assembly has already undergone FALCON-Unzip [default: false]. If true, will Arrow polish once instead of twice.
-
-   Or TrioCanu assembly
-   --paternal_assembly            Paternal genome assembly fasta file to polish
-   --maternal_assembly            Maternal genome assembly fasta file to polish
 
    Pick Step 1 (arrow, purgedups) or Step 2 (Arrow, FreeBayes, FreeBayes)
    --step                         Run step 1 or step 2 (default: 1)
@@ -84,7 +70,7 @@ def helpMessage() {
    Optional modifiers
    --species                      If a string is given, rename the final assembly by species name [default:false]
    --k                            kmer to use in MerquryQV scoring [default:21]
-   --same_specimen                If Illumina and PacBio reads are from the same specimin [default: true].
+   --same_specimen                If Illumina and PacBio reads are from the same specimen [default: true].
    --meryldb                      Path to a prebuilt Meryl database, built from the Illumina reads. If not provided, then build.
 
    Optional configuration arguments
@@ -131,7 +117,7 @@ if ( ( params.help || !params.illumina_reads || !params.pacbio_reads ) && !param
   exit 0
 }
 
-if ( (!params.primary_assembly && !params.paternal_assembly) && !params.check_software ) {
+if ( !params.primary_assembly && !params.check_software ) {
   helpMessage()
   exit 0
 }
@@ -144,7 +130,7 @@ if ( params.profile ) {
 }
 
 def parameters_valid = ['help','monochrome_logs','outdir',
-  'primary_assembly','alternate_assembly','paternal_assembly','maternal_assembly','mitochondrial_assembly',
+  'primary_assembly','alternate_assembly','mitochondrial_assembly',
   'illumina_reads','pacbio_reads','k','species','meryldb','falcon_unzip','same_specimen','steptwo','step',
   'queueSize','account','threads','clusterOptions',
   'queue-size', 'cluster-options',
@@ -184,6 +170,7 @@ process check_software {
   [[ -z `which $purge_dups_app` ]] && echo "${purge_dups_app} .... need to install." && ERR=1 || echo "${purge_dups_app} .... good. " `${purge_dups_app} -h &> temp ; grep Version temp`
   [[ -z `which $get_seqs_app` ]]   && echo "${get_seqs_app}   .... need to install." && ERR=1 || echo "${get_seqs_app}   .... good. " `${get_seqs_app} -h &> temp ; head -n2 temp | tail -n1`
   [[ -z `which $gzip_app` ]]       && echo "${gzip_app}       .... need to install." && ERR=1 || echo "${gzip_app}       .... good. " `${gzip_app} --version | head -n1`
+  [[ -z `which stats.sh` ]]        && echo "stats.sh from bbstat.... need to install." && ERR=1 || echo "stat.sh for bbstat      .... good. " `stats.sh | grep "Usage"`
   [[ -z `which $busco_app ` ]]     && echo "${busco_app}      .... need to install." && ERR=1 || echo "${busco_app}      .... good. " `${busco_app} --version`
 
   """
@@ -224,20 +211,6 @@ workflow {
           | combine(channel.of("${params.species}_pri.fasta"))
           | RENAME_PRIMARY
       }
-    } else if ( params.paternal_assembly ) {  // Option 2: read in TrioCanu assembly
-      mitochondrial_ch = channel.fromPath(params.mitochondrial_assembly, checkIfExists:true)
-      paternal_assembly_ch = channel.fromPath(params.paternal_assembly, checkIfExists:true)
-        | combine(channel.of("${params.species}_pat.fasta"))
-        | RENAME_PAT
-      maternal_assembly_ch = channel.fromPath(params.maternal_assembly, checkIfExists:true)
-        | combine(channel.of("${params.species}_mat.fasta"))
-        | RENAME_MAT
-
-      // Should result in Paternal and Material assemblies being polished separately
-      assembly_ch = paternal_assembly_ch
-        | concat(maternal_assembly_ch)
-        | combine(mitochondrial_ch)
-        | MERGE_FILE_TRIO
     }
 
     k_ch   = channel.of(params.k)
@@ -288,11 +261,6 @@ workflow {
         // Step 2: Arrow Polish with PacBio reads
         if ( params.primary_assembly ) {
           asm_arrow_ch = ARROW_02(channel.of("Step_1/01_ArrowPolish"), assembly_ch, pacbio_all_ch)
-        } else if ( params.paternal_assembly ) {
-          asm_arrow_pat_ch = ARROW_02(channel.of("Step_1/01_ArrowPolish_pat"), assembly_ch.first(), pacbio_all_ch)
-          asm_arrow_mat_ch = ARROW_02b(channel.of("Step_1/01_ArrowPolish_mat"), assembly_ch.last(), pacbio_all_ch)
-          asm_arrow_ch = asm_arrow_pat_ch
-            | concat(asm_arrow_mat_ch)
         }
 
         // Step 3: Check quality of new assembly with Merqury
@@ -351,41 +319,6 @@ workflow {
             | BUSCO
 
         }
-
-      } else if ( params.paternal_assembly ) {
-        // Paternal version
-        tmp_ch = asm_arrow_ch.first()
-          | SPLIT_FILE_02p
-          | map {n -> n.get(0) }
-        channel.of("Step_1/02_Purge_Dups_pat")
-          | combine(tmp_ch)
-          | combine(pacbio_fasta_ch)
-          | PURGE_DUPS_TRIOp
-
-        PURGE_DUPS_TRIOp.out
-          | map {n -> [n.get(0)] }
-          | flatMap
-          | combine(channel.of("Step_1/02_BUSCO_pat"))
-          | map {n -> [n.get(1), n.get(0)]}
-          | combine(channel.of("Step_1/02_BUSCO_pat"))
-          | map {n -> [n.get(1), n.get(0)]}
-          | BUSCO
-
-        // Maternal version
-        tmpm_ch = asm_arrow_ch.last()
-          | SPLIT_FILE_02m
-          | map {n -> n.get(0) }
-        channel.of("Step_1/02_Purge_Dups_mat")
-          | combine(tmpm_ch)
-          | combine(pacbio_fasta_ch)
-          | PURGE_DUPS_TRIOm
-
-        PURGE_DUPS_TRIOm.out
-          | map {n -> [n.get(0)] }
-          | flatMap
-          | combine(channel.of("Step_1/02_BUSCO_mat"))
-          | map {n -> [n.get(1), n.get(0)]}
-          | BUSCO_mat
       }
     } else {
       asm_arrow_ch = assembly_ch
@@ -393,11 +326,6 @@ workflow {
       // Step 4: Arrow Polish with PacBio reads
       if ( params.primary_assembly ) {
         asm_arrow2_ch = ARROW_04(channel.of("Step_2/04_ArrowPolish"), asm_arrow_ch, pacbio_all_ch, peak_ch, merylDB_ch)
-      } else if ( params.paternal_assembly ) {
-        asm_arrow2_pat_ch = ARROW_04(channel.of("Step_2/04_ArrowPolish_pat"), asm_arrow_ch.first() , pacbio_all_ch, peak_ch, merylDB_ch)
-        asm_arrow2_mat_ch = ARROW_04b(channel.of("Step_2/04_ArrowPolish_mat"), asm_arrow_ch.last(), pacbio_all_ch, peak_ch, merylDB_ch)
-        asm_arrow2_ch = asm_arrow2_pat_ch
-          | concat(asm_arrow2_mat_ch)
       }
       // Step 5: Check quality of new assembly with Merqury
       channel.of("Step_2/04_QV")
@@ -411,11 +339,6 @@ workflow {
       // Step 6: FreeBayes polish with Illumina reads
       if ( params.primary_assembly ) {
         asm_freebayes_ch = FREEBAYES_05(channel.of("Step_2/05_FreeBayesPolish"), asm_arrow2_ch, illumina_reads_ch, peak_ch, merylDB_ch)
-      } else if ( params.paternal_assembly ) {
-        asm_freebayes_pat_ch = FREEBAYES_05(channel.of("Step_2/05_FreeBayesPolish_pat"), asm_arrow2_ch.first(), illumina_reads_ch, peak_ch, merylDB_ch)
-        asm_freebayes_mat_ch = FREEBAYES_05b(channel.of("Step_2/05_FreeBayesPolish_mat"), asm_arrow2_ch.last(), illumina_reads_ch, peak_ch, merylDB_ch)
-        asm_freebayes_ch = asm_freebayes_pat_ch
-          | concat(asm_freebayes_mat_ch )
       }
 
       channel.of("Step_2/05_QV")
@@ -429,11 +352,6 @@ workflow {
       // Step 8: FreeBayes polish with Illumina reads
       if ( params.primary_assembly ) {
         asm_freebayes2_ch = FREEBAYES_06(channel.of("Step_2/06_FreeBayesPolish"), asm_freebayes_ch, illumina_reads_ch, peak_ch, merylDB_ch)
-      } else if ( params.paternal_assembly ) {
-        asm_freebayes2_pat_ch = FREEBAYES_06(channel.of("Step_2/06_FreeBayesPolish_pat"), asm_freebayes_ch.first(), illumina_reads_ch, peak_ch, merylDB_ch)
-        asm_freebayes2_mat_ch = FREEBAYES_06b(channel.of("Step_2/06_FreeBayesPolish_mat"), asm_freebayes_ch.last(), illumina_reads_ch, peak_ch, merylDB_ch)
-        asm_freebayes2_ch = asm_freebayes2_pat_ch
-          | concat(asm_freebayes2_mat_ch)
       }
 
       channel.of("Step_2/06_QV")
@@ -448,12 +366,7 @@ workflow {
         channel.of("Step_2/06_FreeBayesPolish")
           | combine(asm_freebayes2_ch)
           | SPLIT_FILE_07
-      } else if ( params.paternal_assembly ) {
-        asm_freebayes2_ch.first()
-          | SPLIT_FILE_07p
-        asm_freebayes2_ch.last()
-          | SPLIT_FILE_07m
-      }
+      } 
     }
   }
 }

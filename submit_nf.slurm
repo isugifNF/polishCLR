@@ -10,31 +10,24 @@
 #SBATCH --mail-type=end
 # --account=project_name    # <= put HPC account name here, required on Atlas
 
-# === Load Modules here
+# === For example, Load Modules here
 # ==  Atlas HPC (will need a local install of nextflow)
 # module load singularity
-# NEXTFLOW=/project/isu_gif_vrsc/programs/nextflow
-
-# == Ceres HPC
-module load nextflow
-NEXTFLOW=nextflow
-module load merfin
 
 # == Nova HPC
 # module load gcc/7.3.0-xegsmw4 nextflow
 # module load singularity
-# NEXTFLOW=nextflow
 
 # === Set working directory and in/out variables
 cd ${SLURM_SUBMIT_DIR}
 
-# === Using Conda Environments
-module load miniconda
-source activate /project/isu_gif_vrsc/jenchang/dot_home/.conda/envs/polishCLR_env
+# === For example, using Conda Environments
+# module load miniconda
+# source activate /project/isu_gif_vrsc/jenchang/dot_home/.conda/envs/polishCLR_env
 
 # === Main Program
 # Pgos
-$NEXTFLOW run main.nf \
+nextflow run main.nf \
   --primary_assembly "/project/ag100pest/Pgos/RawData/3-unzip/all_p_ctg.fasta" \
   --illumina_reads "/project/ag100pest/Illumina_polishing/JAMU*{R1,R2}.fastq.bz2" \
   --pacbio_reads "/project/ag100pest/Pgos/RawData/m54334U_190823_194159.subreads.bam" \

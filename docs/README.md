@@ -19,4 +19,6 @@ To allow for the inclusion of scaffolding before final polishing  and increase t
 
 You can view a more complete visualization of the pipeline in [Supp. Fig. S1](imgs/FigureS01.svg)
 
+![Pipeline Expanded](imgs/FigureS01.svg)
+
 
