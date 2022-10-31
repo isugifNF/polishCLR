@@ -36,20 +36,15 @@ include { bz_to_gz;
           PREFIX_FASTA as PREFIX_ALT;
           PREFIX_FASTA as PREFIX_MIT;
           CONCATINATE_FASTA as MERGE_FASTAS_01;
-          MERGE_FILE as MERGE_FILE_00;
-          SPLIT_FILE as SPLIT_FILE_02;
-          SPLIT_FILE as SPLIT_FILE_07;
-          SPLIT_FILE_CASE1 as SPLIT_FILE_CASE1;
-          RENAME_FILE as RENAME_PRIMARY;
-          MERGE_FILE_CASE1 as MERGE_CASE1;
+          SPLIT_FASTA as SPLIT_FASTA_01;
+          SPLIT_FASTA as SPLIT_FASTA_07;
           bam_to_fasta } from './modules/helper_functions.nf'
 
 // Other
 include { PURGE_DUPS as PURGE_DUPS_02;
           PURGE_DUPS_CASE1 as PURGE_DUPS_CASE1 } from './modules/purge_dups.nf'
 
-include { BUSCO as BUSCO_CASE1;
-          BUSCO } from './modules/busco.nf'
+include { BUSCO } from './modules/busco.nf'
 
 def helpMessage() {
   log.info isuGIFHeader()
@@ -68,48 +63,49 @@ def helpMessage() {
    --alternate_assembly           If alternate/haplotig assembly file is provided, will be concatenated to the primary assembly before polishing [default: false]
    --falcon_unzip                 If primary assembly has already undergone FALCON-Unzip [default: false]. If true, will Arrow polish once instead of twice.
 
-   Pick Step 1 (arrow, purgedups) or Step 2 (Arrow, FreeBayes, FreeBayes)
-   --step                         Run step 1 or step 2 (default: 1)
+   Pick Step 1 (Arrow, purgedups) or Step 2 (Arrow, FreeBayes, FreeBayes)
+   --step                         Run step 1 or step 2 (default: ${params.step})
 
    Optional modifiers
    --species                      If a string is given, rename the final assembly by species name [default:false]
-   --k                            kmer to use in MerquryQV scoring [default:21]
+   --k                            kmer to use in MerquryQV scoring [default:${params.k}]
    --same_specimen                If Illumina and PacBio reads are from the same specimen [default: true].
    --meryldb                      Path to a prebuilt Meryl database, built from the Illumina reads. If not provided, then build.
 
    Optional configuration arguments
-   --parallel_app                 Link to parallel executable [default: 'parallel']
-   --bzcat_app                    Link to bzcat executable [default: 'bzcat']
-   --pigz_app                     Link to pigz executable [default: 'pigz']
-   --meryl_app                    Link to meryl executable [default: 'meryl']
+   --parallel_app                 Link to parallel executable [default: '$parallel_app']
+   --bzcat_app                    Link to bzcat executable [default: '$bzcat_app']
+   --pigz_app                     Link to pigz executable [default: '$pigz_app']
+   --meryl_app                    Link to meryl executable [default: '$meryl_app']
    --merqury_sh                   Link to merqury script [default: '\$MERQURY/merqury.sh']
-   --pbmm2_app                    Link to pbmm2 executable [default: 'pbmm2']
-   --samtools_app                 Link to samtools executable [default: 'samtools']
-   --gcpp_app                     Link to gcpp executable [default: 'gcpp']
-   --bwamem2_app                  Link to bwamem2 executable [default: 'bwa-mem2']
-   --freebayes_app                Link to freebayes executable [default: 'freebayes']
-   --bcftools_app                 Link to bcftools executable [default: 'bcftools']
-   --merfin_app                   Link to merfin executable [default: 'merfin']
+   --pbmm2_app                    Link to pbmm2 executable [default: '$pbmm2_app']
+   --samtools_app                 Link to samtools executable [default: '$samtools_app']
+   --gcpp_app                     Link to gcpp executable [default: '$gcpp_app']
+   --bwamem2_app                  Link to bwamem2 executable [default: '$bwamem2_app']
+   --freebayes_app                Link to freebayes executable [default: '$freebayes_app']
+   --bcftools_app                 Link to bcftools executable [default: '$bcftools_app']
+   --merfin_app                   Link to merfin executable [default: '$merfin_app']
 
    Optional parameter arguments
-   --parallel_params              Parameters passed to parallel executable [default: ' -j 2 ']
+   --parallel_params              Parameters passed to parallel executable [default: '$parallel_params']
    --pbmm2_params                 Parameters passed to pbmm2 align [default: '']
-   --minimap2_params              Parameters passed to minimap2 -xmap-pb or -xasm5 [default: '']
-   --gcpp_params                  Parameters passed to gcpp [default: ' -x 10 -X 120 -q 0 ']
-   --bwamem2_params               Parameters passed to bwamem2 [default: ' -SP ']
-   --freebayes_params             Parameters passed to freebayes [default: ' --min-mapping-quality 0 --min-coverage 3 --min-supporting-allele-qsum 0  --ploidy 2 --min-alternate-fraction 0.2 --max-complex-gap 0 ']
-   --purge_dups_params            Parameters passed to purge_dups [default: ' -2 -T p_cufoffs ']
-   --busco_params                 Parameters passed to busco [default: ' -l insecta_odb10 -m genome -f ']
+   --minimap2_params              Parameters passed to minimap2 -xmap-pb or -xasm5 [default: '$pbmm2_params']
+   --gcpp_params                  Parameters passed to gcpp [default: '$gcpp_params']
+   --bwamem2_params               Parameters passed to bwamem2 [default: '$bwamem2_params']
+   --freebayes_params             Parameters passed to freebayes [default: '$freebayes_params']
+   --purge_dups_params            Parameters passed to purge_dups [default: '$purge_dups_params']
+   --busco_params                 Parameters passed to busco [default: '$busco_params']
 
 
    Optional arguments:
    --outdir                       Output directory to place final output [default: 'PolishCLR_Results']
    --clusterOptions               Cluster options for slurm or sge profiles [default slurm: '-N 1 -n 40 -t 04:00:00'; default sge: ' ']
-   --threads                      Number of CPUs to use during each job [default: 40]
-   --queueSize                    Maximum number of jobs to be queued [default: 50]
+   --threads                      Number of CPUs to use during each job [default: ${params.threads} ]
+   --queueSize                    Maximum number of jobs to be queued [default: ${params.queueSize} ]
    --account                      Some HPCs require you supply an account name for tracking usage.  You can supply that here.
    --help                         This usage statement.
    --check_software               Check if software dependencies are available.
+
   """
 }
 
@@ -133,9 +129,8 @@ if ( !params.primary_assembly && !params.check_software ) {
   exit 0
 }
 
-// If user uses --profile, exit early. The param should be -profile (one hyphen)
 if ( params.profile ) {
-  println("Instead of --profile, use -profile")
+  println("[Wrong Flag Error] Instead of --profile, use -profile")
   exit 0
 }
 
@@ -192,8 +187,6 @@ workflow {
     | view
   } else {
     // === Setup input channels
-
-    // Assembly files
     if(params.primary_assembly) {
       primary_assembly_ch = channel.fromPath(params.primary_assembly, checkIfExists:true) 
         | view {file -> "Primary Assembly: $file "}
@@ -278,12 +271,11 @@ workflow {
       | splitText() { it.trim() }
 
     // Step 1: Check quality of assembly with Merqury and length dist. with bbstat
-    channel.of("00_Preprocess/00_QV")
+    assembly_ch
       | combine(merylDB_ch)
-      | combine(assembly_ch)
       | MerquryQV_00
-    channel.of("00_Preprocess/00_bbstat")
-      | combine(assembly_ch)
+    
+    assembly_ch
       | bbstat_00
 
     if ( params.step == 1 ) {
@@ -291,16 +283,18 @@ workflow {
       if (!params.falcon_unzip) {
         // Step 2: Arrow Polish with PacBio reads
         if ( params.primary_assembly ) {
-          asm_arrow_ch = ARROW_02(channel.of("Step_1/01_ArrowPolish"), assembly_ch, pacbio_all_ch)
+          asm_arrow_ch = ARROW_02(
+              channel.of("Step_1/01_ArrowPolish"),
+              assembly_ch,
+              pacbio_all_ch
+            )
         }
-
         // Step 3: Check quality of new assembly with Merqury
-        channel.of("Step_1/01_QV")
+        asm_arrow_ch
           | combine(merylDB_ch)
-          | combine(asm_arrow_ch)
           | MerquryQV_01
-        channel.of("Step_1/01_bbstat")
-          | combine(asm_arrow_ch)
+
+        asm_arrow_ch
           | bbstat_01
       } else {
         asm_arrow_ch = assembly_ch
@@ -311,94 +305,82 @@ workflow {
         | collect
         | map {n -> [n]}
 
-      if ( params.primary_assembly ) {
-	      // Case 1 - primary and mito assembly, no alternate.
-	      if ( !params.alternate_assembly ) {
-            tmp_ch = channel.of("Step_1/01_ArrowPolish")
-              | combine(asm_arrow_ch)
-              | SPLIT_FILE_CASE1
-              | map {n -> [n.get(0)] }
+      pri_asm_arrow_ch = asm_arrow_ch
+        | SPLIT_FASTA_01
+        | flatten
+        | filter { it.getName() =~ /^pri/ }
 
-            channel.of("Step_1/02_Purge_Dups")
-              | combine(tmp_ch)
-              | combine(pacbio_fasta_ch)
-              | PURGE_DUPS_CASE1
+      alt_asm_arrow_ch = SPLIT_FASTA_01.out
+        | flatten
+        | filter { it.getName() =~ /^alt/ }
 
-            PURGE_DUPS_CASE1.out
-              | map {n -> [n.get(0), n.get(1)] }
-              | flatMap
-              | combine(channel.of("Step_1/02_BUSCO"))
-              | map {n -> [n.get(1), n.get(0)]}
-              | BUSCO_CASE1
-	      }
-
-	      if ( params.alternate_assembly ) {
-	        tmp_ch = channel.of("Step_1/01_ArrowPolish")
-            | combine(asm_arrow_ch)
-            | SPLIT_FILE_02
-            | map {n -> [n.get(0), n.get(1)] }
-          channel.of("Step_1/02_Purge_Dups")
-            | combine(tmp_ch)
-            | combine(pacbio_fasta_ch)
-            | PURGE_DUPS_02
-
-          PURGE_DUPS_02.out
-            | map {n -> [n.get(0), n.get(1)] }
-            | flatMap
-            | combine(channel.of("Step_1/02_BUSCO"))
-            | map {n -> [n.get(1), n.get(0)]}
-            | BUSCO
-
-        }
+	    // Case 1 - primary and mito assembly, no alternate.
+	    if ( !params.alternate_assembly ) {
+        purged_asm_arrow_ch = pri_asm_arrow_ch
+          | combine(pacbio_fasta_ch)
+          | PURGE_DUPS_CASE1
+          | map {n -> [n.get(0), n.get(1)] }
+	    } else {
+        purged_asm_arrow_ch = pri_asm_arrow_ch
+          | combine(alt_asm_arrow_ch)
+          | combine(pacbio_fasta_ch)
+          | PURGE_DUPS_02
+          | map {n -> [n.get(0), n.get(1)] }
       }
+      purged_asm_arrow_ch
+        | BUSCO
+      
     } else {
       asm_arrow_ch = assembly_ch
 
       // Step 4: Arrow Polish with PacBio reads
-      if ( params.primary_assembly ) {
-        asm_arrow2_ch = ARROW_04(channel.of("Step_2/04_ArrowPolish"), asm_arrow_ch, pacbio_all_ch, peak_ch, merylDB_ch)
-      }
+      asm_arrow2_ch = ARROW_04(
+        channel.of("Step_2/04_ArrowPolish"), 
+        asm_arrow_ch, 
+        pacbio_all_ch,
+        peak_ch, 
+        merylDB_ch)
+
       // Step 5: Check quality of new assembly with Merqury
-      channel.of("Step_2/04_QV")
+      asm_arrow2_ch
         | combine(merylDB_ch)
-        | combine(asm_arrow2_ch)
         | MerquryQV_04
-      channel.of("Step_2/04_bbstat")
-        | combine(asm_arrow2_ch)
+      
+      asm_arrow2_ch
         | bbstat_04
 
       // Step 6: FreeBayes polish with Illumina reads
-      if ( params.primary_assembly ) {
-        asm_freebayes_ch = FREEBAYES_05(channel.of("Step_2/05_FreeBayesPolish"), asm_arrow2_ch, illumina_reads_ch, peak_ch, merylDB_ch)
-      }
+      asm_freebayes_ch = FREEBAYES_05(
+        channel.of("Step_2/05_FreeBayesPolish"),
+        asm_arrow2_ch, 
+        illumina_reads_ch, 
+        peak_ch, 
+        merylDB_ch)
 
-      channel.of("Step_2/05_QV")
+      asm_freebayes_ch
         | combine(merylDB_ch)
-        | combine(asm_freebayes_ch)
         | MerquryQV_05
-      channel.of("Step_2/05_bbstat")
-        | combine(asm_freebayes_ch)
-        | bbstat_05
+      
+      asm_freebayes_ch
+        | bbstat_05 
 
       // Step 8: FreeBayes polish with Illumina reads
-      if ( params.primary_assembly ) {
-        asm_freebayes2_ch = FREEBAYES_06(channel.of("Step_2/06_FreeBayesPolish"), asm_freebayes_ch, illumina_reads_ch, peak_ch, merylDB_ch)
-      }
+      asm_freebayes2_ch = FREEBAYES_06(
+        channel.of("Step_2/06_FreeBayesPolish"), 
+        asm_freebayes_ch, 
+        illumina_reads_ch, 
+        peak_ch, 
+        merylDB_ch)
 
-      channel.of("Step_2/06_QV")
+      asm_freebayes2_ch
         | combine(merylDB_ch)
-        | combine(asm_freebayes2_ch)
         | MerquryQV_06
-      channel.of("Step_2/06_bbstat")
-        | combine(asm_freebayes2_ch)
-        | bbstat_06
+      
+      asm_freebayes2_ch
+        | bbstat_06 
 
-      if (params.primary_assembly) {
-        channel.of("Step_2/06_FreeBayesPolish")
-          | combine(asm_freebayes2_ch)
-          | SPLIT_FILE_07
-      } 
-     
+      asm_freebayes2_ch
+        | SPLIT_FASTA_07
     }
   }
 }

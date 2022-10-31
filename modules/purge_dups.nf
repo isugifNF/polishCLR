@@ -3,8 +3,8 @@
 nextflow.enable.dsl=2
 
 process PURGE_DUPS {
-  publishDir "${params.outdir}/$outdir", mode:'copy'
-  input: tuple val(outdir), path(primary_assembly), path(haplo_fasta), path(pacbio_reads)
+  // publishDir "${params.outdir}/outdir", mode:'copy'
+  input: tuple path(primary_assembly), path(haplo_fasta), path(pacbio_reads)
   output: tuple path("primary_purged.fa"), path("haps_purged.fa"), path("*.log")
   script:
   """
@@ -133,8 +133,8 @@ process PURGE_DUPS {
 }
 
 process PURGE_DUPS_CASE1 {
-  publishDir "${params.outdir}/$outdir", mode:'copy'
-  input: tuple val(outdir), path(primary_assembly), path(pacbio_reads)
+  //publishDir "${params.outdir}/outdir", mode:'copy'
+  input: tuple path(primary_assembly), path(pacbio_reads)
   output: tuple path("primary_purged.fa"), path("haps_purged.fa"), path("*.log") //
   script:
   """

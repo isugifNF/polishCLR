@@ -60,9 +60,7 @@ process meryl_peak {
 
 // 01 Merqury QV value
 process MerquryQV {
-  publishDir "${params.outdir}/${outdir}/MerquryQV", mode: 'copy'
-  publishDir "${params.outdir}/${outdir}/", mode: 'copy', pattern: "merqury.qv"
-  input: tuple val(outdir), path(illumina_db), path(assembly_fasta)
+  input: tuple path(assembly_fasta), path(illumina_db)
   output: path("*")
   script:
   """
@@ -84,14 +82,13 @@ process MerquryQV {
 
 // 01 bbstat: Length distribtions of initial assembly
 process bbstat {
-  publishDir "${params.outdir}/${outdir}", mode: 'copy'
-  input: tuple val(outdir), path(assembly_fasta)
+  // publishDir "${params.outdir}/", mode: 'copy'
+  input: path(assembly_fasta)
   output: path("*")
   script:
   """
   #! /usr/bin/env bash
   # Desc: Prints out length distibutions, GC, etc of each assembly, could be added to pipeline at the end
-  # module load bbtools
 
   echo "Assmbly stats of $assembly_fasta  according to bbtools stats.sh"
 
