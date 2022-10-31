@@ -52,65 +52,20 @@ process CONCATINATE_FASTA {
   """
 }
 
-// concat genome and mito together
-process MERGE_FILE {
-  publishDir "${params.outdir}/00_Preprocess", mode: 'copy'
-  input: tuple path(primary_assembly), path(alternate_assembly), path(mito_assembly)
-  output: path("${primary_assembly.simpleName}_merged.fasta")
+process SPLIT_FASTA {
+  input: path(fasta)
+  output: path("*_${fasta}")
   script:
   """
   #! /usr/bin/env bash
-
-  # === Inputs
-  # primary_assembly = p_ctg.fasta     # From FALCON or FALCON-Unzip
-  # alternate_assembly = a_ctg.fasta
-  # mito_assembly = mt.fasta           # From vgpMito pipeline
-
-  # === Outputs
-  # ${primary_assembly.simpleName}_merged.fasta
-
-  cat ${primary_assembly} | sed 's/>/>pri_/g' > ${primary_assembly.simpleName}_temp.fasta
-  echo "" >> ${primary_assembly.simpleName}_temp.fasta
-  cat ${mito_assembly} | sed 's/>/>mit_/g' >> ${primary_assembly.simpleName}_temp.fasta
-  echo "" >> ${primary_assembly.simpleName}_temp.fasta
-  cat ${alternate_assembly} | sed 's/>/>alt_/g' >> ${primary_assembly.simpleName}_temp.fasta
-  cat ${primary_assembly.simpleName}_temp.fasta | grep -v "^\$" > ${primary_assembly.simpleName}_merged.fasta
+  ${samtools_app} faidx ${fasta}
+  for PREFIX in "pri" "alt" "mit" ; do
+    grep "\${PREFIX}_" ${fasta}.fai | cut -f1  > \${PREFIX}.list
+    if [[ -s "\${PREFIX}.list" ]]; then
+      ${samtools_app} faidx -r \${PREFIX}.list ${fasta} > \${PREFIX}_${fasta}
+    fi
+  done
   """
-
-  stub:
-  """
-  touch ${primary_assembly.simpleName}_merged.fasta
-  """
-
-}
-
-// concat genome and mito together
-process MERGE_FILE_CASE1 {
-  publishDir "${params.outdir}/00_Preprocess", mode: 'copy'
-  input: tuple path(primary_assembly), path(mito_assembly)
-  output: path("${primary_assembly.simpleName}_merged.fasta")
-  script:
-  """
-  #! /usr/bin/env bash
-
-  # === Inputs
-  # primary_assembly = p_ctg.fasta     # From CANU, similar to Falcon but without alternative assembly
-  # mito_assembly = mt.fasta           # From vgpMito pipeline
-
-  # === Outputs
-  # ${primary_assembly.simpleName}_merged.fasta
-
-  cat ${primary_assembly} | sed 's/>/>pri_/g' > ${primary_assembly.simpleName}_temp.fasta
-  echo "" >> ${primary_assembly.simpleName}_temp.fasta
-  cat ${mito_assembly} | sed 's/>/>mit_/g' >> ${primary_assembly.simpleName}_temp.fasta
-  cat ${primary_assembly.simpleName}_temp.fasta | grep -v "^\$" > ${primary_assembly.simpleName}_merged.fasta
-  """
-
-  stub:
-  """
-  touch ${primary_assembly.simpleName}_merged.fasta
-  """
-
 }
 
 process SPLIT_FILE_CASE1 {
