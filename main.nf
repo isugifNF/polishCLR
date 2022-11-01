@@ -319,13 +319,14 @@ workflow {
         purged_asm_arrow_ch = pri_asm_arrow_ch
           | combine(pacbio_fasta_ch)
           | PURGE_DUPS_CASE1
-          | map {n -> [n.get(0), n.get(1)] }
+          | map {n -> n.get(0) } // Only purged primary
 	    } else {
         purged_asm_arrow_ch = pri_asm_arrow_ch
           | combine(alt_asm_arrow_ch)
           | combine(pacbio_fasta_ch)
           | PURGE_DUPS_02
-          | map {n -> [n.get(0), n.get(1)] }
+          | map {n -> [n.get(0), n.get(1)] } // purged primary and alternative
+          | flatten
       }
       purged_asm_arrow_ch
         | BUSCO
