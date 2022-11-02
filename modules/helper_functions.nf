@@ -30,6 +30,10 @@ process PREFIX_FASTA {
   #! /usr/bin/env bash
   cat ${fasta} | sed 's/>/>${prefix}_/g' > ${prefix}_${fasta}
   """
+  stub:
+  """
+  touch ${prefix}_${fasta}
+  """
 }
 
 process CONCATINATE_FASTA {
@@ -50,6 +54,10 @@ process CONCATINATE_FASTA {
   
   ls -ltr
   """
+  stub:
+  """
+  touch "${concatinated_fasta}"
+  """
 }
 
 process SPLIT_FASTA {
@@ -66,91 +74,9 @@ process SPLIT_FASTA {
     fi
   done
   """
-}
-
-process SPLIT_FILE_CASE1 {
-  publishDir "${params.outdir}/${outdir}", mode:'copy'
-
-  input:tuple val(outdir), path(genome_fasta)
-  output: tuple path("p_${genome_fasta}"), path("m_${genome_fasta}")
-  script:
-  """
-  #! /usr/bin/env bash
-  #
-  # === Inputs
-  # genome_fasta = primary_assembly_merged.fasta
-  #=== Outputs
-  #  p_${genome_fasta}     # primary assembly
-  #  m_${genome_fasta}     # mitochondrial assembly
-
-  ${samtools_app} faidx ${genome_fasta}
-  grep "pri_" ${genome_fasta}.fai | cut -f1  > pri.list
-  head -n1 pri.list
-  ${samtools_app} faidx -r pri.list ${genome_fasta} > p_${genome_fasta}
-
-  grep "mit_" ${genome_fasta}.fai | cut -f1  > mit.list
-  head -n1 mit.list
-  ${samtools_app} faidx -r mit.list ${genome_fasta} > m_${genome_fasta}
-
-  """
-
   stub:
   """
-  touch p_${genome_fasta} m_${genome_fasta}
-  """
-}
-
-
-process SPLIT_FILE {
-  publishDir "${params.outdir}/${outdir}", mode:'copy'
-
-  input:tuple val(outdir), path(genome_fasta)
-  output: tuple path("p_${genome_fasta}"), path("a_${genome_fasta}"), path("m_${genome_fasta}")
-  script:
-  """
-  #! /usr/bin/env bash
-
-  # === Inputs
-  # genome_fasta = primary_assembly_merged.fasta
-  # === Outputs
-  # p_${genome_fasta}     # primary assembly
-  # a_${genome_fasta}     # alternative assembly
-  # m_${genome_fasta}     # mitochondrial assembly
-
-  ${samtools_app} faidx ${genome_fasta}
-  grep "pri_" ${genome_fasta}.fai | cut -f1 > pri.list
-  head -n1 pri.list
-  ${samtools_app} faidx -r pri.list ${genome_fasta} > p_${genome_fasta}
-
-  grep "mit_" ${genome_fasta}.fai | cut -f1  > mit.list
-  head -n1 mit.list
-  ${samtools_app} faidx -r mit.list ${genome_fasta} > m_${genome_fasta}
-
-  grep "alt_" ${genome_fasta}.fai | cut -f1 > alt.list
-  head -n1 alt.list
-  ${samtools_app} faidx -r alt.list ${genome_fasta} > a_${genome_fasta}
-  """
-
-  stub:
-  """
-  touch p_${genome_fasta} a_${genome_fasta} m_${genome_fasta}
-  """
-}
-
-process RENAME_FILE {
-  publishDir "${params.outdir}/00_Preprocess/", mode:'copy'
-
-  input: tuple path(filename), val(newname)
-  output: path("$newname")
-  script:
-  """
-  #! /usr/bin/env bash
-  mv ${filename} ${newname}
-  """
-
-  stub:
-  """
-  touch ${newname}
+  touch pri_${fasta} alt_${fasta} mit_${fasta}
   """
 }
 
