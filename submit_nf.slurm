@@ -5,7 +5,7 @@
 #SBATCH --job-name=NF_refactor
 #SBATCH --output=R-%x.%J.out
 #SBATCH --error=R-%x.%J.err
-#SBATCH --mail-user=jenchang@iastate.edu
+#SBATCH --mail-user=username@email.com
 #SBATCH --mail-type=begin
 #SBATCH --mail-type=end
 # --account=project_name    # <= put HPC account name here, required on Atlas
