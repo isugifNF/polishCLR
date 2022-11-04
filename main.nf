@@ -95,6 +95,7 @@ def helpMessage() {
    --freebayes_params             Parameters passed to freebayes [default: '$freebayes_params']
    --purge_dups_params            Parameters passed to purge_dups [default: '$purge_dups_params']
    --busco_params                 Parameters passed to busco [default: '$busco_params']
+   --merfin_params                Parameters passed to merfin executable [default: '$merfin_params']
 
 
    Optional arguments:
@@ -142,7 +143,7 @@ def parameters_valid = ['help','monochrome_logs','outdir',
   'parallel_app','bzcat_app','pigz_app','meryl_app','merqury_sh','pbmm2_app','minimap2_app','samtools_app',
   'gcpp_app','bwamem2_app','freebayes_app','bcftools_app','merfin_app','pbcstat_app','hist_plot_py',
   'calcuts_app','split_fa_app','purge_dups_app','get_seqs_app','gzip_app','busco_app','busco_lineage',
-  'parallel_params','pbmm2_params','minimap2_params','gcpp_params','bwamem2_params','freebayes_params',
+  'parallel_params','pbmm2_params','minimap2_params','gcpp_params','bwamem2_params','freebayes_params','merfin_params',
   'purge_dups_params','busco_params','check_software','profile'] as Set
 
 def parameter_diff = params.keySet() - parameters_valid
