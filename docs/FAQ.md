@@ -113,4 +113,4 @@ nextflow run isugifNF/polishCLR \
 | `--busco_params`      | Parameters passed to busco [default: ' -l insecta_odb10 -m genome -f '] |
 | `--merfin_params`     | Parameters passed to merfin executable [default: ' '] |
 
-The values of these parameters can also be viewed using the `--help` flag. One the parameters you may want to modify include `--busco_params` which is currently set to lineage insecta_odb10 (`-l insecta_odb10`) .You may want to select a more specific lineage so that BUSCA runs faster. Other alignment parameters may also be optimized for your particular compute envirnment or based on something specific to your alignments.
+The values of these parameters can also be viewed using the `--help` flag. One the parameters you may want to modify include `--busco_params` which is currently set to lineage insecta_odb10 (`-l insecta_odb10`) .You may want to select a more specific lineage so that BUSCO runs faster. Other alignment parameters may also be optimized for your particular compute envirnment or based on something specific to your alignments.
