@@ -98,3 +98,19 @@ nextflow run isugifNF/polishCLR \
   -profile local \
   --other hi --mito "doesn't_exist"
 ```
+
+### What are the default parameters for subtools?
+
+| Param | Description |
+|:--|:--|
+| `--parallel_params`   | Parameters passed to parallel executable [default: ' -j 2 '] |
+| `--pbmm2_params`      | Parameters passed to pbmm2 align [default: ''] |
+| `--minimap2_params`  | Parameters passed to minimap2 -xmap-pb or -xasm5 [default: ' '] |
+| `--gcpp_params`       | Parameters passed to gcpp [defqault: ' -x 10 -X 120 -q 0 '] |
+| `--bwamem2_params`    | Parameters passed to bwamem2 [default: ' -SP '] |
+| `--freebayes_params`  | Parameters passed to freebayes [default: ' --min-mapping-quality 0 --min-coverage 3 --min-supporting-allele-qsum 0  --ploidy 2 --min-alternate-fraction 0.2 --max-complex-gap 0 '] |
+| `--purge_dups_params` | Parameters passed to purge_dups [default: ' -2 -T p_cufoffs '] |
+| `--busco_params`      | Parameters passed to busco [default: ' -l insecta_odb10 -m genome -f '] |
+| `--merfin_params`     | Parameters passed to merfin executable [default: ' '] |
+
+The values of these parameters can also be viewed using the `--help` flag. One the parameters you may want to modify include `--busco_params` which is currently set to lineage insecta_odb10 (`-l insecta_odb10`) .You may want to select a more specific lineage so that BUSCA runs faster. Other alignment parameters may also be optimized for your particular compute envirnment or based on something specific to your alignments.
