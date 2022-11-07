@@ -11,7 +11,7 @@ sort: 1
 Step 1 runs another round of Arrow polishing and then purge_dups to split off alternate haplotypes.
 
 ```
-nextflow run <path/to/polishCLR>/main.nf  \
+nextflow run isugifNF/polishCLR -r main  \
   --primary_assembly "data/primary.fasta" \
   --mitocondrial_assembly "data/mitochondrial.fasta" \
   --illiumina_reads "data/illumina/*_{R1,R2}.fasta.bz" \
@@ -30,7 +30,7 @@ If scaffolding data, like Hi-C, are available to you, you should scaffold the `p
 Regardless don't forget to include parameter flags `--step 2` and `resume` to this command. 
 
 ```
- nextflow run <path/to/polishCLR>/main.nf \
+ nextflow run isugifNF/polishCLR -r main \
   --primary_assembly "primary_purged.fa" \
   --alternate_assembly "haps_purged.fa" \
   --mitochondrial_assembly "data/mitochondrial.fasta" \

@@ -16,7 +16,7 @@ This describes Case 2 of the three input cases:
 ### Recommended parameters
 
 ```
-nextflow run isugifNF/polishCLR --main \
+nextflow run isugifNF/polishCLR -r main \
   --primary_assembly "data/primary.fasta" \
   --alternate_assembly "data/alternate.fasta" \
   --mitocondrial_assembly "data/mitochondrial.fasta" \
@@ -27,3 +27,23 @@ nextflow run isugifNF/polishCLR --main \
   -profile slurm \
   -resume
 ```
+
+Step 2 runs another round of Arrow polishing with the PacBio reads, then polishes with short-reads with two rounds of FreeBayes. We broke these two steps into seperate phases to allow for manual scaffolding.
+
+Provide the purged primary `primary_purged.fa` and alternate contigs `haps_purged.fa` from purge_dups, and mitochondrial genome `mitochondrial.fasta` as input to step 2. 
+
+If scaffolding data, like Hi-C, are available to you, you should scaffold the `primary_purged.fa` and provide that as input for the  `--primary_assembly`. 
+
+Regardless don't forget to include parameter flags `--step 2` and `resume` to this command. 
+
+```
+ nextflow run isugifNF/polishCLR -r main \
+  --primary_assembly "primary_purged.fa" \
+  --alternate_assembly "haps_purged.fa" \
+  --mitochondrial_assembly "data/mitochondrial.fasta" \
+  --illumina_reads "data/illumina/*_{R1,R2}.fasta.bz" \
+  --pacbio_reads "../RawSequelData/m*.subreads.bam" \
+  --step 2 \
+  -profile slurm \
+  -resume
+  ```
