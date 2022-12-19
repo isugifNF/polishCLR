@@ -1,0 +1,26 @@
+name: polishCLR_env
+channels:
+  - conda-forge
+  - bioconda
+  - agbiome
+  - defaults
+dependencies:
+  - python=3.7
+  - merqury
+  - meryl
+  - parallel
+  - pbmm2
+  - pbgcpp
+  - freebayes
+  - bcftools
+  - samtools
+  - bwa-mem2
+  - pigz
+  - bbtools
+  - purge_dups
+  - bamtools
+  - merfin
+  #- openjdk=11.0.15
+  #- nextflow
+  - busco=5.4.2
+

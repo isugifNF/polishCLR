@@ -59,10 +59,10 @@ nextflow pull isugifNF/polishCLR -r main
 Install dependencies in a [miniconda](https://docs.conda.io/en/latest/miniconda.html) environment.
 
 ```
-wget https://raw.githubusercontent.com/isugifNF/polishCLR/main/environment.yml
+wget https://raw.githubusercontent.com/isugifNF/polishCLR/main/other_dependencies.yml
 
 [[ -d env ]] || mkdir env
-conda env create -f environment.yml -p ${PWD}/env/polishCLR_env
+conda env create -f other_dependencies.yml -p ${PWD}/env/polishCLR_env
 
 conda activate env/polishCLR_env
 
