@@ -21,21 +21,21 @@ Case 3 will take primary assembly from the `FALCON/4-polish` folder.
 
 | Param | Files | Download link|
 |:--|:--|:--
-| --primary_assembly | "cns_p_ctg.fasta" | [cns_p_ctg.fasta](https://data.nal.usda.gov/system/files/cns_p_ctg.fasta) |
-| --alternate_assembly | "cns_h_ctg.fasta" | [cns_h_ctg.fasta](https://data.nal.usda.gov/system/files/cns_h_ctg.fasta)|
-| --mitochondrial_assembly | "GCF_022581195.2_ilHelZeax1.1_mito.fa" | [GenBank download fasta](https://www.ncbi.nlm.nih.gov/nuccore/NC_061507.1?report=fasta)|
-| --illumina_reads |"testpolish_{R1,R2}.fq" | [testpolish_R1.fastq](https://data.nal.usda.gov/system/files/testpolish_R1.fastq), [testpolish_R2.fastq](https://data.nal.usda.gov/system/files/testpolish_R2.fastq) |
-| --pacbio_reads | "test.1.filtered.bam" | [test.1.filtered.bam_.gz](https://data.nal.usda.gov/system/files/test.1.filtered.bam_.gz)|
+| `--primary_assembly` | "cns_p_ctg.fasta" | [cns_p_ctg.fasta](https://data.nal.usda.gov/system/files/cns_p_ctg.fasta) |
+| `--alternate_assembly` | "cns_h_ctg.fasta" | [cns_h_ctg.fasta](https://data.nal.usda.gov/system/files/cns_h_ctg.fasta)|
+| `--mitochondrial_assembly` | "GCF_022581195.2_ilHelZeax1.1_mito.fa" | [GenBank download fasta](https://www.ncbi.nlm.nih.gov/nuccore/NC_061507.1?report=fasta)|
+| `--illumina_reads` |"testpolish_{R1,R2}.fastq" | [testpolish_R1.fastq](https://data.nal.usda.gov/system/files/testpolish_R1.fastq), [testpolish_R2.fastq](https://data.nal.usda.gov/system/files/testpolish_R2.fastq) |
+| `--pacbio_reads` | "test.1.filtered.bam" | [test.1.filtered.bam_.gz](https://data.nal.usda.gov/system/files/test.1.filtered.bam_.gz)|
 
 ### Recommended parameters
 
 ```
 nextflow run isugifNF/polishCLR -r main \
-  --primary_assembly "data/primary.fasta" \
-  --alternate_assembly "data/alternate.fasta" \
-  --mitocondrial_assembly "data/mitochondrial.fasta" \
-  --illumina_reads "data/illumina/*_{R1,R2}.fasta.bz" \
-  --pacbio_reads "data/pacbio/pacbio.subreads.bam" \
+  --primary_assembly "cns_p_ctg.fasta" \
+  --alternate_assembly "cns_h_ctg.fasta" \
+  --mitocondrial_assembly "GCF_022581195.2_ilHelZeax1.1_mito.fa" \
+  --illumina_reads "*_{R1,R2}.fastq" \
+  --pacbio_reads "test.1.filtered.bam" \
   --step 1 \
   -profile slurm \
   -resume
