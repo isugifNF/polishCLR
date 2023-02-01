@@ -70,6 +70,18 @@ nextflow run isugifNF/polishCLR -r main \
   --check_software
 ```
 
+**NOTE** 
+
+if you run into the error ```ERROR: Unable to load secrets provider``` while running the nextflow command
+Then define `NXF_HOME` where your nextflow script is located. 
+
+For example:
+
+```
+export NXF_HOME=~/.conda/envs/nextflow/bin
+```
+Your nextflow location may differ.  Use `which nextflow` to locate the path to your nextflow you have installed.
+
 ### Docker
 
 Start up [docker](https://docs.docker.com/get-docker/) and pull the [csiva2022/polishclr:latest](https://hub.docker.com/r/csiva2022/polishclr) image.
