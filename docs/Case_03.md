@@ -20,7 +20,7 @@ We have listed some example files to test the pipeline based on Chromosome 30 Hz
 Case 3 will take primary assembly from the `FALCON/4-polish` folder.
 
 | Param | Files | Download link|
-|:--|:--|:--
+|:--|:--|:--|
 | `--primary_assembly` | "cns_p_ctg.fasta" | [cns_p_ctg.fasta](https://data.nal.usda.gov/system/files/cns_p_ctg.fasta) |
 | `--alternate_assembly` | "cns_h_ctg.fasta" | [cns_h_ctg.fasta](https://data.nal.usda.gov/system/files/cns_h_ctg.fasta)|
 | `--mitochondrial_assembly` | "GCF_022581195.2_ilHelZeax1.1_mito.fa" | [GenBank download fasta](https://www.ncbi.nlm.nih.gov/nuccore/NC_061507.1?report=fasta)|
@@ -47,6 +47,8 @@ nextflow run isugifNF/polishCLR -r main \
   -resume
 ```
 
+  **Note:** On some browsers, the dashes (-) and underscores (_) can be copied incorrectly.  So if you run into an error that says `not valid in the pipeline` try manually retyping those parameters.
+
 Step 2 runs another round of Arrow polishing with the PacBio reads, then polishes with short-reads with two rounds of FreeBayes. We broke these two steps into seperate phases to allow for manual scaffolding.
 
 Provide the purged primary `primary_purged.fa` and alternate contigs `haps_purged.fa` from purge_dups, and mitochondrial genome `mitochondrial.fasta` as input to step 2. 
@@ -60,11 +62,11 @@ Regardless don't forget to include parameter flags `--step 2` and `resume` to th
   --primary_assembly "primary_purged.fa" \
   --alternate_assembly "haps_purged.fa" \
   --mitochondrial_assembly "data/mitochondrial.fasta" \
-  --illumina_reads "data/illumina/*_{R1,R2}.fasta.bz" \
+  --illumina_reads "*_{R1,R2}.fastq" \
   --pacbio_reads "test.1.filtered.bam" \
   --step 2 \
   -profile slurm \
   -resume
   ```
 
-  **Note:** On some browsers, the dashes (-) and underscores (_) can be copied incorrectly.  So if you run into an error that says `not valid in the pipeline` try manually retyping those parameters.
+

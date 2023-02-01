@@ -20,7 +20,7 @@ We have listed some example files to test the pipeline based on Chromosome 30 Hz
 Case 2 will take primary assembly from the `FALCON/3-unzip` folder.
 
 | Param | Files | Download link|
-|:--|:--|:--
+|:--|:--|:--|
 | `--primary_assembly` | "all_p_ctg.fasta" | [all_p_ctg.fasta](https://data.nal.usda.gov/system/files/all_p_ctg.fasta)|
 | `--alternate_assembly` | "all_h_ctg.fasta" |[all_h_ctg.fasta](https://data.nal.usda.gov/system/files/all_h_ctg.fasta)|
 | `--mitochondrial_assembly` | "GCF_022581195.2_ilHelZeax1.1_mito.fa" | [GenBank download fasta](https://www.ncbi.nlm.nih.gov/nuccore/NC_061507.1?report=fasta)|
@@ -43,7 +43,7 @@ nextflow run isugifNF/polishCLR -r main \
   --illumina_reads "*_{R1,R2}.fastq" \
   --pacbio_reads "test.1.filtered.bam" \
   --step 1 \
-  --arrow01 \
+  --falcon_unzip true \
   -profile slurm \
   -resume
 ```
@@ -63,7 +63,7 @@ Regardless don't forget to include parameter flags `--step 2` and `resume` to th
   --primary_assembly "primary_purged.fa" \
   --alternate_assembly "haps_purged.fa" \
   --mitochondrial_assembly "data/mitochondrial.fasta" \
-  --illumina_reads "data/illumina/*_{R1,R2}.fasta.bz" \
+  --illumina_reads "*_{R1,R2}.fastq" \
   --pacbio_reads "test.1.filtered.bam" \
   --step 2 \
   -profile slurm \
