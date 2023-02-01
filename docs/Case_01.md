@@ -35,11 +35,11 @@ Case 1 will take primary assembly from the `FALCON/2-asm-falcon` folder.
 ```
 nextflow run isugifNF/polishCLR -r main  \
   --primary_assembly "p_ctg.fasta" \
-  --mitocondrial_assembly "GCF_022581195.2_ilHelZeax1.1_mito.fa" \
+  --mitochondrial_assembly "GCF_022581195.2_ilHelZeax1.1_mito.fa" \
   --illumina_reads "*_{R1,R2}.fastq" \
   --pacbio_reads "test.1.filtered.bam_.gz" \
   --step 1 \
-  --falcon-unzip false \
+  --falcon_unzip false \
   -profile slurm
 ```
 

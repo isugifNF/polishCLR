@@ -33,7 +33,7 @@ Case 2 will take primary assembly from the `FALCON/3-unzip` folder.
 nextflow run isugifNF/polishCLR -r main \
   --primary_assembly "all_p_ctg.fasta" \
   --alternate_assembly "all_h_ctg.fasta" \
-  --mitocondrial_assembly "GCF_022581195.2_ilHelZeax1.1_mito.fa" \
+  --mitochondrial_assembly "GCF_022581195.2_ilHelZeax1.1_mito.fa" \
   --illumina_reads "*_{R1,R2}.fastq" \
   --pacbio_reads "test.1.filtered.bam_.gz" \
   --step 1 \
@@ -41,6 +41,8 @@ nextflow run isugifNF/polishCLR -r main \
   -profile slurm \
   -resume
 ```
+
+**Note:** On some browsers, the dashes (-) and underscores (_) can be copied incorrectly.  So if you run into an error that says `not valid in the pipeline` try manually retyping those parameters.
 
 Step 2 runs another round of Arrow polishing with the PacBio reads, then polishes with short-reads with two rounds of FreeBayes. We broke these two steps into seperate phases to allow for manual scaffolding.
 

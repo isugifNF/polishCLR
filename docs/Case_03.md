@@ -33,7 +33,7 @@ Case 3 will take primary assembly from the `FALCON/4-polish` folder.
 nextflow run isugifNF/polishCLR -r main \
   --primary_assembly "cns_p_ctg.fasta" \
   --alternate_assembly "cns_h_ctg.fasta" \
-  --mitocondrial_assembly "GCF_022581195.2_ilHelZeax1.1_mito.fa" \
+  --mitochondrial_assembly "GCF_022581195.2_ilHelZeax1.1_mito.fa" \
   --illumina_reads "*_{R1,R2}.fastq" \
   --pacbio_reads "test.1.filtered.bam_.gz" \
   --step 1 \
@@ -60,3 +60,5 @@ Regardless don't forget to include parameter flags `--step 2` and `resume` to th
   -profile slurm \
   -resume
   ```
+
+  **Note:** On some browsers, the dashes (-) and underscores (_) can be copied incorrectly.  So if you run into an error that says `not valid in the pipeline` try manually retyping those parameters.
