@@ -16,11 +16,11 @@ dependencies:
   - samtools
   - bwa-mem2
   - pigz
-  - bbtools
+  #- bbtools
   - purge_dups
   - bamtools
   - merfin
   #- openjdk=11.0.15
-  #- nextflow
+  - nextflow
   - busco=5.4.2
 
