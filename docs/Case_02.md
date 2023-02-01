@@ -35,7 +35,7 @@ nextflow run isugifNF/polishCLR -r main \
   --alternate_assembly "all_h_ctg.fasta" \
   --mitocondrial_assembly "GCF_022581195.2_ilHelZeax1.1_mito.fa" \
   --illumina_reads "*_{R1,R2}.fastq" \
-  --pacbio_reads "test.1.filtered.bam" \
+  --pacbio_reads "test.1.filtered.bam_.gz" \
   --step 1 \
   --arrow01 \
   -profile slurm \
