@@ -27,6 +27,12 @@ Case 3 will take primary assembly from the `FALCON/4-polish` folder.
 | `--illumina_reads` |"testpolish_{R1,R2}.fastq" | [testpolish_R1.fastq](https://data.nal.usda.gov/system/files/testpolish_R1.fastq), [testpolish_R2.fastq](https://data.nal.usda.gov/system/files/testpolish_R2.fastq) |
 | `--pacbio_reads` | "test.1.filtered.bam" | [test.1.filtered.bam_.gz](https://data.nal.usda.gov/system/files/test.1.filtered.bam_.gz)|
 
+**Note:** The PacBio Reads (`test.1.filtered.bam_.gz`) must be decompressed before running the pipeline. 
+
+```
+gunzip -dc test.1.filtered.bam_.gz > test.1.filtered.bam
+```
+
 ### Recommended parameters
 
 ```
@@ -35,7 +41,7 @@ nextflow run isugifNF/polishCLR -r main \
   --alternate_assembly "cns_h_ctg.fasta" \
   --mitochondrial_assembly "GCF_022581195.2_ilHelZeax1.1_mito.fa" \
   --illumina_reads "*_{R1,R2}.fastq" \
-  --pacbio_reads "test.1.filtered.bam_.gz" \
+  --pacbio_reads "test.1.filtered.bam" \
   --step 1 \
   -profile slurm \
   -resume
@@ -55,7 +61,7 @@ Regardless don't forget to include parameter flags `--step 2` and `resume` to th
   --alternate_assembly "haps_purged.fa" \
   --mitochondrial_assembly "data/mitochondrial.fasta" \
   --illumina_reads "data/illumina/*_{R1,R2}.fasta.bz" \
-  --pacbio_reads "../RawSequelData/m*.subreads.bam" \
+  --pacbio_reads "test.1.filtered.bam" \
   --step 2 \
   -profile slurm \
   -resume
