@@ -43,6 +43,8 @@ nextflow run isugifNF/polishCLR -r main  \
   -profile slurm
 ```
 
+**Note:** On some browsers, the dashes (-) and underscores (_) can be copied incorrectly.  So if you run into an error that says `not valid in the pipeline` try manually retyping those parameters.
+
 Step 2 runs another round of Arrow polishing with the PacBio reads, then polishes with short-reads with two rounds of FreeBayes. We broke these two steps into seperate phases to allow for manual scaffolding.
 
 Provide the purged primary `primary_purged.fa` and alternate contigs `haps_purged.fa` from purge_dups, and mitochondrial genome `mitochondrial.fasta` as input to step 2. 
