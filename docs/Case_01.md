@@ -24,24 +24,32 @@ We have listed some example files to test the pipeline based on Chromosome 30 Hz
 Case 1 will take primary assembly from the `FALCON/2-asm-falcon` folder.
 
 | Param | Files | Download link|
-|:--|:--|:--
-| --primary_assembly | "p_ctg.fasta" | [p_ctg.fasta](https://data.nal.usda.gov/system/files/p_ctg.fasta)|
-| --mitochondrial_assembly | "GCF_022581195.2_ilHelZeax1.1_mito.fa" | [GenBank download fasta](https://www.ncbi.nlm.nih.gov/nuccore/NC_061507.1?report=fasta)|
-| --illumina_reads |"testpolish_{R1,R2}.fq" | [testpolish_R1.fastq](https://data.nal.usda.gov/system/files/testpolish_R1.fastq), [testpolish_R2.fastq](https://data.nal.usda.gov/system/files/testpolish_R2.fastq) |
-| --pacbio_reads | "test.1.filtered.bam" | [test.1.filtered.bam_.gz](https://data.nal.usda.gov/system/files/test.1.filtered.bam_.gz)|
+|:--|:--|:--|
+| `--primary_assembly` | "p_ctg.fasta" | [p_ctg.fasta](https://data.nal.usda.gov/system/files/p_ctg.fasta)|
+| `--mitochondrial_assembly` | "GCF_022581195.2_ilHelZeax1.1_mito.fa" | [GenBank download fasta](https://www.ncbi.nlm.nih.gov/nuccore/NC_061507.1?report=fasta)|
+| `--illumina_reads` |"testpolish_{R1,R2}.fastq" | [testpolish_R1.fastq](https://data.nal.usda.gov/system/files/testpolish_R1.fastq), [testpolish_R2.fastq](https://data.nal.usda.gov/system/files/testpolish_R2.fastq) |
+| `--pacbio_reads` | "test.1.filtered.bam" | [test.1.filtered.bam_.gz](https://data.nal.usda.gov/system/files/test.1.filtered.bam_.gz)|
+
+**Note:** The PacBio Reads (`test.1.filtered.bam_.gz`) must be decompressed before running the pipeline. 
+
+```
+gunzip -dc test.1.filtered.bam_.gz > test.1.filtered.bam
+```
 
 ### Recommended parameters
 
 ```
 nextflow run isugifNF/polishCLR -r main  \
-  --primary_assembly "data/primary.fasta" \
-  --mitocondrial_assembly "data/mitochondrial.fasta" \
-  --illiumina_reads "data/illumina/*_{R1,R2}.fasta.bz" \
-  --pacbio_reads "data/pacbio/pacbio.subreads.bam" \
+  --primary_assembly "p_ctg.fasta" \
+  --mitochondrial_assembly "GCF_022581195.2_ilHelZeax1.1_mito.fa" \
+  --illumina_reads "*_{R1,R2}.fastq" \
+  --pacbio_reads "test.1.filtered.bam" \
   --step 1 \
-  --falcon-unzip false \
+  --falcon_unzip false \
   -profile slurm
 ```
+
+**Note:** On some browsers, the dashes (-) and underscores (_) can be copied incorrectly.  So if you run into an error that says `not valid in the pipeline` try manually retyping those parameters.
 
 Step 2 runs another round of Arrow polishing with the PacBio reads, then polishes with short-reads with two rounds of FreeBayes. We broke these two steps into seperate phases to allow for manual scaffolding.
 
@@ -56,8 +64,8 @@ Regardless don't forget to include parameter flags `--step 2` and `resume` to th
   --primary_assembly "primary_purged.fa" \
   --alternate_assembly "haps_purged.fa" \
   --mitochondrial_assembly "data/mitochondrial.fasta" \
-  --illumina_reads "data/illumina/*_{R1,R2}.fasta.bz" \
-  --pacbio_reads "../RawSequelData/m*.subreads.bam" \
+  --illumina_reads "*_{R1,R2}.fastq" \
+  --pacbio_reads "test.1.filtered.bam" \
   --step 2 \
   -profile slurm \
   -resume
